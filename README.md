@@ -57,7 +57,7 @@
       <li>• React.js with Vite</li>
       <li>• Material-UI (MUI) v5</li>
       <li>• React Router v6</li>
-      <li>• Zustand for state management</li>
+      <li>• Context API for state management</li>
       <li>• Axios for API requests</li>
     </ul>
   </div>
@@ -92,8 +92,8 @@ labour-mobility/
     │   ├── api/           # API client setup
     │   ├── assets/        # Static assets
     │   ├── components/    # Reusable UI components
+    │   ├── context/       # React Context providers
     │   ├── pages/         # Page components
-    │   ├── store/         # State management
     │   └── theme/         # MUI theme configuration
     └── public/            # Public assets
 ```
@@ -161,7 +161,7 @@ For any questions or feedback, please contact us at [your-email@example.com](mai
 - **Build Tool**: Vite
 - **Styling**: TailwindCSS
 - **Routing**: React Router v6
-- **State Management**: Zustand
+- **State Management**: Context API
 - **Forms**: React Hook Form + Yup validation
 - **HTTP Client**: Axios
 - **Icons**: Heroicons
