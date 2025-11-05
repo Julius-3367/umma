@@ -24,12 +24,11 @@ import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
 import AdminCourses from './pages/admin/Courses';
 import AdminCreateCourse from './pages/admin/CreateCourse';
-import AdminCertificateApprovals from './pages/admin/CertificateApprovals';
 import AdminCompanies from './pages/admin/Companies';
 import AdminReports from './pages/admin/Reports';
 import AdminSettings from './pages/admin/Settings';
 import AdminAttendance from './pages/admin/Attendance';
-import AdminCertificates from './pages/admin/Certificates';
+import CertificateManagement from './pages/admin/CertificateManagement';
 import CandidateDashboard from './pages/candidate/Dashboard';
 import CandidateCourses from './pages/candidate/Courses';
 import CandidateCourseDetails from './pages/candidate/CourseDetails';
@@ -293,8 +292,7 @@ const App = () => {
                   <Route path="courses/new" element={<AdminCreateCourse />} />
                   <Route path="courses/:id/edit" element={<AdminCreateCourse />} />
                   <Route path="attendance" element={<AdminAttendance />} />
-                  <Route path="certificate-management" element={<AdminCertificates />} />
-                  <Route path="certificates" element={<AdminCertificateApprovals />} />
+                  <Route path="certificates" element={<CertificateManagement />} />
                   <Route path="companies" element={<AdminCompanies />} />
                   <Route path="reports" element={<AdminReports />} />
                   <Route path="settings" element={<AdminSettings />} />

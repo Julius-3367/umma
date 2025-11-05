@@ -1563,8 +1563,11 @@ const getCertificates = async (req, res) => {
       select: { tenantId: true },
     });
 
+    // Default to tenant 1 if user doesn't have tenantId
+    const tenantId = user.tenantId || 1;
+
     const where = {
-      tenantId: user.tenantId,
+      tenantId,
     };
 
     if (status && status !== 'all') {
@@ -1735,41 +1738,75 @@ const getCertificateById = async (req, res) => {
  */
 const generateCertificate = async (req, res) => {
   try {
-    const { templateId, candidateId, courseId, issueDate, expiryDate, grade, remarks } = req.body;
-
-    if (!templateId || !candidateId || !courseId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Template ID, candidate ID, and course ID are required',
-      });
-    }
+    const { templateId, candidateId, courseId, enrollmentId, issueDate, expiryDate, grade, remarks } = req.body;
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { tenantId: true },
     });
 
-    // Get enrollment
-    const enrollment = await prisma.enrollment.findFirst({
-      where: {
-        candidateId: parseInt(candidateId),
-        courseId: parseInt(courseId),
-        tenantId: user.tenantId,
-      },
-      include: {
-        candidate: {
-          include: {
-            user: true,
-          },
+    let enrollment;
+
+    // Get enrollment either by enrollmentId or by candidateId + courseId
+    if (enrollmentId) {
+      enrollment = await prisma.enrollment.findFirst({
+        where: {
+          id: parseInt(enrollmentId),
+          tenantId: user.tenantId,
         },
-        course: true,
-      },
-    });
+        include: {
+          candidate: {
+            include: {
+              user: true,
+            },
+          },
+          course: true,
+        },
+      });
+    } else if (candidateId && courseId) {
+      enrollment = await prisma.enrollment.findFirst({
+        where: {
+          candidateId: parseInt(candidateId),
+          courseId: parseInt(courseId),
+          tenantId: user.tenantId,
+        },
+        include: {
+          candidate: {
+            include: {
+              user: true,
+            },
+          },
+          course: true,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Either enrollmentId or (candidateId and courseId) are required',
+      });
+    }
 
     if (!enrollment) {
       return res.status(404).json({
         success: false,
         message: 'Enrollment not found',
+      });
+    }
+
+    // Check if certificate already exists for this enrollment
+    const existingCertificate = await prisma.certificate.findUnique({
+      where: {
+        tenantId_enrollmentId: {
+          tenantId: user.tenantId,
+          enrollmentId: enrollment.id,
+        },
+      },
+    });
+
+    if (existingCertificate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Certificate already exists for this enrollment. Use reissue if you need to generate a new one.',
       });
     }
 
@@ -1781,14 +1818,14 @@ const generateCertificate = async (req, res) => {
     // Generate QR code data (simplified - in production use proper QR library)
     const qrCodeData = JSON.stringify({
       certificateNumber,
-      candidateId,
-      courseId,
+      candidateId: enrollment.candidateId,
+      courseId: enrollment.courseId,
       issueDate: issueDate || new Date(),
     });
 
     // Generate digital signature (simplified - in production use proper crypto)
     const crypto = require('crypto');
-    const signatureData = `${certificateNumber}${candidateId}${courseId}${issueDate}`;
+    const signatureData = `${certificateNumber}${enrollment.candidateId}${enrollment.courseId}${issueDate || new Date()}`;
     const digitalSignature = crypto.createHash('sha256').update(signatureData).digest('hex');
 
     // Create certificate
@@ -1796,7 +1833,8 @@ const generateCertificate = async (req, res) => {
       data: {
         tenantId: user.tenantId,
         enrollmentId: enrollment.id,
-        templateId: parseInt(templateId),
+        courseId: enrollment.courseId,
+        templateId: templateId ? parseInt(templateId) : null,
         certificateNumber,
         issueDate: issueDate ? new Date(issueDate) : new Date(),
         expiryDate: expiryDate ? new Date(expiryDate) : null,
@@ -2372,18 +2410,21 @@ const getCertificateStatistics = async (req, res) => {
       select: { tenantId: true },
     });
 
+    // Default to tenant 1 if user doesn't have tenantId
+    const tenantId = user.tenantId || 1;
+
     const [total, issued, pending, revoked] = await Promise.all([
       prisma.certificate.count({
-        where: { tenantId: user.tenantId },
+        where: { tenantId },
       }),
       prisma.certificate.count({
-        where: { tenantId: user.tenantId, status: 'ISSUED' },
+        where: { tenantId, status: 'ISSUED' },
       }),
       prisma.certificate.count({
-        where: { tenantId: user.tenantId, status: 'PENDING' },
+        where: { tenantId, status: 'PENDING' },
       }),
       prisma.certificate.count({
-        where: { tenantId: user.tenantId, status: 'REVOKED' },
+        where: { tenantId, status: 'REVOKED' },
       }),
     ]);
 

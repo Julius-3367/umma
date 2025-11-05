@@ -12,17 +12,17 @@ export const theme = createTheme({
     // Professional Color Scheme - Original Design
     // ----------------------------------------------------
     primary: {
-      // Light Blue - softened professional blue for improved visibility
-      main: '#3B82F6',
-      light: '#60A5FA',
-      dark: '#60A5FA', // Changed to light blue instead of darker blue
+      // Deep Blue - Professional deep blue for strong brand identity
+      main: '#1e40af',
+      light: '#3b82f6',
+      dark: '#1e3a8a',
       contrastText: '#ffffff',
     },
     secondary: {
       // Lime Green/Chartreuse - Fresh and energetic
       main: '#78BE21',
       light: '#8FD838',
-      dark: '#8FD838', // Changed to bright lime instead of dark lime
+      dark: '#5E9A14',
       contrastText: '#ffffff',
     },
     // ----------------------------------------------------
@@ -31,25 +31,25 @@ export const theme = createTheme({
     error: {
       main: '#ef4444',
       light: '#f87171',
-      dark: '#f87171', // Changed to light red instead of dark
+      dark: '#dc2626',
       contrastText: '#ffffff',
     },
     warning: {
       main: '#f59e0b',
       light: '#fbbf24',
-      dark: '#fbbf24', // Changed to light orange instead of dark
+      dark: '#d97706',
       contrastText: '#ffffff',
     },
     info: {
-      main: '#3b82f6',
-      light: '#60a5fa',
-      dark: '#60a5fa', // Changed to light blue instead of dark
+      main: '#1e40af',
+      light: '#3b82f6',
+      dark: '#1e3a8a',
       contrastText: '#ffffff',
     },
     success: {
       main: '#10b981',
       light: '#34d399',
-      dark: '#34d399', // Changed to light green instead of dark
+      dark: '#059669',
       contrastText: '#ffffff',
     },
     grey: {
@@ -69,8 +69,8 @@ export const theme = createTheme({
       paper: '#ffffff',
     },
     text: {
-      primary: '#475569', // Medium gray instead of almost black
-      secondary: '#94a3b8', // Light gray for secondary text
+      primary: '#1e293b', // Darker text for better readability
+      secondary: '#64748b', // Medium gray for secondary text
       disabled: '#cbd5e1', // Very light gray
     },
     // Custom colors for labor mobility status indicators
@@ -78,7 +78,7 @@ export const theme = createTheme({
       pending: '#f59e0b', // Amber for pending applications
       approved: '#22c55e', // Green for approved
       rejected: '#ef4444', // Red for rejected
-      active: '#3B82F6', // Light blue for active jobs (changed from deep blue)
+      active: '#1e40af', // Deep blue for active jobs
       expired: '#64748b', // Grey for expired listings
       urgent: '#dc2626', // Dark red for urgent positions
     },
