@@ -78,30 +78,53 @@ import {
   RadialBar,
 } from 'recharts';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import candidateService from '../../api/candidate';
 
 const CandidateDashboard = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [applying, setApplying] = useState(false);
 
-  // Mock candidate data
+  // Real candidate data
   const [candidateData, setCandidateData] = useState(null);
 
   useEffect(() => {
-    setTimeout(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch dashboard data and recommended jobs in parallel
+      const [dashboardData, jobsData] = await Promise.all([
+        candidateService.getDashboardData(),
+        candidateService.getRecommendedJobs()
+      ]);
+
+      // Mock additional data that's not yet in the API
       setCandidateData({
-        profile: {
-          completionRate: 85,
-          skillsAssessed: 12,
-          certificationsEarned: 3,
-          jobApplications: 8,
-          interviewsScheduled: 2,
-          placementRate: 75,
+        profile: dashboardData.profile || {
+          completionRate: 0,
+          skillsAssessed: 0,
+          certificationsEarned: 0,
+          jobApplications: 0,
+          interviewsScheduled: 0,
         },
-        currentCourses: [
+        stats: dashboardData.stats || {},
+        currentCourses: dashboardData.currentCourses || [],
+        upcomingEvents: dashboardData.upcomingEvents || [],
+        recommendedJobs: jobsData || [],
+        // Keep mock data for features not yet in API
+        oldCourses: [
           {
             id: 1,
             title: 'Construction Safety Training',
@@ -125,64 +148,6 @@ const CandidateDashboard = () => {
             nextSession: '2024-01-18',
             instructor: 'John Smith',
             status: 'In Progress',
-          },
-        ],
-        upcomingEvents: [
-          {
-            id: 1,
-            title: 'Job Interview - Al-Futtaim Construction',
-            date: '2024-01-14',
-            time: '10:00 AM',
-            type: 'interview',
-            location: 'Dubai Office',
-          },
-          {
-            id: 2,
-            title: 'Skills Assessment - Electrical',
-            date: '2024-01-16',
-            time: '2:00 PM',
-            type: 'assessment',
-            location: 'Training Center',
-          },
-          {
-            id: 3,
-            title: 'Construction Safety - Final Exam',
-            date: '2024-01-20',
-            time: '9:00 AM',
-            type: 'exam',
-            location: 'Online',
-          },
-        ],
-        recommendedJobs: [
-          {
-            id: 1,
-            title: 'Construction Worker',
-            company: 'Emirates Construction',
-            location: 'Dubai',
-            salary: 'AED 2,500-3,000',
-            match: 92,
-            requirements: ['Construction Safety Certificate', '2+ years experience'],
-            posted: '2 days ago',
-          },
-          {
-            id: 2,
-            title: 'Electrical Technician',
-            company: 'Dubai Electricity',
-            location: 'Dubai',
-            salary: 'AED 3,500-4,200',
-            match: 87,
-            requirements: ['Electrical Certificate', 'English Communication'],
-            posted: '4 days ago',
-          },
-          {
-            id: 3,
-            title: 'Maintenance Worker',
-            company: 'ADNOC Facilities',
-            location: 'Abu Dhabi',
-            salary: 'AED 2,800-3,500',
-            match: 78,
-            requirements: ['Basic Maintenance Skills', 'Safety Training'],
-            posted: '1 week ago',
           },
         ],
         learningProgress: [
@@ -226,9 +191,13 @@ const CandidateDashboard = () => {
           },
         ],
       });
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError(err.response?.data?.message || 'Failed to load dashboard data');
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, [theme]);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -261,6 +230,24 @@ const CandidateDashboard = () => {
     setJobDialogOpen(true);
   };
 
+  const handleJobApply = async (jobId) => {
+    try {
+      setApplying(true);
+      await candidateService.applyForJob(jobId, {
+        coverLetter: 'I am interested in this position',
+      });
+      alert('Application submitted successfully!');
+      setJobDialogOpen(false);
+      // Refresh data
+      fetchDashboardData();
+    } catch (err) {
+      console.error('Error applying for job:', err);
+      alert(err.response?.data?.message || 'Failed to submit application');
+    } finally {
+      setApplying(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box
@@ -274,6 +261,23 @@ const CandidateDashboard = () => {
         <CircularProgress size={64} />
       </Box>
     );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={fetchDashboardData}>
+          Retry
+        </Button>
+      </Container>
+    );
+  }
+
+  if (!candidateData) {
+    return null;
   }
 
   return (
@@ -445,7 +449,7 @@ const CandidateDashboard = () => {
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     My Courses
                   </Typography>
-                  <Button variant="outlined" size="small">
+                  <Button variant="outlined" size="small" onClick={() => navigate('/candidate/courses')}>
                     View All
                   </Button>
                 </Box>
@@ -499,7 +503,7 @@ const CandidateDashboard = () => {
                           <Typography variant="caption" color="text.secondary">
                             Next session: {course.nextSession}
                           </Typography>
-                          <Button size="small" variant="text">
+                          <Button size="small" variant="text" onClick={() => navigate(`/candidate/courses/${course.id}`)}>
                             Continue
                           </Button>
                         </Box>
@@ -609,8 +613,13 @@ const CandidateDashboard = () => {
                           <Button size="small" variant="outlined" onClick={() => handleJobView(job)}>
                             View Details
                           </Button>
-                          <Button size="small" variant="contained">
-                            Apply Now
+                          <Button 
+                            size="small" 
+                            variant="contained"
+                            onClick={() => handleJobApply(job.id)}
+                            disabled={applying}
+                          >
+                            {applying ? 'Applying...' : 'Apply Now'}
                           </Button>
                         </Box>
                       </Box>
@@ -700,7 +709,12 @@ const CandidateDashboard = () => {
                     </Paper>
                   ))}
                 </Stack>
-                <Button variant="text" fullWidth sx={{ mt: 2 }}>
+                <Button 
+                  variant="text" 
+                  fullWidth 
+                  sx={{ mt: 2 }}
+                  onClick={() => navigate('/candidate/calendar')}
+                >
                   View Full Calendar
                 </Button>
               </CardContent>
@@ -762,7 +776,12 @@ const CandidateDashboard = () => {
                     </React.Fragment>
                   ))}
                 </List>
-                <Button variant="text" fullWidth sx={{ mt: 2 }}>
+                <Button 
+                  variant="text" 
+                  fullWidth 
+                  sx={{ mt: 2 }}
+                  onClick={() => navigate('/candidate/notifications')}
+                >
                   View All Notifications
                 </Button>
               </CardContent>
@@ -829,8 +848,12 @@ const CandidateDashboard = () => {
               <Button onClick={() => setJobDialogOpen(false)}>
                 Close
               </Button>
-              <Button variant="contained">
-                Apply for this Job
+              <Button 
+                variant="contained"
+                onClick={() => handleJobApply(selectedJob.id)}
+                disabled={applying}
+              >
+                {applying ? 'Applying...' : 'Apply for this Job'}
               </Button>
             </DialogActions>
           </>

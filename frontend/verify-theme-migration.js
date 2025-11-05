@@ -141,7 +141,7 @@ function verifyThemeMigration() {
 
   if (fileExists('src/theme/theme.js')) {
     const themeContent = readFile('src/theme/theme.js');
-    const hasUMSLColors = themeContent.includes('#0077B6') && themeContent.includes('#78BE21');
+  const hasUMSLColors = themeContent.includes('#3B82F6') && themeContent.includes('#78BE21');
     const hasCustomPalette = themeContent.includes('custom:');
     const hasTypography = themeContent.includes('typography:');
     const hasComponents = themeContent.includes('components:');

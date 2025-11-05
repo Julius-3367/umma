@@ -1,8 +1,13 @@
 const { PrismaClient } = require('@prisma/client');
 
-// Create a single instance of PrismaClient
+// Create a single instance of PrismaClient with connection pool settings
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'], // Reduced logging to prevent connection overload
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
 });
 
 // Handle graceful shutdown

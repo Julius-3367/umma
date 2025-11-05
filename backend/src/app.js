@@ -13,6 +13,9 @@ const path = require('path');
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const authGoogleRoutes = require('./routes/authGoogle');
+const candidateRoutes = require('./routes/candidateRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const trainerRoutes = require('./routes/trainerRoutes');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -29,7 +32,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 
@@ -214,6 +217,9 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', authGoogleRoutes);
+app.use('/api/candidate', candidateRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/trainer', trainerRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

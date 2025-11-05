@@ -126,7 +126,7 @@ class ThemeVerifier {
 
       // Check for UMSL brand colors
       const brandColors = [
-        { color: '#0077B6', name: 'UMSL Primary Blue' },
+    { color: '#3B82F6', name: 'UMSL Primary Blue' },
         { color: '#78BE21', name: 'UMSL Secondary Green' },
         { color: '#00A2DB', name: 'UMSL Info Blue' }
       ];
@@ -263,7 +263,7 @@ class ThemeVerifier {
 
     // Color contrast ratios (simplified check)
     const colorPairs = [
-      { bg: '#0077B6', fg: '#ffffff', name: 'Primary button' },
+      { bg: '#3B82F6', fg: '#ffffff', name: 'Primary button' },
       { bg: '#78BE21', fg: '#000000', name: 'Secondary button' },
       { bg: '#f8fafc', fg: '#0f172a', name: 'Background text' }
     ];

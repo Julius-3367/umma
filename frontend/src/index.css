@@ -8,9 +8,9 @@
 /* CSS Variables for Theme Integration */
 :root {
   /* UMSL Theme Colors */
-  --color-primary: #0077b6;
-  --color-primary-light: #38a0d1;
-  --color-primary-dark: #005f9a;
+  --color-primary: #3B82F6;
+  --color-primary-light: #60A5FA;
+  --color-primary-dark: #2563EB;
   --color-secondary: #78be21;
   --color-secondary-light: #a4d65e;
   --color-secondary-dark: #5aa31a;
@@ -27,7 +27,7 @@
   --color-pending: #f59e0b;
   --color-approved: #22c55e;
   --color-rejected: #ef4444;
-  --color-active: #0077b6;
+  --color-active: #3B82F6;
   --color-expired: #64748b;
   --color-urgent: #dc2626;
 
@@ -145,7 +145,7 @@
 .btn:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px rgba(0, 119, 182, 0.5);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 
 .btn-primary {

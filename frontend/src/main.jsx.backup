@@ -6,8 +6,9 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './app/store';
 
-// Import theme provider
+// Import theme provider and style utilities
 import ThemeProvider from './providers/ThemeProvider.jsx';
+import { loadAllStyles, monitorStylePerformance } from './utils/styleLoader.js';
 import { theme } from './theme/theme.js';
 
 // Import main app component
@@ -17,7 +18,8 @@ import App from './App.jsx';
 import './index.css';
 
 /**
- * Enhanced App Wrapper
+ * Enhanced App Wrapper with comprehensive style loading
+ * Ensures all themes and styles are loaded before app initialization
  */
 const AppWrapper = () => {
   return (
@@ -44,7 +46,7 @@ const AppWrapper = () => {
 };
 
 /**
- * Application initialization
+ * Application initialization with style pre-loading
  */
 const initializeApp = async () => {
   console.log('🚀 Initializing UMSL Labor Mobility Platform...');
@@ -54,8 +56,15 @@ const initializeApp = async () => {
     console.log('🎭 Running in demo mode with mock data');
   }
 
+  // Start performance monitoring in development
+  if (import.meta.env.DEV) {
+    monitorStylePerformance();
+  }
+
   try {
-    console.log('📦 Loading application...');
+    // Ensure all styles are loaded before rendering
+    console.log('📦 Loading theme and styles...');
+    await loadAllStyles(theme);
 
     // Get root element
     const rootElement = document.getElementById('root');

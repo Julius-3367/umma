@@ -26,7 +26,7 @@ const authenticate = async (req, res, next) => {
       include: { role: true }
     });
 
-    if (!user || !user.isActive) {
+    if (!user || user.status !== 'ACTIVE') {
       return res.status(401).json({
         success: false,
         message: 'Invalid or inactive user'

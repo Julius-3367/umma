@@ -10,7 +10,8 @@ const register = async (req, res) => {
   try {
     console.log('Registration attempt with data:', req.body); // Log incoming data
     
-    const { email, password, firstName, lastName, phone, roleId } = req.body;
+    const { email, password, firstName, lastName, phone, roleId, role: roleName } = req.body;
+    console.log('Extracted roleName:', roleName, 'roleId:', roleId);
 
     // Basic validation
     if (!email || !password || !firstName || !lastName) {
@@ -36,17 +37,31 @@ const register = async (req, res) => {
       });
     }
 
-    // Default to CANDIDATE role if not provided
-    const roleIdToUse = roleId || 3; // 3 = CANDIDATE role ID
-    const role = await prisma.role.findUnique({
-      where: { id: roleIdToUse }
-    });
+    // Find role by roleId, roleName, or default to Candidate
+    let role;
+    
+    if (roleId) {
+      // If roleId is provided, try to find it
+      role = await prisma.role.findUnique({
+        where: { id: roleId }
+      });
+    } else if (roleName) {
+      // If role name is provided, find by name
+      role = await prisma.role.findFirst({
+        where: { name: roleName }
+      });
+    } else {
+      // Default to Candidate role by name (use findFirst since name is not unique by itself)
+      role = await prisma.role.findFirst({
+        where: { name: 'Candidate' }
+      });
+    }
 
     if (!role) {
-      console.log('Invalid role ID:', roleIdToUse);
+      console.log('Invalid role or role not found:', roleId || roleName || 'Candidate');
       return res.status(400).json({
         success: false,
-        message: 'Invalid role specified'
+        message: 'Invalid role specified or Candidate role not found in database. Please run database seed.'
       });
     }
 
@@ -62,7 +77,7 @@ const register = async (req, res) => {
         firstName,
         lastName,
         phone,
-        roleId: roleIdToUse
+        roleId: role.id
       },
       include: {
         role: true
@@ -107,6 +122,14 @@ const register = async (req, res) => {
         details: { email, role: role.name }
       });
 
+      // Set refresh token as HttpOnly cookie
+      res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
 
@@ -122,6 +145,7 @@ const register = async (req, res) => {
             role: role.name
           },
           accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
           expiresIn: tokens.expiresIn
         }
       });
@@ -168,7 +192,7 @@ const login = async (req, res) => {
       });
     }
 
-    if (!user.isActive) {
+    if (user.status !== 'ACTIVE') {
       return res.status(401).json({
         success: false,
         message: 'Account is deactivated'
@@ -229,6 +253,7 @@ const login = async (req, res) => {
       data: {
         user: userWithoutPassword,
         accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn
       }
     });
@@ -282,7 +307,7 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    if (!session.user.isActive) {
+    if (session.user.status !== 'ACTIVE') {
       return res.status(401).json({
         success: false,
         message: 'User account is deactivated'

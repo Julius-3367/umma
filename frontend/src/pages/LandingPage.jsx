@@ -215,25 +215,6 @@ const LandingPage = () => {
     <Box sx={{ overflowX: 'hidden' }}>
       {/* Hero Section */}
       <HeroSection>
-        {isAuthenticated && (
-          <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
-            <Button 
-              variant="outlined" 
-              color="inherit"
-              onClick={() => dispatch(logoutUser())}
-              sx={{ 
-                color: 'white', 
-                borderColor: 'rgba(255,255,255,0.5)',
-                '&:hover': {
-                  borderColor: 'white',
-                  backgroundColor: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              Logout
-            </Button>
-          </Box>
-        )}
         <Container maxWidth="lg">
           <Box sx={{ 
             position: 'relative',
@@ -701,17 +682,18 @@ const LandingPage = () => {
                     }
                   }}>
                     <Box sx={{ 
-                      width: '50px',
-                      height: '50px',
+                      width: '60px',
+                      height: '60px',
                       borderRadius: '50%',
-                      bgcolor: 'primary.light',
-                      color: 'primary.contrastText',
+                      bgcolor: 'primary.main',
+                      color: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 'bold',
-                      fontSize: '1.5rem',
-                      mb: 3
+                      fontSize: '1.8rem',
+                      mb: 3,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                     }}>
                       {item.step}
                     </Box>

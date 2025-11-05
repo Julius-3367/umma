@@ -75,9 +75,27 @@ const Login = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      const rolePath = user.role ? `/${user.role.toLowerCase() === 'employer' ? 'recruiter' : user.role.toLowerCase()}/dashboard` : '/dashboard';
-      const from = location.state?.from?.pathname || rolePath;
-      navigate(from, { replace: true });
+      try {
+        console.log('User authenticated, redirecting...', { user, role: user.role });
+        // Map role to correct path
+        const rolePathMap = {
+          'admin': '/admin/dashboard',
+          'candidate': '/candidate/dashboard',
+          'trainer': '/trainer/dashboard',
+          'agent': '/agent/dashboard',
+          'broker': '/broker/dashboard',
+          'employer': '/employer/dashboard',
+          'recruiter': '/employer/dashboard',
+        };
+        const rolePath = rolePathMap[user.role?.toLowerCase()] || '/candidate/dashboard';
+        const from = location.state?.from?.pathname || rolePath;
+        console.log('Navigating to:', from);
+        navigate(from, { replace: true });
+      } catch (error) {
+        console.error('Navigation error:', error);
+        // Fallback navigation
+        navigate('/admin/dashboard', { replace: true });
+      }
     }
   }, [isAuthenticated, user, navigate, location]);
 
@@ -167,7 +185,8 @@ const Login = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.info.light} 100%)`,
+        bgcolor: '#ffffff',
+        backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(120, 190, 33, 0.05) 0%, transparent 50%)',
         p: 2,
       }}
     >

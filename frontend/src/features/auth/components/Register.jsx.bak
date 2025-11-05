@@ -10,7 +10,6 @@ import {
   Button,
   Link,
   Paper,
-  Grid,
   Avatar,
   InputAdornment,
   IconButton,
@@ -23,6 +22,7 @@ import {
   FormHelperText,
   Divider,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import {
   PersonAdd as PersonAddIcon,
   Visibility,
@@ -160,7 +160,7 @@ const Register = () => {
         <Paper elevation={3} sx={{ p: 4, mt: 3, width: '100%' }}>
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   autoComplete="given-name"
                   name="firstName"
@@ -176,7 +176,7 @@ const Register = () => {
                   disabled={loading}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
@@ -191,7 +191,7 @@ const Register = () => {
                   disabled={loading}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   required
                   fullWidth
@@ -206,7 +206,7 @@ const Register = () => {
                   disabled={loading}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
@@ -235,7 +235,7 @@ const Register = () => {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
@@ -263,7 +263,7 @@ const Register = () => {
                   }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <FormControl fullWidth required error={!!errors.userType} disabled={loading}>
                   <InputLabel id="user-type-label">I am a</InputLabel>
                   <Select
@@ -301,7 +301,7 @@ const Register = () => {
             <Divider sx={{ my: 2 }}>OR</Divider>
             
             <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12} sm={4}>
+              <Grid xs={12} sm={4}>
                 <Button
                   fullWidth
                   variant="outlined"
@@ -312,7 +312,7 @@ const Register = () => {
                   Google
                 </Button>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid xs={12} sm={4}>
                 <Button
                   fullWidth
                   variant="outlined"
@@ -323,7 +323,7 @@ const Register = () => {
                   Facebook
                 </Button>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid xs={12} sm={4}>
                 <Button
                   fullWidth
                   variant="outlined"

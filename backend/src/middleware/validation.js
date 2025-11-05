@@ -40,7 +40,8 @@ const schemas = {
     firstName: Joi.string().min(1).max(50).required(),
     lastName: Joi.string().min(1).max(50).optional().allow(null, ''),
     phone: Joi.string().pattern(/^[+]?[\d\s-()]+$/).optional(),
-    roleId: Joi.number().integer().positive().optional()
+    roleId: Joi.number().integer().positive().optional(),
+    role: Joi.string().valid('Admin', 'Trainer', 'Candidate', 'Agent', 'Broker', 'Recruiter').optional()
   }),
 
   // User login

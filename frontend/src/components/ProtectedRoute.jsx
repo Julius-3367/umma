@@ -51,7 +51,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // Check role-based access if roles are specified
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+  if (allowedRoles.length > 0 && !allowedRoles.some(role => role.toLowerCase() === user.role?.toLowerCase())) {
     return (
       <Box
         sx={{

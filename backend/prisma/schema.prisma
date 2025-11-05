@@ -106,38 +106,47 @@ enum NotificationStatus {
   CANCELLED
 }
 
+enum CertificateStatus {
+  PENDING
+  ISSUED
+  REVOKED
+  EXPIRED
+  REISSUED
+}
+
 /// -----------------------------
 /// CORE ENTITIES
 /// -----------------------------
 
 model Tenant {
-  id                  Int                @id @default(autoincrement())
-  name                String             @unique
-  code                String             @unique
-  branding            Json?
-  contactInfo         Json?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  code        String   @unique
+  branding    Json?
+  contactInfo Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  roles               Role[]
-  users               User[]
-  userTenants         UserTenant[]
-  activityLogs        ActivityLog[]
-  candidates          Candidate[]
-  candidateDocuments  CandidateDocument[]
-  courses             Course[]
-  enrollments         Enrollment[]
-  attendanceRecords   AttendanceRecord[]
-  assessments         Assessment[]
-  certificates        Certificate[]
-  vettingRecords      VettingRecord[]
-  placements          Placement[]
-  agents              Agent[]
-  brokers             Broker[]
-  payments            Payment[]
-  invoices            Invoice[]
-  notifications       Notification[]
-  settings            Setting[]
+  roles                Role[]
+  users                User[]
+  userTenants          UserTenant[]
+  activityLogs         ActivityLog[]
+  candidates           Candidate[]
+  candidateDocuments   CandidateDocument[]
+  courses              Course[]
+  enrollments          Enrollment[]
+  attendanceRecords    AttendanceRecord[]
+  assessments          Assessment[]
+  certificates         Certificate[]
+  certificateTemplates CertificateTemplate[]
+  vettingRecords       VettingRecord[]
+  placements           Placement[]
+  agents               Agent[]
+  brokers              Broker[]
+  payments             Payment[]
+  invoices             Invoice[]
+  notifications        Notification[]
+  settings             Setting[]
 
   @@map("tenants")
 }
@@ -153,7 +162,7 @@ model Role {
   updatedAt   DateTime @updatedAt
   tenantId    Int?
 
-  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users       User[]
   userTenants UserTenant[]
 
@@ -182,48 +191,48 @@ model User {
   createdBy        Int?
   updatedBy        Int?
 
-  role        Role     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sessions    Session[]
-  activityLogs ActivityLog[]
-  createdUsers User[]   @relation("UserCreatedBy")
-  updatedUsers User[]   @relation("UserUpdatedBy")
-  createdByUser User?   @relation("UserCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?   @relation("UserUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  userTenants  UserTenant[]
-  agentsCreated      Agent[]         @relation("AgentCreatedBy")
-  agentsUpdated      Agent[]         @relation("AgentUpdatedBy")
-  brokersCreated     Broker[]        @relation("BrokerCreatedBy")
-  brokersUpdated     Broker[]        @relation("BrokerUpdatedBy")
-  candidateProfile   Candidate?      @relation("CandidateAccount")
-  candidatesCreated  Candidate[]     @relation("CandidateCreatedBy")
-  candidatesUpdated  Candidate[]     @relation("CandidateUpdatedBy")
-  candidateDocuments CandidateDocument[] @relation("CandidateDocumentUploadedBy")
-  coursesCreated     Course[]        @relation("CourseCreatedBy")
-  coursesUpdated     Course[]        @relation("CourseUpdatedBy")
-  enrollmentsCreated Enrollment[]    @relation("EnrollmentCreatedBy")
-  enrollmentsUpdated Enrollment[]    @relation("EnrollmentUpdatedBy")
-  attendanceRecorded AttendanceRecord[] @relation("AttendanceRecordedBy")
-  assessmentsCreated Assessment[]    @relation("AssessmentCreatedBy")
-  assessmentsUpdated Assessment[]    @relation("AssessmentUpdatedBy")
-  certificatesCreated Certificate[]  @relation("CertificateCreatedBy")
-  certificatesUpdated Certificate[]  @relation("CertificateUpdatedBy")
-  vettingCreated     VettingRecord[] @relation("VettingCreatedBy")
-  vettingUpdated     VettingRecord[] @relation("VettingUpdatedBy")
-  vettingVerified    VettingRecord[] @relation("VettingVerifiedBy")
-  vettingReviewed    VettingRecord[] @relation("VettingReviewedBy")
-  placementsCreated  Placement[]     @relation("PlacementCreatedBy")
-  placementsUpdated  Placement[]     @relation("PlacementUpdatedBy")
-  placementsManaged  Placement[]     @relation("PlacementOfficer")
-  paymentsCreated    Payment[]       @relation("PaymentCreatedBy")
-  paymentsUpdated    Payment[]       @relation("PaymentUpdatedBy")
-  invoicesCreated    Invoice[]       @relation("InvoiceCreatedBy")
-  invoicesUpdated    Invoice[]       @relation("InvoiceUpdatedBy")
-  notificationsSent  Notification[]  @relation("NotificationCreatedBy")
-  notificationsUpdated Notification[] @relation("NotificationUpdatedBy")
-  notifications      Notification[]  @relation("NotificationRecipient")
-  settingsCreated    Setting[]       @relation("SettingCreatedBy")
-  settingsUpdated    Setting[]       @relation("SettingUpdatedBy")
+  role                 Role                  @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant               Tenant?               @relation(fields: [tenantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sessions             Session[]
+  activityLogs         ActivityLog[]
+  createdUsers         User[]                @relation("UserCreatedBy")
+  updatedUsers         User[]                @relation("UserUpdatedBy")
+  createdByUser        User?                 @relation("UserCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser        User?                 @relation("UserUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userTenants          UserTenant[]
+  agentsCreated        Agent[]               @relation("AgentCreatedBy")
+  agentsUpdated        Agent[]               @relation("AgentUpdatedBy")
+  brokersCreated       Broker[]              @relation("BrokerCreatedBy")
+  brokersUpdated       Broker[]              @relation("BrokerUpdatedBy")
+  candidateProfile     Candidate?            @relation("CandidateAccount")
+  candidatesCreated    Candidate[]           @relation("CandidateCreatedBy")
+  candidatesUpdated    Candidate[]           @relation("CandidateUpdatedBy")
+  candidateDocuments   CandidateDocument[]   @relation("CandidateDocumentUploadedBy")
+  coursesCreated       Course[]              @relation("CourseCreatedBy")
+  coursesUpdated       Course[]              @relation("CourseUpdatedBy")
+  enrollmentsCreated   Enrollment[]          @relation("EnrollmentCreatedBy")
+  enrollmentsUpdated   Enrollment[]          @relation("EnrollmentUpdatedBy")
+  attendanceRecorded   AttendanceRecord[]    @relation("AttendanceRecordedBy")
+  assessmentsCreated   Assessment[]          @relation("AssessmentCreatedBy")
+  assessmentsUpdated   Assessment[]          @relation("AssessmentUpdatedBy")
+  certificatesIssued   Certificate[]         @relation("CertificateIssuedBy")
+  templatesCreated     CertificateTemplate[] @relation("TemplateCreatedBy")
+  vettingCreated       VettingRecord[]       @relation("VettingCreatedBy")
+  vettingUpdated       VettingRecord[]       @relation("VettingUpdatedBy")
+  vettingVerified      VettingRecord[]       @relation("VettingVerifiedBy")
+  vettingReviewed      VettingRecord[]       @relation("VettingReviewedBy")
+  placementsCreated    Placement[]           @relation("PlacementCreatedBy")
+  placementsUpdated    Placement[]           @relation("PlacementUpdatedBy")
+  placementsManaged    Placement[]           @relation("PlacementOfficer")
+  paymentsCreated      Payment[]             @relation("PaymentCreatedBy")
+  paymentsUpdated      Payment[]             @relation("PaymentUpdatedBy")
+  invoicesCreated      Invoice[]             @relation("InvoiceCreatedBy")
+  invoicesUpdated      Invoice[]             @relation("InvoiceUpdatedBy")
+  notificationsSent    Notification[]        @relation("NotificationCreatedBy")
+  notificationsUpdated Notification[]        @relation("NotificationUpdatedBy")
+  notifications        Notification[]        @relation("NotificationRecipient")
+  settingsCreated      Setting[]             @relation("SettingCreatedBy")
+  settingsUpdated      Setting[]             @relation("SettingUpdatedBy")
 
   @@map("users")
 }
@@ -235,10 +244,10 @@ model Session {
   userId    Int
   expiresAt DateTime
   createdAt DateTime @default(now())
-  
+
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
+
   @@map("sessions")
 }
 
@@ -255,7 +264,7 @@ model ActivityLog {
   userAgent String?
   createdAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user   User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tenant Tenant? @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, module])
@@ -280,34 +289,34 @@ model UserTenant {
 }
 
 model Agent {
-  id                 Int       @id @default(autoincrement())
-  tenantId           Int
-  name               String
-  agentCode          String
-  contactPerson      String?
-  email              String?
-  phone              String?
-  address            String?
-  country            String?
+  id                  Int       @id @default(autoincrement())
+  tenantId            Int
+  name                String
+  agentCode           String
+  contactPerson       String?
+  email               String?
+  phone               String?
+  address             String?
+  country             String?
   idOrBusinessCertUrl String?
-  dateJoined         DateTime?
-  feePerCandidate    Decimal?  @db.Decimal(12, 2)
-  paymentTerms       String?
-  discountRate       Float?
-  paymentMethod      String?
-  metadata           Json?
-  createdBy          Int?
-  updatedBy          Int?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  dateJoined          DateTime?
+  feePerCandidate     Decimal?  @db.Decimal(12, 2)
+  paymentTerms        String?
+  discountRate        Float?
+  paymentMethod       String?
+  metadata            Json?
+  createdBy           Int?
+  updatedBy           Int?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  tenant        Tenant       @relation(fields: [tenantId], references: [id])
   candidates    Candidate[]
   enrollments   Enrollment[]
   placements    Placement[]
   payments      Payment[]
-  createdByUser User?  @relation("AgentCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?  @relation("AgentUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser User?        @relation("AgentCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?        @relation("AgentUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([tenantId, agentCode])
   @@index([tenantId, name])
@@ -331,12 +340,12 @@ model Broker {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  tenant        Tenant      @relation(fields: [tenantId], references: [id])
   candidates    Candidate[]
   placements    Placement[]
   payments      Payment[]
-  createdByUser User?  @relation("BrokerCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?  @relation("BrokerUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser User?       @relation("BrokerCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?       @relation("BrokerUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([tenantId, brokerCode])
   @@index([tenantId, name])
@@ -344,9 +353,9 @@ model Broker {
 }
 
 model Candidate {
-  id                     Int              @id @default(autoincrement())
+  id                     Int             @id @default(autoincrement())
   tenantId               Int
-  userId                 Int?              @unique
+  userId                 Int?            @unique
   fullName               String
   gender                 String?
   dob                    DateTime?
@@ -364,31 +373,31 @@ model Candidate {
   previousRole           String?
   previousDuration       String?
   referenceContact       Json?
-  applyingViaAgent       Boolean        @default(false)
+  applyingViaAgent       Boolean         @default(false)
   agentId                Int?
-  referredByBroker       Boolean        @default(false)
+  referredByBroker       Boolean         @default(false)
   brokerId               Int?
-  feeAgreementConfirmed  Boolean        @default(false)
+  feeAgreementConfirmed  Boolean         @default(false)
   medicalClearanceUrl    String?
   policeClearanceUrl     String?
   languageTestScore      Float?
   interviewStatus        String?
   preferredCountry       String?
   jobTypePreference      String?
-  willingToRelocate      Boolean        @default(false)
-  declarationConfirmed   Boolean        @default(false)
+  willingToRelocate      Boolean         @default(false)
+  declarationConfirmed   Boolean         @default(false)
   status                 CandidateStatus @default(APPLIED)
   createdBy              Int?
   updatedBy              Int?
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id])
-  user          User?    @relation("CandidateAccount", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  agent         Agent?   @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  broker        Broker?  @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser User?    @relation("CandidateCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?    @relation("CandidateUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant        Tenant              @relation(fields: [tenantId], references: [id])
+  user          User?               @relation("CandidateAccount", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  agent         Agent?              @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  broker        Broker?             @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?               @relation("CandidateCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?               @relation("CandidateUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   enrollments   Enrollment[]
   vetting       VettingRecord[]
   placements    Placement[]
@@ -401,24 +410,24 @@ model Candidate {
 }
 
 model CandidateDocument {
-  id          Int      @id @default(autoincrement())
-  tenantId    Int
-  candidateId Int
+  id           Int      @id @default(autoincrement())
+  tenantId     Int
+  candidateId  Int
   documentType String
-  fileUrl     String
-  uploadedBy  Int?
-  uploadedAt  DateTime @default(now())
+  fileUrl      String
+  uploadedBy   Int?
+  uploadedAt   DateTime @default(now())
 
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
-  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  uploadedByUser User?    @relation("CandidateDocumentUploadedBy", fields: [uploadedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant         Tenant    @relation(fields: [tenantId], references: [id])
+  candidate      Candidate @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  uploadedByUser User?     @relation("CandidateDocumentUploadedBy", fields: [uploadedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([tenantId, documentType])
   @@map("candidate_documents")
 }
 
 model Course {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   tenantId     Int
   title        String
   code         String
@@ -433,16 +442,16 @@ model Course {
   status       String?
   createdBy    Int?
   updatedBy    Int?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
   enrollments   Enrollment[]
   attendance    AttendanceRecord[]
   assessments   Assessment[]
   certificates  Certificate[]
-  createdByUser User?  @relation("CourseCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?  @relation("CourseUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?              @relation("CourseCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?              @relation("CourseUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([tenantId, code])
   @@index([tenantId, title])
@@ -450,30 +459,30 @@ model Course {
 }
 
 model Enrollment {
-  id             Int              @id @default(autoincrement())
-  tenantId       Int
-  courseId       Int
-  candidateId    Int
-  applicationId  Int?
-  enrollmentDate DateTime?
+  id               Int              @id @default(autoincrement())
+  tenantId         Int
+  courseId         Int
+  candidateId      Int
+  applicationId    Int?
+  enrollmentDate   DateTime?
   enrollmentStatus EnrollmentStatus @default(APPLIED)
-  paymentStatus   PaymentStatus? @default(PENDING)
-  agentId        Int?
-  admissionStatus String?
-  createdBy      Int?
-  updatedBy      Int?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  paymentStatus    PaymentStatus?   @default(PENDING)
+  agentId          Int?
+  admissionStatus  String?
+  createdBy        Int?
+  updatedBy        Int?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  agent         Agent?    @relation(fields: [agentId], references: [id])
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  course        Course             @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  candidate     Candidate          @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  agent         Agent?             @relation(fields: [agentId], references: [id])
   attendance    AttendanceRecord[]
   assessments   Assessment[]
   certificates  Certificate[]
-  createdByUser User?     @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?     @relation("EnrollmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?              @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?              @relation("EnrollmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([tenantId, courseId, candidateId])
   @@index([tenantId, enrollmentStatus])
@@ -481,22 +490,22 @@ model Enrollment {
 }
 
 model AttendanceRecord {
-  id             Int             @id @default(autoincrement())
-  tenantId       Int
-  courseId       Int
-  enrollmentId   Int
-  date           DateTime
-  sessionNumber  Int?
-  status         AttendanceStatus
-  remarks        String?
-  recordedBy     Int?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            Int              @id @default(autoincrement())
+  tenantId      Int
+  courseId      Int
+  enrollmentId  Int
+  date          DateTime
+  sessionNumber Int?
+  status        AttendanceStatus
+  remarks       String?
+  recordedBy    Int?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  recordedByUser User?     @relation("AttendanceRecordedBy", fields: [recordedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant         Tenant     @relation(fields: [tenantId], references: [id])
+  course         Course     @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recordedByUser User?      @relation("AttendanceRecordedBy", fields: [recordedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([tenantId, enrollmentId, date])
   @@index([tenantId, courseId, date])
@@ -504,7 +513,7 @@ model AttendanceRecord {
 }
 
 model Assessment {
-  id              Int              @id @default(autoincrement())
+  id              Int               @id @default(autoincrement())
   tenantId        Int
   courseId        Int
   enrollmentId    Int
@@ -515,45 +524,68 @@ model Assessment {
   date            DateTime?
   createdBy       Int?
   updatedBy       Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant        Tenant     @relation(fields: [tenantId], references: [id])
+  course        Course     @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   enrollment    Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser User?     @relation("AssessmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?     @relation("AssessmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?      @relation("AssessmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?      @relation("AssessmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([tenantId, courseId])
   @@map("assessments")
 }
 
 model Certificate {
-  id              Int      @id @default(autoincrement())
-  tenantId        Int
-  enrollmentId    Int
-  courseId        Int
-  certificateNo   String   @unique
-  traineeName     String
-  courseTitle     String
-  completionDate  DateTime?
-  trainerName     String?
-  signatureData   Json?
-  pdfUrl          String?
-  verificationCode String   @unique
-  createdBy       Int?
-  updatedBy       Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                Int               @id @default(autoincrement())
+  tenantId          Int
+  enrollmentId      Int
+  templateId        Int?
+  certificateNumber String            @unique
+  issueDate         DateTime
+  expiryDate        DateTime?
+  status            CertificateStatus @default(PENDING)
+  grade             String?
+  remarks           String?           @db.Text
+  qrCode            String?           @db.Text
+  digitalSignature  String?           @db.Text
+  pdfUrl            String?
+  issuedBy          Int?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
-  tenant        Tenant     @relation(fields: [tenantId], references: [id])
-  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  course        Course     @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser User?     @relation("CertificateCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?     @relation("CertificateUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant       Tenant               @relation(fields: [tenantId], references: [id])
+  enrollment   Enrollment           @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  template     CertificateTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  issuedByUser User?                @relation("CertificateIssuedBy", fields: [issuedBy], references: [id], onDelete: SetNull)
+  Course       Course?              @relation(fields: [courseId], references: [id])
+  courseId     Int?
 
-  @@index([tenantId, traineeName])
+  @@unique([tenantId, enrollmentId])
+  @@index([tenantId, status])
+  @@index([certificateNumber])
   @@map("certificates")
+}
+
+model CertificateTemplate {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int
+  name        String
+  description String?  @db.Text
+  design      Json?
+  content     Json?
+  isActive    Boolean  @default(true)
+  createdBy   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  createdByUser User?         @relation("TemplateCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  certificates  Certificate[]
+
+  @@unique([tenantId, name])
+  @@map("certificate_templates")
 }
 
 model VettingRecord {
@@ -578,72 +610,72 @@ model VettingRecord {
   createdAt                   DateTime      @default(now())
   updatedAt                   DateTime      @updatedAt
 
-  tenant               Tenant        @relation(fields: [tenantId], references: [id])
-  candidate            Candidate     @relation(fields: [candidateId], references: [id])
-  verificationOfficer  User?         @relation("VettingVerifiedBy", fields: [verificationOfficerId], references: [id])
-  reviewedByUser       User?         @relation("VettingReviewedBy", fields: [reviewedBy], references: [id])
-  createdByUser        User?         @relation("VettingCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser        User?         @relation("VettingUpdatedBy", fields: [updatedBy], references: [id])
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  candidate           Candidate @relation(fields: [candidateId], references: [id])
+  verificationOfficer User?     @relation("VettingVerifiedBy", fields: [verificationOfficerId], references: [id])
+  reviewedByUser      User?     @relation("VettingReviewedBy", fields: [reviewedBy], references: [id])
+  createdByUser       User?     @relation("VettingCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser       User?     @relation("VettingUpdatedBy", fields: [updatedBy], references: [id])
 
   @@index([tenantId, vettingStatus])
   @@map("vetting_records")
 }
 
 model Placement {
-  id                   Int            @id @default(autoincrement())
-  tenantId             Int
-  candidateId          Int
-  agentId              Int?
-  brokerId             Int?
-  recruitingAgency     String?
-  jobRoleOffered       String?
-  country              String?
-  employerName         String?
-  interviewDate        DateTime?
-  interviewResult      String?
-  offerLetterUrl       String?
-  visaApplicationNo    String?
-  visaStatus           String?
-  travelDate           DateTime?
-  flightDetails        Json?
-  recruitmentOfficerId Int?
-  trainingFeeBalance   Decimal?       @db.Decimal(12, 2)
-  agentCommission      Decimal?       @db.Decimal(12, 2)
-  brokerFee            Decimal?       @db.Decimal(12, 2)
-  contractUploaded     Boolean        @default(false)
-  paymentConfirmation  Boolean        @default(false)
-  candidateNotified    Boolean        @default(false)
-  acceptanceConfirmed  Boolean        @default(false)
-  placementStatus      PlacementStatus @default(INITIATED)
+  id                     Int             @id @default(autoincrement())
+  tenantId               Int
+  candidateId            Int
+  agentId                Int?
+  brokerId               Int?
+  recruitingAgency       String?
+  jobRoleOffered         String?
+  country                String?
+  employerName           String?
+  interviewDate          DateTime?
+  interviewResult        String?
+  offerLetterUrl         String?
+  visaApplicationNo      String?
+  visaStatus             String?
+  travelDate             DateTime?
+  flightDetails          Json?
+  recruitmentOfficerId   Int?
+  trainingFeeBalance     Decimal?        @db.Decimal(12, 2)
+  agentCommission        Decimal?        @db.Decimal(12, 2)
+  brokerFee              Decimal?        @db.Decimal(12, 2)
+  contractUploaded       Boolean         @default(false)
+  paymentConfirmation    Boolean         @default(false)
+  candidateNotified      Boolean         @default(false)
+  acceptanceConfirmed    Boolean         @default(false)
+  placementStatus        PlacementStatus @default(INITIATED)
   placementCompletedDate DateTime?
-  createdBy            Int?
-  updatedBy            Int?
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  createdBy              Int?
+  updatedBy              Int?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
-  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  agent         Agent?    @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  broker        Broker?   @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  recruitmentOfficer User? @relation("PlacementOfficer", fields: [recruitmentOfficerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser User?     @relation("PlacementCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?     @relation("PlacementUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  payments      Payment[]
+  tenant             Tenant    @relation(fields: [tenantId], references: [id])
+  candidate          Candidate @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  agent              Agent?    @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  broker             Broker?   @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recruitmentOfficer User?     @relation("PlacementOfficer", fields: [recruitmentOfficerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser      User?     @relation("PlacementCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser      User?     @relation("PlacementUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payments           Payment[]
 
   @@index([tenantId, placementStatus])
   @@map("placements")
 }
 
 model Payment {
-  id            Int          @id @default(autoincrement())
+  id            Int            @id @default(autoincrement())
   tenantId      Int
   referenceNo   String
   payerId       Int?
   type          PaymentType
-  amount        Decimal      @db.Decimal(12, 2)
-  currency      String?      @default("KES")
+  amount        Decimal        @db.Decimal(12, 2)
+  currency      String?        @default("KES")
   method        PaymentMethod?
-  status        PaymentStatus @default(PENDING)
+  status        PaymentStatus  @default(PENDING)
   metadata      Json?
   invoicePdfUrl String?
   agentId       Int?
@@ -652,16 +684,16 @@ model Payment {
   placementId   Int?
   createdBy     Int?
   updatedBy     Int?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
-  agent         Agent?    @relation(fields: [agentId], references: [id])
-  broker        Broker?   @relation(fields: [brokerId], references: [id])
+  tenant        Tenant     @relation(fields: [tenantId], references: [id])
+  agent         Agent?     @relation(fields: [agentId], references: [id])
+  broker        Broker?    @relation(fields: [brokerId], references: [id])
   candidate     Candidate? @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   placement     Placement? @relation(fields: [placementId], references: [id])
-  createdByUser User?     @relation("PaymentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?     @relation("PaymentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?      @relation("PaymentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?      @relation("PaymentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([tenantId, referenceNo])
   @@index([tenantId, status])
@@ -669,12 +701,12 @@ model Payment {
 }
 
 model Invoice {
-  id          Int      @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   tenantId    Int
-  referenceNo String   @unique
+  referenceNo String        @unique
   payerName   String?
-  amount      Decimal  @db.Decimal(12, 2)
-  currency    String?  @default("KES")
+  amount      Decimal       @db.Decimal(12, 2)
+  currency    String?       @default("KES")
   status      PaymentStatus @default(PENDING)
   dueDate     DateTime?
   issuedDate  DateTime?
@@ -682,35 +714,35 @@ model Invoice {
   pdfUrl      String?
   createdBy   Int?
   updatedBy   Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  tenant        Tenant  @relation(fields: [tenantId], references: [id])
-  createdByUser User?   @relation("InvoiceCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?   @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id])
+  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  createdByUser User?  @relation("InvoiceCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?  @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id])
 
   @@index([tenantId, status])
   @@map("invoices")
 }
 
 model Notification {
-  id          Int                @id @default(autoincrement())
+  id          Int                 @id @default(autoincrement())
   tenantId    Int
   userId      Int?
   channel     NotificationChannel
   templateKey String
   payload     Json?
-  status      NotificationStatus @default(QUEUED)
+  status      NotificationStatus  @default(QUEUED)
   sentAt      DateTime?
   createdBy   Int?
   updatedBy   Int?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
-  tenant            Tenant @relation(fields: [tenantId], references: [id])
-  user              User?  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser     User?  @relation("NotificationCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser     User?  @relation("NotificationUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  user          User?  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User?  @relation("NotificationCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?  @relation("NotificationUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([tenantId, status])
   @@map("notifications")

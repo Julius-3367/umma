@@ -122,6 +122,9 @@ const AppLayout = ({ children }) => {
       admin: [
         { label: 'Users', path: '/admin/users', icon: UserGroupIcon },
         { label: 'Courses', path: '/admin/courses', icon: AcademicCapIcon },
+        { label: 'Attendance', path: '/admin/attendance', icon: CalendarIcon },
+        { label: 'Certificate Management', path: '/admin/certificate-management', icon: TrophyIcon },
+        { label: 'Certificate Approvals', path: '/admin/certificates', icon: TrophyIcon },
         { label: 'Companies', path: '/admin/companies', icon: BuildingOfficeIcon },
         { label: 'Reports', path: '/admin/reports', icon: ChartBarIcon },
         { label: 'Settings', path: '/admin/settings', icon: Cog6ToothIcon },

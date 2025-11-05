@@ -9,48 +9,47 @@ export const theme = createTheme({
   palette: {
     mode: 'light',
     // ----------------------------------------------------
-    // UMSL Logo Colors
+    // Professional Color Scheme - Original Design
     // ----------------------------------------------------
     primary: {
-      // Deep Blue from the logo background/text (Used for main buttons/links)
-      main: '#0077B6',
-      light: '#38A0D1',
-      dark: '#005F9A',
+      // Light Blue - softened professional blue for improved visibility
+      main: '#3B82F6',
+      light: '#60A5FA',
+      dark: '#60A5FA', // Changed to light blue instead of darker blue
       contrastText: '#ffffff',
     },
     secondary: {
-      // Lime Green/Chartreuse from the logo circles (Used for accents/highlight)
+      // Lime Green/Chartreuse - Fresh and energetic
       main: '#78BE21',
-      light: '#A4D65E',
-      dark: '#5AA31A',
-      contrastText: '#000000', // Black text for contrast on bright green
+      light: '#8FD838',
+      dark: '#8FD838', // Changed to bright lime instead of dark lime
+      contrastText: '#ffffff',
     },
     // ----------------------------------------------------
     // Extended Color Palette for Labor Mobility Platform
     // ----------------------------------------------------
     error: {
-      main: '#ef4444', // Red-500
+      main: '#ef4444',
       light: '#f87171',
-      dark: '#dc2626',
+      dark: '#f87171', // Changed to light red instead of dark
       contrastText: '#ffffff',
     },
     warning: {
-      main: '#f59e0b', // Amber-500
+      main: '#f59e0b',
       light: '#fbbf24',
-      dark: '#d97706',
-      contrastText: '#000000',
+      dark: '#fbbf24', // Changed to light orange instead of dark
+      contrastText: '#ffffff',
     },
     info: {
-      // Brighter Blue accent (e.g., the lighter blue circle in the logo)
-      main: '#00A2DB',
-      light: '#60C2EA',
-      dark: '#0083B0',
+      main: '#3b82f6',
+      light: '#60a5fa',
+      dark: '#60a5fa', // Changed to light blue instead of dark
       contrastText: '#ffffff',
     },
     success: {
-      main: '#22c55e', // Green-500
-      light: '#4ade80',
-      dark: '#16a34a',
+      main: '#10b981',
+      light: '#34d399',
+      dark: '#34d399', // Changed to light green instead of dark
       contrastText: '#ffffff',
     },
     grey: {
@@ -66,20 +65,20 @@ export const theme = createTheme({
       900: '#0f172a',
     },
     background: {
-      default: '#f8fafc', // Slate-50
+      default: '#ffffff', // Pure white background instead of gray
       paper: '#ffffff',
     },
     text: {
-      primary: '#0f172a', // Slate-900
-      secondary: '#475569', // Slate-600
-      disabled: '#94a3b8', // Slate-400
+      primary: '#475569', // Medium gray instead of almost black
+      secondary: '#94a3b8', // Light gray for secondary text
+      disabled: '#cbd5e1', // Very light gray
     },
     // Custom colors for labor mobility status indicators
     custom: {
       pending: '#f59e0b', // Amber for pending applications
       approved: '#22c55e', // Green for approved
       rejected: '#ef4444', // Red for rejected
-      active: '#0077B6', // Primary blue for active jobs
+      active: '#3B82F6', // Light blue for active jobs (changed from deep blue)
       expired: '#64748b', // Grey for expired listings
       urgent: '#dc2626', // Dark red for urgent positions
     },
@@ -237,7 +236,7 @@ export const theme = createTheme({
               left: 0,
               right: 0,
               height: 4,
-              background: 'linear-gradient(90deg, #0077B6 0%, #78BE21 100%)',
+              background: 'linear-gradient(90deg, #3B82F6 0%, #78BE21 100%)',
             },
           },
         },
@@ -278,18 +277,18 @@ export const theme = createTheme({
               borderColor: '#e0e0e0', // grey[300]
             },
             '&:hover fieldset': {
-              borderColor: '#0077B6', // primary.main
+              borderColor: '#3B82F6', // primary.main
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#0077B6', // primary.main
+              borderColor: '#3B82F6', // primary.main
               borderWidth: 1,
             },
           },
-          '& .MuiFormLabel-root': {
+            '& .MuiFormLabel-root': {
             color: 'rgba(0, 0, 0, 0.6)', // text.secondary
           },
           '& .MuiInputLabel-shrink': {
-            color: '#0077B6', // primary.main
+            color: '#3B82F6', // primary.main
           },
         },
       },
@@ -345,7 +344,7 @@ export const theme = createTheme({
           padding: '8px 16px',
           transition: 'all 0.2s ease-in-out',
           '&:focus-visible': {
-            outline: '2px solid #0077B6',
+            outline: '2px solid #3B82F6',
             outlineOffset: '2px',
           },
         },
@@ -363,12 +362,12 @@ export const theme = createTheme({
           borderWidth: '2px',
           '&:hover': {
             borderWidth: '2px',
-            backgroundColor: 'rgba(0, 119, 182, 0.04)',
+            backgroundColor: 'rgba(59, 130, 246, 0.04)',
           },
         },
-        text: {
+          text: {
           '&:hover': {
-            backgroundColor: 'rgba(0, 119, 182, 0.04)',
+            backgroundColor: 'rgba(59, 130, 246, 0.04)',
           },
         },
         sizeLarge: {
@@ -427,10 +426,10 @@ export const theme = createTheme({
           '& .MuiOutlinedInput-root': {
             borderRadius: 8,
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#0077B6',
+              borderColor: '#3B82F6',
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#0077B6',
+              borderColor: '#3B82F6',
               borderWidth: '2px',
             },
           },
@@ -445,7 +444,7 @@ export const theme = createTheme({
         },
         filled: {
           '&.MuiChip-colorPrimary': {
-            backgroundColor: '#0077B6',
+            backgroundColor: '#3B82F6',
             color: '#ffffff',
           },
           '&.MuiChip-colorSecondary': {
@@ -477,7 +476,7 @@ export const theme = createTheme({
           fontWeight: 500,
           minHeight: 48,
           '&:hover': {
-            backgroundColor: 'rgba(0, 119, 182, 0.04)',
+            backgroundColor: 'rgba(59, 130, 246, 0.04)',
           },
         },
       },
