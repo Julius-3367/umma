@@ -57,9 +57,9 @@ export const adminService = {
   downloadCertificate: (id) => axios.get(`${API_URL}/certificates/${id}/download`, {
     responseType: 'blob',
   }),
-  sendCertificate: (id) => axios.post(`${API_URL}/certificates/${id}/send`),
-  verifyCertificate: (data) => axios.post(`${API_URL}/certificates/verify`, data),
-  revokeCertificate: (id) => axios.put(`${API_URL}/certificates/${id}/revoke`),
+  sendCertificate: (id, email) => axios.post(`${API_URL}/certificates/${id}/send`, { email }),
+  verifyCertificate: (certificateNumber) => axios.post(`${API_URL}/certificates/verify`, { certificateNumber }),
+  revokeCertificate: (id, reason) => axios.put(`${API_URL}/certificates/${id}/revoke`, { reason }),
   reissueCertificate: (id) => axios.post(`${API_URL}/certificates/${id}/reissue`),
   getCertificateStatistics: () => axios.get(`${API_URL}/certificates/statistics`),
   

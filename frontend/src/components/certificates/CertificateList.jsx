@@ -71,10 +71,12 @@ const CertificateList = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminService.getCertificates(filters);
-      setCertificates(data);
+      const response = await adminService.getCertificates(filters);
+      setCertificates(response.data?.data || response.data || []);
     } catch (err) {
+      console.error('Failed to fetch certificates:', err);
       setError(err.response?.data?.message || 'Failed to fetch certificates');
+      setCertificates([]);
     } finally {
       setLoading(false);
     }
@@ -82,19 +84,21 @@ const CertificateList = () => {
 
   const fetchStatistics = async () => {
     try {
-      const data = await adminService.getCertificateStatistics();
-      setStatistics(data);
+      const response = await adminService.getCertificateStatistics();
+      setStatistics(response.data?.data || response.data || { total: 0, issued: 0, pending: 0, revoked: 0 });
     } catch (err) {
       console.error('Failed to fetch statistics:', err);
+      setStatistics({ total: 0, issued: 0, pending: 0, revoked: 0 });
     }
   };
 
   const fetchCourses = async () => {
     try {
-      const data = await adminService.getAllCourses();
-      setCourses(data);
+      const response = await adminService.getAllCourses();
+      setCourses(response.data?.data || response.data || []);
     } catch (err) {
       console.error('Failed to fetch courses:', err);
+      setCourses([]);
     }
   };
 

@@ -41,9 +41,11 @@ const CertificateVerification = () => {
       setError(null);
       setVerificationResult(null);
 
-      const result = await adminService.verifyCertificate(certificateNumber);
+      const response = await adminService.verifyCertificate(certificateNumber);
+      const result = response.data?.data || response.data;
       setVerificationResult(result);
     } catch (err) {
+      console.error('Certificate verification failed:', err);
       setError(err.response?.data?.message || 'Certificate not found or invalid');
     } finally {
       setLoading(false);

@@ -60,10 +60,13 @@ const CertificateTemplates = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminService.getCertificateTemplates();
-      setTemplates(data);
+      const response = await adminService.getCertificateTemplates();
+      const data = response.data?.data || response.data || [];
+      setTemplates(Array.isArray(data) ? data : []);
     } catch (err) {
+      console.error('Failed to fetch templates:', err);
       setError(err.response?.data?.message || 'Failed to fetch templates');
+      setTemplates([]);
     } finally {
       setLoading(false);
     }

@@ -70,13 +70,16 @@ const CertificateApprovalQueue = () => {
       setLoading(true);
       setError(null);
       // Fetch certificates with PENDING status
-      const data = await adminService.getCertificates({ 
+      const response = await adminService.getCertificates({ 
         status: 'pending',
         ...filters 
       });
-      setApprovalQueue(data);
+      const data = response.data?.data || response.data || [];
+      setApprovalQueue(Array.isArray(data) ? data : []);
     } catch (err) {
+      console.error('Failed to fetch approval queue:', err);
       setError(err.response?.data?.message || 'Failed to fetch approval queue');
+      setApprovalQueue([]);
     } finally {
       setLoading(false);
     }
@@ -84,19 +87,23 @@ const CertificateApprovalQueue = () => {
 
   const fetchTemplates = async () => {
     try {
-      const data = await adminService.getCertificateTemplates();
-      setTemplates(data.filter(t => t.isActive));
+      const response = await adminService.getCertificateTemplates();
+      const data = response.data?.data || response.data || [];
+      setTemplates(Array.isArray(data) ? data.filter(t => t.isActive) : []);
     } catch (err) {
       console.error('Failed to fetch templates:', err);
+      setTemplates([]);
     }
   };
 
   const fetchCourses = async () => {
     try {
-      const data = await adminService.getAllCourses();
-      setCourses(data);
+      const response = await adminService.getAllCourses();
+      const data = response.data?.data || response.data || [];
+      setCourses(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch courses:', err);
+      setCourses([]);
     }
   };
 
