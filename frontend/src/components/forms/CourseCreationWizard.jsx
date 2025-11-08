@@ -39,13 +39,9 @@ import {
   NavigateNext as NextIcon,
   NavigateBefore as BackIcon,
   Save as SaveIcon,
-  Upload as UploadIcon,
-  Delete as DeleteIcon,
   FileCopy as CloneIcon,
   Preview as PreviewIcon,
   Close as CloseIcon,
-  AttachFile as AttachFileIcon,
-  CloudUpload as CloudUploadIcon,
 } from '@mui/icons-material';
 import { DatePicker, TimePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -111,12 +107,11 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
     secondaryTrainers: [],
     
     // Step 5: Materials
-    materials: [],
-    syllabus: null,
+  // materials and syllabus removed — materials upload moved out of wizard
   });
 
   const [trainers, setTrainers] = useState([]);
-  const [categories, setCategories] = useState([
+  const [categories] = useState([
     'IT & Software',
     'Healthcare',
     'Business',
@@ -131,13 +126,35 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
     'Schedule & Duration',
     'Capacity & Fees',
     'Trainer Assignment',
-    'Materials Upload',
   ];
+
+  const getCurrencyAdornment = (currency) => {
+    switch (currency) {
+      case 'USD':
+        return '$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'CAD':
+        return '$';
+      case 'KES':
+      default:
+        return 'KES';
+    }
+  };
 
   useEffect(() => {
     // Load initial data if editing or cloning
     if (initialData) {
-      setFormData({ ...formData, ...initialData });
+      // Convert ISO date strings from initialData into Date objects for pickers
+      const converted = { ...initialData };
+      if (initialData.startDate) converted.startDate = new Date(initialData.startDate);
+      if (initialData.endDate) converted.endDate = new Date(initialData.endDate);
+      if (initialData.startTime) converted.startTime = new Date(initialData.startTime);
+      if (initialData.endTime) converted.endTime = new Date(initialData.endTime);
+      if (initialData.registrationDeadline) converted.registrationDeadline = new Date(initialData.registrationDeadline);
+      setFormData((prev) => ({ ...prev, ...converted }));
     }
     
     // Fetch trainers
@@ -272,7 +289,7 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
         objectives: formData.objectives,
         prerequisites: formData.prerequisites,
         startDate: formData.startDate,
-        endDate: formData.endDate,
+          endDate: formData.endDate,
         startTime: formData.startTime,
         endTime: formData.endTime,
         duration: formData.duration,
@@ -289,6 +306,20 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
         secondaryTrainers: formData.secondaryTrainers,
       };
 
+      // When creating via the wizard's 'Create Course' action, treat it as publish
+      // (Save Draft button uses localStorage). This automates activation for complete courses.
+      if (mode === 'create') {
+        courseData.status = 'ACTIVE';
+      }
+
+      // Normalize dates to ISO strings (backend expects ISO timestamps)
+      const normalizeDate = (d) => (d instanceof Date ? d.toISOString() : d || null);
+      courseData.startDate = normalizeDate(courseData.startDate);
+      courseData.endDate = normalizeDate(courseData.endDate);
+      courseData.startTime = normalizeDate(courseData.startTime);
+      courseData.endTime = normalizeDate(courseData.endTime);
+      courseData.registrationDeadline = normalizeDate(courseData.registrationDeadline);
+
       // Call API to create course
       const response = mode === 'edit' 
         ? await adminService.updateCourse(initialData?.id, courseData)
@@ -297,19 +328,29 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
       if (response.data.success) {
         setSuccess(mode === 'edit' ? 'Course updated successfully!' : 'Course created successfully!');
         localStorage.removeItem('courseDraft');
-        
-        // Handle file uploads if any (could be separate endpoint)
-        // TODO: Implement file upload endpoint if needed
-        if (formData.materials.length > 0 || formData.syllabus) {
-          console.log('Files to upload:', {
-            materials: formData.materials,
-            syllabus: formData.syllabus,
-          });
+
+        // Ensure created course is published. Some backends may ignore status on create,
+        // so perform a fallback update to set status to ACTIVE when needed.
+        try {
+          const created = response.data.data?.course || response.data.data;
+          const createdId = created?.id;
+          const createdStatus = created?.status;
+          if (mode === 'create' && createdId && createdStatus !== 'ACTIVE') {
+            await adminService.updateCourse(createdId, { status: 'ACTIVE' });
+          }
+        } catch (err) {
+          // Non-fatal — log and continue navigation
+          console.warn('Failed to ensure course active after create:', err);
         }
         
+        // Clear any prior error and navigate to the created course's detail page
+        setError('');
+        const created = response.data.data?.course || response.data.data;
+        const createdId = created?.id;
         setTimeout(() => {
-          navigate('/admin/courses');
-        }, 2000);
+          if (createdId) navigate(`/admin/courses/${createdId}`);
+          else navigate('/admin/courses');
+        }, 800);
       }
     } catch (err) {
       console.error('Error submitting course:', err);
@@ -324,26 +365,7 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
     setCloneDialogOpen(false);
   };
 
-  const handleFileUpload = (event, type) => {
-    const files = Array.from(event.target.files);
-    
-    if (type === 'materials') {
-      setFormData({
-        ...formData,
-        materials: [...formData.materials, ...files],
-      });
-    } else if (type === 'syllabus') {
-      setFormData({
-        ...formData,
-        syllabus: files[0],
-      });
-    }
-  };
-
-  const handleRemoveFile = (index) => {
-    const newMaterials = formData.materials.filter((_, i) => i !== index);
-    setFormData({ ...formData, materials: newMaterials });
-  };
+  // File upload removed from wizard. Use a dedicated course materials management UI if needed.
 
   const renderStepContent = (step) => {
     switch (step) {
@@ -595,7 +617,9 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
                   onChange={(e) => setFormData({ ...formData, courseFee: e.target.value })}
                   inputProps={{ min: 0, step: 0.01 }}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    startAdornment: (
+                      <InputAdornment position="start">{getCurrencyAdornment(formData.currency)}</InputAdornment>
+                    ),
                   }}
                 />
               </Grid>
@@ -709,111 +733,6 @@ const CourseCreationWizard = ({ initialData = null, mode = 'create' }) => {
                 }
               />
             </Grid>
-          </Grid>
-        );
-        
-      case 4:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Course Syllabus
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <input
-                      accept=".pdf,.doc,.docx"
-                      style={{ display: 'none' }}
-                      id="syllabus-upload"
-                      type="file"
-                      onChange={(e) => handleFileUpload(e, 'syllabus')}
-                    />
-                    <label htmlFor="syllabus-upload">
-                      <Button
-                        variant="outlined"
-                        component="span"
-                        startIcon={<CloudUploadIcon />}
-                      >
-                        Upload Syllabus
-                      </Button>
-                    </label>
-                    {formData.syllabus && (
-                      <Chip
-                        label={formData.syllabus.name}
-                        onDelete={() => setFormData({ ...formData, syllabus: null })}
-                      />
-                    )}
-                  </Stack>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    Supported formats: PDF, DOC, DOCX
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                Course Materials
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Card variant="outlined">
-                <CardContent>
-                  <input
-                    accept="*"
-                    style={{ display: 'none' }}
-                    id="materials-upload"
-                    type="file"
-                    multiple
-                    onChange={(e) => handleFileUpload(e, 'materials')}
-                  />
-                  <label htmlFor="materials-upload">
-                    <Button
-                      variant="contained"
-                      component="span"
-                      startIcon={<UploadIcon />}
-                      fullWidth
-                    >
-                      Upload Course Materials
-                    </Button>
-                  </label>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    Upload presentations, assignments, videos, etc.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            {formData.materials.length > 0 && (
-              <Grid item xs={12}>
-                <List>
-                  {formData.materials.map((file, index) => (
-                    <ListItem key={index} divider>
-                      <AttachFileIcon sx={{ mr: 2 }} />
-                      <ListItemText
-                        primary={file.name}
-                        secondary={`${(file.size / 1024).toFixed(2)} KB`}
-                      />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleRemoveFile(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              </Grid>
-            )}
           </Grid>
         );
         

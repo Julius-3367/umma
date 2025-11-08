@@ -509,6 +509,7 @@ const createCourse = async (req, res) => {
       allowWaitlist,
       primaryTrainer,
       secondaryTrainers,
+      status,
     } = req.body;
 
     // Calculate duration in days
@@ -553,7 +554,8 @@ const createCourse = async (req, res) => {
         endDate: endDate ? new Date(endDate) : null,
         trainers: trainersData,
         capacity: parseInt(maxCapacity),
-        status: 'DRAFT',
+        // Allow client to provide a status; default to ACTIVE so newly created courses are published
+        status: status || 'ACTIVE',
         createdBy: req.user?.userId,
         // Store additional data in a custom field if available, or we'll need to modify schema
       },

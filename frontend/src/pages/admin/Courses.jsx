@@ -34,12 +34,14 @@ import {
   School,
 } from '@mui/icons-material';
 import { adminService } from '../../api/admin';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
 const Courses = () => {
   const navigate = useNavigate();
   const [courses, setcourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCourses, setTotalCourses] = useState(0);
@@ -71,6 +73,54 @@ const Courses = () => {
       setError(err.response?.data?.message || 'Failed to load courses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmActionCourse, setConfirmActionCourse] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const handleOpenDelete = (course) => {
+    setConfirmActionCourse(course);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleCloseDelete = () => {
+    setConfirmActionCourse(null);
+    setConfirmDeleteOpen(false);
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!confirmActionCourse) return;
+    try {
+      setActionLoading(true);
+      await adminService.deleteCourse(confirmActionCourse.id);
+      // Optimistic update
+      setcourses((prev) => prev.filter((c) => c.id !== confirmActionCourse.id));
+      setSuccess('Course deleted successfully');
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError(err.response?.data?.message || 'Failed to delete course');
+    } finally {
+      setActionLoading(false);
+      handleCloseDelete();
+    }
+  };
+
+  const handlePublishCourse = async (course) => {
+    try {
+      setActionLoading(true);
+      const payload = { status: 'ACTIVE' };
+      const response = await adminService.updateCourse(course.id, payload);
+      if (response.data.success) {
+        setcourses((prev) => prev.map((c) => (c.id === course.id ? { ...c, status: 'ACTIVE' } : c)));
+        setSuccess('Course published successfully');
+      }
+    } catch (err) {
+      console.error('Publish error:', err);
+      setError(err.response?.data?.message || 'Failed to publish course');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -252,6 +302,23 @@ const Courses = () => {
                               <Edit />
                             </IconButton>
                           </Tooltip>
+                          {course.status === 'DRAFT' && (
+                            <Tooltip title="Publish">
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handlePublishCourse(course)}
+                              >
+                                Publish
+                              </Button>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="Delete">
+                            <IconButton size="small" color="error" onClick={() => handleOpenDelete(course)}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+                            </IconButton>
+                          </Tooltip>
                         </Stack>
                       </TableCell>
                     </TableRow>
@@ -271,6 +338,28 @@ const Courses = () => {
           </>
         )}
       </TableContainer>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={confirmDeleteOpen} onClose={handleCloseDelete} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the course "{confirmActionCourse?.title}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDelete} disabled={actionLoading}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDeleteCourse} disabled={actionLoading}>
+            {actionLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {success && (
+        <Alert severity="success" sx={{ mt: 2 }} onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
     </Box>
   );
 };

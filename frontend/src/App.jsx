@@ -33,6 +33,7 @@ import CertificateManagement from './pages/admin/CertificateManagement';
 import CandidateDashboard from './pages/candidate/Dashboard';
 import CandidateCourses from './pages/candidate/Courses';
 import CandidateCourseDetails from './pages/candidate/CourseDetails';
+import AdminCourseDetails from './pages/admin/CourseDetails';
 import CandidateCalendar from './pages/candidate/Calendar';
 import CandidateNotifications from './pages/candidate/Notifications';
 import TrainerDashboard from './pages/trainer/Dashboard';
@@ -293,6 +294,7 @@ const App = () => {
                   <Route path="users/:id" element={<CreateEditUser />} />
                   <Route path="users/:id/edit" element={<CreateEditUser />} />
                   <Route path="courses" element={<AdminCourses />} />
+                  <Route path="courses/:courseId" element={<AdminCourseDetails />} />
                   <Route path="courses/new" element={<AdminCreateCourse />} />
                   <Route path="courses/:id/edit" element={<AdminCreateCourse />} />
                   <Route path="attendance" element={<AdminAttendance />} />
