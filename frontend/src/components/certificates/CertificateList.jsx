@@ -37,6 +37,7 @@ import {
   Cancel,
   HourglassEmpty,
   Description,
+  Print,
 } from '@mui/icons-material';
 import { adminService } from '../../api/admin';
 import { format } from 'date-fns';
@@ -107,10 +108,71 @@ const CertificateList = () => {
     try {
       setError(null);
       setSuccess(null);
-      await adminService.downloadCertificate(certificate.id);
+      const response = await adminService.downloadCertificate(certificate.id);
+      
+      // Create a blob from the response
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' });
+      
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Certificate_${certificate.certificateNumber || certificate.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       setSuccess(`Certificate downloaded successfully`);
     } catch (err) {
+      console.error('Download error:', err);
       setError(err.response?.data?.message || 'Failed to download certificate');
+    }
+  };
+
+  const handlePrint = async (certificate) => {
+    try {
+      setError(null);
+      setSuccess(null);
+      const response = await adminService.downloadCertificate(certificate.id);
+      
+      // Create a blob from the response
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' });
+      
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new window for printing
+      const printWindow = window.open(url, '_blank');
+      
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          printWindow.print();
+          // Clean up after print dialog closes (or 1 second delay)
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+          }, 1000);
+        });
+      } else {
+        // Fallback if popup was blocked - download instead
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Certificate_${certificate.certificateNumber || certificate.id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        setError('Pop-up blocked. Certificate downloaded instead. Please allow pop-ups to print directly.');
+      }
+      
+      setSuccess(`Certificate ready for printing`);
+    } catch (err) {
+      console.error('Print error:', err);
+      setError(err.response?.data?.message || 'Failed to print certificate');
     }
   };
 
@@ -357,9 +419,7 @@ const CertificateList = () => {
                   <TableCell>Candidate</TableCell>
                   <TableCell>Course</TableCell>
                   <TableCell>Issue Date</TableCell>
-                  <TableCell>Expiry Date</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Grade</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -397,24 +457,12 @@ const CertificateList = () => {
                       })() : '—'}
                     </TableCell>
                     <TableCell>
-                      {certificate.expiryDate ? (() => {
-                        try {
-                          return format(new Date(certificate.expiryDate), 'MMM dd, yyyy');
-                        } catch (e) {
-                          return String(certificate.expiryDate);
-                        }
-                      })() : 'No Expiry'}
-                    </TableCell>
-                    <TableCell>
                       <Chip
                         label={certificate.status}
                         color={getStatusColor(certificate.status)}
                         size="small"
                         icon={getStatusIcon(certificate.status)}
                       />
-                    </TableCell>
-                    <TableCell>
-                      {certificate.grade || '-'}
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -427,6 +475,15 @@ const CertificateList = () => {
                                 onClick={() => handleDownload(certificate)}
                               >
                                 <Download fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Print">
+                              <IconButton
+                                size="small"
+                                color="secondary"
+                                onClick={() => handlePrint(certificate)}
+                              >
+                                <Print fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Send via Email">

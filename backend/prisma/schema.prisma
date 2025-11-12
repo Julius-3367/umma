@@ -134,6 +134,7 @@ model Tenant {
   candidates           Candidate[]
   candidateDocuments   CandidateDocument[]
   courses              Course[]
+  companies            Company[]
   enrollments          Enrollment[]
   attendanceRecords    AttendanceRecord[]
   assessments          Assessment[]
@@ -234,6 +235,8 @@ model User {
   notifications        Notification[]        @relation("NotificationRecipient")
   settingsCreated      Setting[]             @relation("SettingCreatedBy")
   settingsUpdated      Setting[]             @relation("SettingUpdatedBy")
+  companiesCreated     Company[]             @relation("CompanyCreatedBy")
+  companiesUpdated     Company[]             @relation("CompanyUpdatedBy")
 
   @@map("users")
 }
@@ -457,6 +460,34 @@ model Course {
   @@unique([tenantId, code])
   @@index([tenantId, title])
   @@map("courses")
+}
+
+/// Company / Employer profiles
+model Company {
+  id            Int      @id @default(autoincrement())
+  tenantId      Int
+  name          String
+  email         String?
+  phone         String?
+  country       String?
+  industry      String?
+  contactPerson String?
+  website       String?
+  address       String?
+  status        String?  @default("ACTIVE")
+  metadata      Json?
+  createdBy     Int?
+  updatedBy     Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  createdByUser User?  @relation("CompanyCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?  @relation("CompanyUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([tenantId, status])
+  @@index([tenantId, name])
+  @@map("companies")
 }
 
 model Enrollment {

@@ -426,6 +426,192 @@ const getAllCourses = async (req, res) => {
 };
 
 /**
+ * Get all companies
+ */
+const getAllCompanies = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, industry, status } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const where = {};
+    if (industry) where.industry = industry;
+    if (status) where.status = status;
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { email: { contains: search } },
+        { phone: { contains: search } },
+        { contactPerson: { contains: search } },
+      ];
+    }
+
+    const [companies, total] = await Promise.all([
+      prisma.company.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: parseInt(limit),
+      }),
+      prisma.company.count({ where }),
+    ]);
+
+    // Return a flat structure expected by frontend (companies, totalCount, page, limit)
+    res.json({
+      success: true,
+      companies,
+      totalCount: total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+    });
+  } catch (error) {
+    console.error('Error fetching companies:', error);
+    res.status(500).json({ success: false, message: 'Error fetching companies', error: error.message });
+  }
+};
+
+/**
+ * Get company by ID
+ */
+const getCompanyById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const company = await prisma.company.findUnique({ where: { id: parseInt(id) } });
+    if (!company) return res.status(404).json({ success: false, message: 'Company not found' });
+    res.json({ success: true, data: company });
+  } catch (error) {
+    console.error('Error fetching company:', error);
+    res.status(500).json({ success: false, message: 'Error fetching company', error: error.message });
+  }
+};
+
+/**
+ * Create new company
+ */
+const createCompany = async (req, res) => {
+  try {
+    const { name, email, phone, country, industry, contactPerson, website, address, status } = req.body;
+    
+    // Validate required field
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Company name is required' });
+    }
+
+    const company = await prisma.company.create({
+      data: {
+        tenantId: 1,
+        name: name.trim(),
+        email: email?.trim() || null,
+        phone: phone?.trim() || null,
+        country: country?.trim() || null,
+        industry: industry?.trim() || null,
+        contactPerson: contactPerson?.trim() || null,
+        website: website?.trim() || null,
+        address: address?.trim() || null,
+        status: status || 'ACTIVE',
+        createdBy: req.user?.userId || null,
+      },
+    });
+
+    // Activity log
+    await prisma.activityLog.create({
+      data: {
+        tenantId: 1,
+        userId: req.user?.userId || null,
+        action: 'CREATE',
+        targetType: 'Company',
+        targetId: company.id,
+        details: `Created company: ${company.name}`,
+      },
+    }).catch(err => console.error('Activity log error:', err));
+
+    res.status(201).json({ success: true, message: 'Company created successfully', data: company });
+  } catch (error) {
+    console.error('Error creating company:', error);
+    console.error('Error details:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error creating company', 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+/**
+ * Update company
+ */
+const updateCompany = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, country, industry, contactPerson, website, address, status } = req.body;
+
+    const existing = await prisma.company.findUnique({ where: { id: parseInt(id) } });
+    if (!existing) return res.status(404).json({ success: false, message: 'Company not found' });
+
+    const company = await prisma.company.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        email,
+        phone,
+        country,
+        industry,
+        contactPerson,
+        website,
+        address,
+        status: status || existing.status,
+        updatedBy: req.user?.userId,
+      },
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        tenantId: 1,
+        userId: req.user?.userId,
+        action: 'UPDATE',
+        targetType: 'Company',
+        targetId: company.id,
+        details: `Updated company: ${company.name}`,
+      },
+    }).catch(err => console.error('Activity log error:', err));
+
+    res.json({ success: true, message: 'Company updated successfully', data: company });
+  } catch (error) {
+    console.error('Error updating company:', error);
+    res.status(500).json({ success: false, message: 'Error updating company', error: error.message });
+  }
+};
+
+/**
+ * Delete company
+ */
+const deleteCompany = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.company.findUnique({ where: { id: parseInt(id) } });
+    if (!existing) return res.status(404).json({ success: false, message: 'Company not found' });
+
+    await prisma.company.delete({ where: { id: parseInt(id) } });
+
+    await prisma.activityLog.create({
+      data: {
+        tenantId: 1,
+        userId: req.user?.userId,
+        action: 'DELETE',
+        targetType: 'Company',
+        targetId: parseInt(id),
+        details: `Deleted company: ${existing.name}`,
+      },
+    }).catch(err => console.error('Activity log error:', err));
+
+    res.json({ success: true, message: 'Company deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting company:', error);
+    res.status(500).json({ success: false, message: 'Error deleting company', error: error.message });
+  }
+};
+
+/**
  * Get course by ID
  */
 const getCourseById = async (req, res) => {
@@ -2031,23 +2217,26 @@ const downloadCertificate = async (req, res) => {
       select: { tenantId: true },
     });
 
+    // Build the where clause - if user has no tenantId, don't filter by it
+    const whereClause = {
+      id: parseInt(id),
+    };
+    
+    if (user.tenantId) {
+      whereClause.tenantId = user.tenantId;
+    }
+
     const certificate = await prisma.certificate.findFirst({
-      where: {
-        id: parseInt(id),
-        tenantId: user.tenantId,
-      },
+      where: whereClause,
       include: {
         enrollment: {
           include: {
-            candidate: {
-              include: {
-                user: true,
-              },
-            },
+            candidate: true,
             course: true,
           },
         },
         template: true,
+        Course: true,
       },
     });
 
@@ -2058,19 +2247,40 @@ const downloadCertificate = async (req, res) => {
       });
     }
 
+    // Get candidate name and course title
+    const candidateName = certificate.enrollment?.candidate?.fullName || 'N/A';
+    const courseTitle = certificate.enrollment?.course?.title || 
+                       certificate.Course?.title || 
+                       certificate.enrollment?.course?.name || 
+                       'Course Name';
+    const issueDate = certificate.issueDate ? new Date(certificate.issueDate).toLocaleDateString() : 'N/A';
+
     // In production, use a proper PDF generation library like puppeteer or pdfkit
-    // For now, send a simple response
+    // For now, send a simple text-based certificate
     const pdfContent = `
-Certificate of Completion
+================================================================================
+                        CERTIFICATE OF COMPLETION
+================================================================================
 
 Certificate Number: ${certificate.certificateNumber}
-Student: ${certificate.enrollment.candidate.user.firstName} ${certificate.enrollment.candidate.user.lastName}
-Course: ${certificate.enrollment.course.title}
-Issue Date: ${certificate.issueDate.toLocaleDateString()}
+
+This is to certify that
+
+                            ${candidateName}
+
+has successfully completed the training program
+
+                            ${courseTitle}
+
+Issue Date: ${issueDate}
 Status: ${certificate.status}
 
-Digital Signature: ${certificate.digitalSignature}
-QR Code: ${certificate.qrCode}
+${certificate.remarks || ''}
+
+${certificate.digitalSignature ? 'Digital Signature: ' + certificate.digitalSignature : ''}
+${certificate.qrCode ? 'QR Code: ' + certificate.qrCode : ''}
+
+================================================================================
     `.trim();
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -2078,18 +2288,24 @@ QR Code: ${certificate.qrCode}
     res.status(200).send(pdfContent);
 
     // Log activity
-    await prisma.activityLog.create({
-      data: {
-        tenantId: user.tenantId,
-        userId: req.user.id,
-        action: 'CERTIFICATE_DOWNLOADED',
-        entityType: 'Certificate',
-        entityId: certificate.id,
-        description: `Downloaded certificate ${certificate.certificateNumber}`,
-      },
-    });
+    try {
+      await prisma.activityLog.create({
+        data: {
+          tenantId: user.tenantId || certificate.tenantId || 1,
+          userId: req.user.id,
+          action: 'CERTIFICATE_DOWNLOADED',
+          entityType: 'Certificate',
+          entityId: certificate.id,
+          description: `Downloaded certificate ${certificate.certificateNumber}`,
+        },
+      });
+    } catch (logError) {
+      console.error('Error logging activity:', logError);
+      // Don't fail the download if logging fails
+    }
   } catch (error) {
     console.error('Error downloading certificate:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error downloading certificate',
@@ -3002,6 +3218,12 @@ module.exports = {
   createCertificateTemplate,
   updateCertificateTemplate,
   deleteCertificateTemplate,
+  // Company Management
+  getAllCompanies,
+  getCompanyById,
+  createCompany,
+  updateCompany,
+  deleteCompany,
   // Reports
   getReports,
   // Reports

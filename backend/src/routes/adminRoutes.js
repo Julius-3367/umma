@@ -31,6 +31,15 @@ router.put('/courses/:id', adminController.updateCourse);
 router.delete('/courses/:id', adminController.deleteCourse);
 
 /**
+ * Company Management
+ */
+router.get('/companies', adminController.getAllCompanies);
+router.get('/companies/:id', adminController.getCompanyById);
+router.post('/companies', adminController.createCompany);
+router.put('/companies/:id', adminController.updateCompany);
+router.delete('/companies/:id', adminController.deleteCompany);
+
+/**
  * Candidate Management
  */
 router.get('/candidates', adminController.getAllCandidates);

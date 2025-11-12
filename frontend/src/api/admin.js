@@ -22,6 +22,10 @@ export const adminService = {
 
   // Company Management
   getAllCompanies: (params) => axios.get(`${API_URL}/companies`, { params }),
+  getCompanyById: (id) => axios.get(`${API_URL}/companies/${id}`),
+  createCompany: (data) => axios.post(`${API_URL}/companies`, data),
+  updateCompany: (id, data) => axios.put(`${API_URL}/companies/${id}`, data),
+  deleteCompany: (id) => axios.delete(`${API_URL}/companies/${id}`),
 
   // Candidate Management
   getAllCandidates: (params) => axios.get(`${API_URL}/candidates`, { params }),

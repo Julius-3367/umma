@@ -22,6 +22,11 @@ import {
   InputLabel,
   Stack,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,6 +44,8 @@ const Companies = () => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState(null);
   
   // Pagination
   const [page, setPage] = useState(0);
@@ -74,6 +81,32 @@ const Companies = () => {
     } catch (err) {
       console.error('Error fetching companies:', err);
       setError(err.response?.data?.message || 'Failed to load companies');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenDelete = (company) => {
+    setCompanyToDelete(company);
+    setConfirmOpen(true);
+  };
+
+  const handleCloseDelete = () => {
+    setCompanyToDelete(null);
+    setConfirmOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!companyToDelete) return;
+    try {
+      setLoading(true);
+      await adminService.deleteCompany(companyToDelete.id);
+      // refresh list
+      handleCloseDelete();
+      fetchCompanies();
+    } catch (err) {
+      console.error('Delete error', err);
+      setError(err.response?.data?.message || 'Failed to delete company');
     } finally {
       setLoading(false);
     }
@@ -236,7 +269,7 @@ const Companies = () => {
                     <TableCell>{company.contactPerson || 'N/A'}</TableCell>
                     <TableCell>{company.email || 'N/A'}</TableCell>
                     <TableCell>{company.phone || 'N/A'}</TableCell>
-                    <TableCell>{company.location || 'N/A'}</TableCell>
+                    <TableCell>{company.country || company.address || 'N/A'}</TableCell>
                     <TableCell>
                       <Chip
                         label={company.status || 'ACTIVE'}
@@ -263,6 +296,7 @@ const Companies = () => {
                         size="small"
                         color="error"
                         title="Delete"
+                        onClick={() => handleOpenDelete(company)}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
@@ -283,6 +317,19 @@ const Companies = () => {
           </>
         )}
       </TableContainer>
+      {/* Delete confirmation dialog */}
+      <Dialog open={confirmOpen} onClose={handleCloseDelete}>
+        <DialogTitle>Delete Company</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the company "{companyToDelete?.name}"? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDelete}>Cancel</Button>
+          <Button color="error" onClick={handleDelete}>Delete</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

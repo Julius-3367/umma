@@ -26,6 +26,8 @@ import CreateEditUser from './pages/admin/CreateEditUser';
 import AdminCourses from './pages/admin/Courses';
 import AdminCreateCourse from './pages/admin/CreateCourse';
 import AdminCompanies from './pages/admin/Companies';
+import CreateEditCompany from './pages/admin/CompanyForm';
+import CompanyDetails from './pages/admin/CompanyDetails';
 import AdminReports from './pages/admin/Reports';
 import AdminSettings from './pages/admin/Settings';
 import AdminAttendance from './pages/admin/Attendance';
@@ -297,6 +299,10 @@ const App = () => {
                   <Route path="courses/:courseId" element={<AdminCourseDetails />} />
                   <Route path="courses/new" element={<AdminCreateCourse />} />
                   <Route path="courses/:id/edit" element={<AdminCreateCourse />} />
+                  <Route path="companies" element={<AdminCompanies />} />
+                  <Route path="companies/new" element={<CreateEditCompany />} />
+                  <Route path="companies/:companyId" element={<CompanyDetails />} />
+                  <Route path="companies/:companyId/edit" element={<CreateEditCompany />} />
                   <Route path="attendance" element={<AdminAttendance />} />
                   <Route path="certificates" element={<CertificateManagement />} />
                   <Route path="companies" element={<AdminCompanies />} />
