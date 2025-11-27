@@ -1,6 +1,6 @@
 /**
  * Unified Dashboard Components
- * Reusable across Admin, Candidate, Trainer, Employer, Broker, Agent dashboards
+ * Reusable across Admin, Candidate, Trainer, Employer, Broker, Recruiter dashboards
  */
 
 export { default as StatCard } from './StatCard';

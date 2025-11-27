@@ -24,11 +24,11 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const authStorage = localStorage.getItem('auth-storage');
+    const authStorage = localStorage.getItem('authState');
     if (authStorage) {
-      const { state } = JSON.parse(authStorage);
-      if (state?.accessToken) {
-        config.headers.Authorization = `Bearer ${state.accessToken}`;
+      const authState = JSON.parse(authStorage);
+      if (authState?.accessToken) {
+        config.headers.Authorization = `Bearer ${authState.accessToken}`;
       }
     }
     return config;
@@ -48,22 +48,22 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const authStorage = localStorage.getItem('auth-storage');
+        const authStorage = localStorage.getItem('authState');
         if (authStorage) {
-          const { state } = JSON.parse(authStorage);
-          if (state?.refreshToken) {
+          const authState = JSON.parse(authStorage);
+          if (authState?.refreshToken) {
             const response = await api.post('/auth/refresh', {
-              refreshToken: state.refreshToken,
+              refreshToken: authState.refreshToken,
             });
 
             const { accessToken } = response.data;
 
             // Update stored token
             const updatedAuth = {
-              ...JSON.parse(authStorage),
-              state: { ...state, accessToken }
+              ...authState,
+              accessToken
             };
-            localStorage.setItem('auth-storage', JSON.stringify(updatedAuth));
+            localStorage.setItem('authState', JSON.stringify(updatedAuth));
 
             // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -72,7 +72,7 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed, redirect to login
-        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('authState');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -401,6 +401,49 @@ export const authAPI = {
   logout: (refreshToken) => apiService.logout(refreshToken),
   refreshToken: (refreshToken) => apiService.refreshToken(refreshToken),
   getProfile: () => apiService.getProfile(),
+};
+
+// Export recruiter API methods
+export const recruiterAPI = {
+  // Dashboard
+  getDashboard: () => api.get('/recruiter/dashboard'),
+  
+  // Pipeline management
+  getPipelineCandidates: () => api.get('/recruiter/pipeline/candidates'),
+  getCandidateEvents: (candidateId) => api.get(`/recruiter/pipeline/${candidateId}/events`),
+  transitionCandidate: (candidateId, data) => api.post(`/recruiter/pipeline/${candidateId}/transition`, data),
+  
+  // Job openings
+  createJobOpening: (data) => api.post('/recruiter/jobs', data),
+  getJobOpenings: () => api.get('/recruiter/jobs'),
+};
+
+// Export admin API methods
+export const adminAPI = {
+  // Dashboard
+  getDashboard: () => api.get('/admin/dashboard'),
+  
+  // Companies
+  getCompanies: () => api.get('/admin/companies'),
+  getCompanyById: (id) => api.get(`/admin/companies/${id}`),
+  createCompany: (data) => api.post('/admin/companies', data),
+  updateCompany: (id, data) => api.put(`/admin/companies/${id}`, data),
+  deleteCompany: (id) => api.delete(`/admin/companies/${id}`),
+  
+  // Placements
+  getPlacements: () => api.get('/admin/placements'),
+  getPlacementById: (id) => api.get(`/admin/placements/${id}`),
+  createPlacement: (data) => api.post('/admin/placements', data),
+  updatePlacement: (id, data) => api.put(`/admin/placements/${id}`, data),
+  deletePlacement: (id) => api.delete(`/admin/placements/${id}`),
+  
+  // Candidates
+  getCandidates: () => api.get('/admin/candidates'),
+  
+  // Reports
+  getStatistics: () => api.get('/admin/statistics'),
+  generateReport: (data) => api.post('/admin/reports/generate', data),
+  getReports: () => api.get('/admin/reports'),
 };
 
 // Export axios instance for custom requests

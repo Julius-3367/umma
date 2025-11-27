@@ -151,7 +151,7 @@ overline: Label text
    - Focus on course management UI
    - Implement assessment interfaces
 
-2. **Agent Dashboard**
+2. **Recruiter Dashboard**
    - Convert placement tracking components
    - Update candidate management interface
    - Implement reporting views

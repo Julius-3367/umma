@@ -430,15 +430,40 @@ const getCourseDetails = async (req, res) => {
 /**
  * Get recommended jobs
  */
-const getRecommendedJobs = async (req, res) => {
-  try {
-    const userId = req.user.id;
+const mapJobOpeningResponse = (jobOpening, candidate = null) => ({
+  id: jobOpening.id,
+  jobTitle: jobOpening.jobTitle,
+  employerName: jobOpening.employerName,
+  location: jobOpening.location,
+  jobType: jobOpening.jobType,
+  priority: jobOpening.priority,
+  openings: jobOpening.openings,
+  salaryRange: jobOpening.salaryRange,
+  status: jobOpening.status,
+  interviewDate: jobOpening.interviewDate,
+  description: jobOpening.description,
+  requirements: jobOpening.requirements,
+  createdAt: jobOpening.createdAt,
+  updatedAt: jobOpening.updatedAt,
+  postedAgo: getRelativeTime(jobOpening.createdAt),
+  matchScore: candidate ? Math.floor(Math.random() * 25) + 75 : null,
+});
 
+const getCandidateJobOpenings = async (candidate) => {
+  return prisma.jobOpening.findMany({
+    where: {
+      status: 'OPEN',
+      ...(candidate?.tenantId ? { tenantId: candidate.tenantId } : {}),
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+};
+
+const getJobOpenings = async (req, res) => {
+  try {
     const candidate = await prisma.candidate.findUnique({
-      where: { userId },
-      include: {
-        skills: true,
-      },
+      where: { userId: req.user.id },
     });
 
     if (!candidate) {
@@ -448,23 +473,40 @@ const getRecommendedJobs = async (req, res) => {
       });
     }
 
-    // For now, return all available jobs
-    // TODO: Implement matching algorithm based on skills
-    const jobs = await prisma.job.findMany({
-      where: {
-        status: 'OPEN',
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
+    const openings = await getCandidateJobOpenings(candidate);
 
     res.json({
       success: true,
-      data: jobs.map(job => ({
-        ...job,
-        match: Math.floor(Math.random() * 30) + 70, // Mock match score for now
-        posted: getRelativeTime(job.createdAt),
-      })),
+      data: openings.map((opening) => mapJobOpeningResponse(opening, candidate)),
+    });
+  } catch (error) {
+    console.error('Get job openings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch job openings',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+const getRecommendedJobs = async (req, res) => {
+  try {
+    const candidate = await prisma.candidate.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate profile not found',
+      });
+    }
+
+    const openings = await getCandidateJobOpenings(candidate);
+
+    res.json({
+      success: true,
+      data: openings.slice(0, 10).map((opening) => mapJobOpeningResponse(opening, candidate)),
     });
   } catch (error) {
     console.error('Get recommended jobs error:', error);
@@ -483,7 +525,7 @@ const applyForJob = async (req, res) => {
   try {
     const { jobId } = req.params;
     const userId = req.user.id;
-    const { coverLetter, resume } = req.body;
+    const { coverLetter } = req.body;
 
     const candidate = await prisma.candidate.findUnique({
       where: { userId },
@@ -496,42 +538,60 @@ const applyForJob = async (req, res) => {
       });
     }
 
-    // Check if already applied
+    const jobOpening = await prisma.jobOpening.findFirst({
+      where: {
+        id: parseInt(jobId, 10),
+        status: 'OPEN',
+        ...(candidate.tenantId ? { tenantId: candidate.tenantId } : {}),
+      },
+    });
+
+    if (!jobOpening) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job opening not found or no longer accepting applications',
+      });
+    }
+
     const existingApplication = await prisma.placement.findFirst({
       where: {
         candidateId: candidate.id,
-        jobId: parseInt(jobId),
+        jobOpeningId: jobOpening.id,
       },
     });
 
     if (existingApplication) {
       return res.status(400).json({
         success: false,
-        message: 'You have already applied for this job',
+        message: 'You have already applied for this role',
       });
     }
 
-    // Create placement/application
     const placement = await prisma.placement.create({
       data: {
+        tenantId: jobOpening.tenantId || candidate.tenantId,
         candidateId: candidate.id,
-        jobId: parseInt(jobId),
-        status: 'INITIATED',
-        applicationDate: new Date(),
+        jobOpeningId: jobOpening.id,
+        employerName: jobOpening.employerName,
+        jobRoleOffered: jobOpening.jobTitle,
+        country: jobOpening.location,
+        recruitmentOfficerId: jobOpening.recruiterId,
         notes: coverLetter || '',
       },
       include: {
-        job: true,
+        jobOpening: true,
       },
     });
 
-    // Log activity
     await createActivityLog({
       userId,
       action: 'JOB_APPLICATION_SUBMITTED',
       resource: 'Placement',
       resourceId: placement.id,
-      details: { jobId, jobTitle: placement.job.title },
+      details: {
+        jobOpeningId: jobOpening.id,
+        jobTitle: jobOpening.jobTitle,
+      },
     });
 
     res.status(201).json({

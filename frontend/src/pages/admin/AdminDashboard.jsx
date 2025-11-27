@@ -128,7 +128,7 @@ const AdminDashboard = () => {
           { role: 'Trainers', count: 45, percentage: 2.4, color: theme.palette.success.main },
           { role: 'Employers', count: 89, percentage: 4.8, color: theme.palette.warning.main },
           { role: 'Brokers', count: 156, percentage: 8.5, color: theme.palette.secondary.main },
-          { role: 'Agents', count: 67, percentage: 3.6, color: theme.palette.error.main },
+          { role: 'Recruiters', count: 67, percentage: 3.6, color: theme.palette.info.main },
           { role: 'Admins', count: 12, percentage: 0.7, color: theme.palette.grey[600] },
         ],
         financialMetrics: [

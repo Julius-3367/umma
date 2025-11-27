@@ -4,117 +4,131 @@ const adminController = require('../controllers/adminController');
 const appealController = require('../controllers/attendanceAppealController');
 const { authenticate, authorize } = require('../middleware/auth');
 
-// All routes require authentication and Admin role
+// All routes require authentication and Admin role (unless overridden below)
 router.use(authenticate);
-router.use(authorize(['Admin']));
 
 /**
  * Dashboard
  */
-router.get('/dashboard', adminController.getDashboard);
+router.get('/dashboard', authorize(['Admin', 'Recruiter']), adminController.getDashboard);
 
 /**
- * User Management
+ * User Management (Admin only)
  */
-router.get('/users', adminController.getAllUsers);
-router.get('/users/:id', adminController.getUserById);
-router.post('/users', adminController.createUser);
-router.put('/users/:id', adminController.updateUser);
-router.delete('/users/:id', adminController.deleteUser);
+router.get('/users', authorize(['Admin']), adminController.getAllUsers);
+router.get('/users/:id', authorize(['Admin']), adminController.getUserById);
+router.post('/users', authorize(['Admin']), adminController.createUser);
+router.put('/users/:id', authorize(['Admin']), adminController.updateUser);
+router.delete('/users/:id', authorize(['Admin']), adminController.deleteUser);
 
 /**
- * Course Management
+ * Course Management (Admin only)
  */
-router.get('/courses', adminController.getAllCourses);
-router.get('/courses/:id', adminController.getCourseById);
-router.post('/courses', adminController.createCourse);
-router.put('/courses/:id', adminController.updateCourse);
-router.delete('/courses/:id', adminController.deleteCourse);
+router.get('/courses', authorize(['Admin']), adminController.getAllCourses);
+router.get('/courses/:id', authorize(['Admin']), adminController.getCourseById);
+router.post('/courses', authorize(['Admin']), adminController.createCourse);
+router.put('/courses/:id', authorize(['Admin']), adminController.updateCourse);
+router.delete('/courses/:id', authorize(['Admin']), adminController.deleteCourse);
 
 /**
- * Company Management
+ * Company Management (Admin + Recruiter)
  */
-router.get('/companies', adminController.getAllCompanies);
-router.get('/companies/:id', adminController.getCompanyById);
-router.post('/companies', adminController.createCompany);
-router.put('/companies/:id', adminController.updateCompany);
-router.delete('/companies/:id', adminController.deleteCompany);
+router.get('/companies', authorize(['Admin', 'Recruiter']), adminController.getAllCompanies);
+router.get('/companies/:id', authorize(['Admin', 'Recruiter']), adminController.getCompanyById);
+router.post('/companies', authorize(['Admin', 'Recruiter']), adminController.createCompany);
+router.put('/companies/:id', authorize(['Admin', 'Recruiter']), adminController.updateCompany);
+router.delete('/companies/:id', authorize(['Admin']), adminController.deleteCompany);
 
 /**
- * Candidate Management
+ * Candidate Management (Admin + Recruiter)
  */
-router.get('/candidates', adminController.getAllCandidates);
+router.get('/candidates', authorize(['Admin', 'Recruiter']), adminController.getAllCandidates);
 
 /**
- * Enrollment Management
+ * Placement Management (Admin + Recruiter)
  */
-router.get('/enrollments', adminController.getEnrollments);
-router.put('/enrollments/:id', adminController.updateEnrollmentStatus);
+router.get('/placements', authorize(['Admin', 'Recruiter']), adminController.getAllPlacements);
+router.get('/placements/:id', authorize(['Admin', 'Recruiter']), adminController.getPlacementById);
+router.post('/placements', authorize(['Admin', 'Recruiter']), adminController.createPlacement);
+router.put('/placements/:id', authorize(['Admin', 'Recruiter']), adminController.updatePlacement);
+router.delete('/placements/:id', authorize(['Admin']), adminController.deletePlacement);
 
 /**
- * Statistics & Reports
+ * Enrollment Management (Admin only)
  */
-router.get('/statistics', adminController.getStatistics);
+router.get('/enrollments', authorize(['Admin']), adminController.getEnrollments);
+router.put('/enrollments/:id', authorize(['Admin']), adminController.updateEnrollmentStatus);
+
+/**
+ * Statistics & Reports (Admin + Recruiter for read-only)
+ */
+router.get('/statistics', authorize(['Admin', 'Recruiter']), adminController.getStatistics);
 // Report generation endpoints (async jobs)
-router.post('/reports/generate', adminController.generateReport);
-router.get('/reports/status/:jobId', adminController.getReportStatus);
-router.get('/reports/download/:jobId', adminController.downloadReport);
-router.get('/reports', adminController.getReports);
-router.get('/activity-logs', adminController.getActivityLogs);
+router.post('/reports/generate', authorize(['Admin', 'Recruiter']), adminController.generateReport);
+router.get('/reports/status/:jobId', authorize(['Admin', 'Recruiter']), adminController.getReportStatus);
+router.get('/reports/download/:jobId', authorize(['Admin', 'Recruiter']), adminController.downloadReport);
+router.get('/reports', authorize(['Admin', 'Recruiter']), adminController.getReports);
+router.get('/activity-logs', authorize(['Admin']), adminController.getActivityLogs);
 
 /**
- * Certificate Management
+ * Certificate Management (Admin only)
  */
-router.get('/certificate-requests', adminController.getCertificateRequests);
-router.get('/certificate-stats', adminController.getCertificateStats);
-router.put('/certificate-requests/:id', adminController.processCertificateRequest);
+router.get('/certificate-requests', authorize(['Admin']), adminController.getCertificateRequests);
+router.get('/certificate-stats', authorize(['Admin']), adminController.getCertificateStats);
+router.put('/certificate-requests/:id', authorize(['Admin']), adminController.processCertificateRequest);
 
 /**
- * Attendance Management
+ * Attendance Management (Admin only)
  */
-router.get('/attendance', adminController.getAttendance);
-router.post('/attendance', adminController.saveAttendance);
-router.get('/attendance/statistics', adminController.getAttendanceStatistics);
-router.post('/attendance/notifications', adminController.sendAttendanceNotifications);
-router.get('/attendance/export', adminController.exportAttendance);
+router.get('/attendance', authorize(['Admin']), adminController.getAttendance);
+router.post('/attendance', authorize(['Admin']), adminController.saveAttendance);
+router.get('/attendance/statistics', authorize(['Admin']), adminController.getAttendanceStatistics);
+router.post('/attendance/notifications', authorize(['Admin']), adminController.sendAttendanceNotifications);
+router.get('/attendance/export', authorize(['Admin']), adminController.exportAttendance);
 
 /**
- * Certificate Management System
+ * Certificate Management System (Admin only)
  */
-router.get('/certificates', adminController.getCertificates);
-router.get('/certificates/statistics', adminController.getCertificateStatistics);
-router.get('/certificates/:id', adminController.getCertificateById);
-router.post('/certificates/generate', adminController.generateCertificate);
-router.put('/certificates/:id', adminController.updateCertificate);
-router.post('/certificates/bulk-generate', adminController.bulkGenerateCertificates);
-router.get('/certificates/:id/download', adminController.downloadCertificate);
-router.post('/certificates/:id/send', adminController.sendCertificate);
-router.post('/certificates/:id/preview', adminController.previewCertificate);
-router.post('/certificates/verify', adminController.verifyCertificate);
-router.put('/certificates/:id/revoke', adminController.revokeCertificate);
-router.post('/certificates/:id/reissue', adminController.reissueCertificate);
+router.get('/certificates', authorize(['Admin']), adminController.getCertificates);
+router.get('/certificates/statistics', authorize(['Admin']), adminController.getCertificateStatistics);
+router.get('/certificates/:id', authorize(['Admin']), adminController.getCertificateById);
+router.post('/certificates/generate', authorize(['Admin']), adminController.generateCertificate);
+router.put('/certificates/:id', authorize(['Admin']), adminController.updateCertificate);
+router.post('/certificates/bulk-generate', authorize(['Admin']), adminController.bulkGenerateCertificates);
+router.get('/certificates/:id/download', authorize(['Admin']), adminController.downloadCertificate);
+router.post('/certificates/:id/send', authorize(['Admin']), adminController.sendCertificate);
+router.post('/certificates/:id/preview', authorize(['Admin']), adminController.previewCertificate);
+router.post('/certificates/verify', authorize(['Admin']), adminController.verifyCertificate);
+router.put('/certificates/:id/revoke', authorize(['Admin']), adminController.revokeCertificate);
+router.post('/certificates/:id/reissue', authorize(['Admin']), adminController.reissueCertificate);
 
 /**
- * Certificate Templates
+ * Certificate Templates (Admin only)
  */
-router.get('/certificate-templates', adminController.getCertificateTemplates);
-router.get('/certificate-templates/:id', adminController.getCertificateTemplateById);
-router.post('/certificate-templates', adminController.createCertificateTemplate);
-router.put('/certificate-templates/:id', adminController.updateCertificateTemplate);
-router.delete('/certificate-templates/:id', adminController.deleteCertificateTemplate);
+router.get('/certificate-templates', authorize(['Admin']), adminController.getCertificateTemplates);
+router.get('/certificate-templates/:id', authorize(['Admin']), adminController.getCertificateTemplateById);
+router.post('/certificate-templates', authorize(['Admin']), adminController.createCertificateTemplate);
+router.put('/certificate-templates/:id', authorize(['Admin']), adminController.updateCertificateTemplate);
+router.delete('/certificate-templates/:id', authorize(['Admin']), adminController.deleteCertificateTemplate);
 
 /**
- * Notifications
+ * Notifications (Admin only)
  */
-router.get('/notifications', adminController.getNotifications);
-router.patch('/notifications/:id/read', adminController.markNotificationAsRead);
-router.patch('/notifications/mark-all-read', adminController.markAllNotificationsAsRead);
-router.delete('/notifications/:id', adminController.deleteNotification);
+router.get('/notifications', authorize(['Admin']), adminController.getNotifications);
+router.patch('/notifications/:id/read', authorize(['Admin']), adminController.markNotificationAsRead);
+router.patch('/notifications/mark-all-read', authorize(['Admin']), adminController.markAllNotificationsAsRead);
+router.delete('/notifications/:id', authorize(['Admin']), adminController.deleteNotification);
 
 /**
- * Attendance Appeals
+ * Attendance Appeals (Admin only)
  */
-router.get('/attendance/appeals', appealController.getAdminAppeals);
-router.put('/attendance/appeals/:appealId/override', appealController.overrideAppeal);
+router.get('/attendance/appeals', authorize(['Admin']), appealController.getAdminAppeals);
+router.put('/attendance/appeals/:appealId/override', authorize(['Admin']), appealController.overrideAppeal);
+
+/**
+ * Vetting Management (Admin only)
+ */
+router.get('/vetting/dashboard', authorize(['Admin']), adminController.getVettingDashboard);
+router.put('/vetting/:id', authorize(['Admin']), adminController.updateVettingRecord);
 
 module.exports = router;

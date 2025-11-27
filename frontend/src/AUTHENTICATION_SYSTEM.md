@@ -11,7 +11,6 @@ The UMSL platform now includes a fully functional authentication system with dem
 | **Administrator** | admin@umsl.edu | admin123 | /admin/dashboard |
 | **Trainer/Instructor** | trainer@umsl.edu | trainer123 | /trainer/dashboard |
 | **Student/Candidate** | candidate@umsl.edu | candidate123 | /candidate/dashboard |
-| **Agent** | agent@umsl.edu | agent123 | /agent/dashboard |
 | **Broker** | broker@umsl.edu | broker123 | /broker/dashboard |
 | **Recruiter** | recruiter@umsl.edu | recruiter123 | /recruiter/dashboard |
 

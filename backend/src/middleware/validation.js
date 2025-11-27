@@ -56,6 +56,13 @@ const schemas = {
     newPassword: Joi.string().min(6).required()
   }),
 
+  // Authenticated profile update
+  updateProfile: Joi.object({
+    firstName: Joi.string().min(1).max(50).optional(),
+    lastName: Joi.string().min(1).max(50).optional(),
+    phone: Joi.string().pattern(/^[+]?[\d\s-()]+$/).optional(),
+  }).min(1),
+
   // User update
   updateUser: Joi.object({
     firstName: Joi.string().min(2).max(50).optional(),
@@ -86,9 +93,39 @@ const schemas = {
     sortOrder: Joi.string().valid('asc', 'desc').default('desc')
   }),
 
+  createJobOpening: Joi.object({
+    jobTitle: Joi.string().min(3).max(120).required(),
+    employerName: Joi.string().min(2).max(120).required(),
+    location: Joi.string().max(120).optional().allow('', null),
+    jobType: Joi.string().max(60).optional().allow('', null),
+    priority: Joi.string().valid('High', 'Medium', 'Low').optional(),
+    openings: Joi.number().integer().min(1).max(500).optional(),
+    salaryRange: Joi.string().max(120).optional().allow('', null),
+    status: Joi.string().valid('OPEN', 'ON_HOLD', 'CLOSED').optional(),
+    interviewDate: Joi.date().iso().optional(),
+    description: Joi.string().max(2000).optional().allow('', null),
+    requirements: Joi.string().max(2000).optional().allow('', null),
+    metadata: Joi.object().optional(),
+  }),
+
   // ID parameter
   idParam: Joi.object({
     id: Joi.number().integer().positive().required()
+  }),
+
+  candidateIdParam: Joi.object({
+    candidateId: Joi.number().integer().positive().required(),
+  }),
+
+  pipelineTransition: Joi.object({
+    nextStage: Joi.string().valid('APPLIED', 'UNDER_REVIEW', 'ENROLLED', 'WAITLISTED', 'PLACED', 'CANCELLED').required(),
+    comment: Joi.string().max(1000).optional().allow('', null),
+    isBlocked: Joi.boolean().optional(),
+    blockerReason: Joi.when('isBlocked', {
+      is: true,
+      then: Joi.string().trim().min(5).max(500).required(),
+      otherwise: Joi.string().max(500).optional().allow('', null),
+    }),
   })
 };
 

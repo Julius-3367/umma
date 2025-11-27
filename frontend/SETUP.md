@@ -68,7 +68,7 @@ The application includes comprehensive demo data and can run completely standalo
 | **Trainer** | trainer@labormobility.com | trainer123 | Course management |
 | **Employer** | employer@labormobility.com | employer123 | Recruitment portal |
 | **Broker** | broker@labormobility.com | broker123 | Referral management |
-| **Agent** | agent@labormobility.com | agent123 | Placement coordination |
+| **Recruiter** | recruiter@labormobility.com | recruiter123 | Placement coordination |
 
 ## 🏗️ Architecture Overview
 
@@ -78,7 +78,7 @@ The application includes comprehensive demo data and can run completely standalo
 - **Employer Dashboard**: Job postings, applications, interview management
 - **Broker Dashboard**: Referral tracking, commission management
 - **Trainer Dashboard**: Course management, student progress
-- **Agent Dashboard**: Placement coordination, candidate matching
+- **Recruiter Dashboard**: Placement coordination, candidate matching
 
 ### Key Features
 - ✅ Role-based authentication and routing
@@ -144,6 +144,7 @@ src/
 │   ├── admin/          # Admin dashboard
 │   ├── candidate/      # Candidate portal
 │   ├── employer/       # Employer dashboard
+│   ├── recruiter/      # Recruiter dashboard
 │   ├── broker/         # Broker dashboard
 │   └── ...
 ├── seed/               # Demo data and mock responses

@@ -239,6 +239,67 @@ async function main() {
     }
   }
 
+  // Create sample recruiter
+  const recruiterRole = await prisma.role.findFirst({
+    where: { name: 'Recruiter' }
+  });
+  const agentRole = await prisma.role.findFirst({
+    where: { name: 'Agent' }
+  });
+
+  if (recruiterRole) {
+    const recruiterEmail = 'recruiter@labourmobility.com';
+    const existingRecruiter = await prisma.user.findUnique({
+      where: { email: recruiterEmail }
+    });
+
+    if (!existingRecruiter) {
+      const hashedPassword = await bcrypt.hash('recruiter123', 12);
+      const recruiterUser = await prisma.user.create({
+        data: {
+          email: recruiterEmail,
+          password: hashedPassword,
+          firstName: 'Rita',
+          lastName: 'Recruiter',
+          phone: '+254700000010',
+          roleId: recruiterRole.id,
+          tenantId: 1,
+          status: 'ACTIVE'
+        }
+      });
+
+      console.log('✅ Created recruiter user: recruiter@labourmobility.com');
+    } else {
+      const needsRoleUpdate = existingRecruiter.roleId !== recruiterRole.id;
+
+      if (needsRoleUpdate) {
+        await prisma.user.update({
+          where: { id: existingRecruiter.id },
+          data: { roleId: recruiterRole.id }
+        });
+        console.log('🔁 Updated existing recruiter user to Recruiter role');
+      } else {
+        console.log('⏭️  Recruiter user already exists');
+      }
+    }
+  } else {
+    console.warn('⚠️  Recruiter role not found; recruiter seed user was not created');
+  }
+
+  if (recruiterRole && agentRole) {
+    const legacyAgents = await prisma.user.findMany({
+      where: { roleId: agentRole.id }
+    });
+
+    for (const agentUser of legacyAgents) {
+      await prisma.user.update({
+        where: { id: agentUser.id },
+        data: { roleId: recruiterRole.id }
+      });
+      console.log(`🔁 Updated legacy agent (${agentUser.email}) to Recruiter role`);
+    }
+  }
+
   // Create sample courses
   if (trainerId) {
     console.log('📚 Creating sample courses...');
@@ -443,7 +504,8 @@ async function main() {
 📋 Default Users Created:
    Admin: admin@labourmobility.com / admin123
    Trainer: trainer@labourmobility.com / trainer123
-   Candidate: candidate@labourmobility.com / candidate123
+  Candidate: candidate@labourmobility.com / candidate123
+  Recruiter: recruiter@labourmobility.com / recruiter123
 
 📊 Sample Data Created:
    5 Courses

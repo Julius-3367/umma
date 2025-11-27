@@ -48,6 +48,7 @@ import {
   QuestionMarkCircleIcon,
   ClipboardDocumentListIcon,
   ScaleIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/auth/authThunks';
@@ -81,7 +82,7 @@ const AppLayout = ({ children }) => {
     if (path.includes('/admin')) return 'Admin Dashboard';
     if (path.includes('/candidate')) return 'Candidate Portal';
     if (path.includes('/trainer')) return 'Trainer Dashboard';
-    if (path.includes('/agent')) return 'Agent Dashboard';
+    if (path.includes('/recruiter')) return 'Recruiter Dashboard';
     if (path.includes('/broker')) return 'Broker Dashboard';
     if (path.includes('/employer')) return 'Employer Dashboard';
     return 'Dashboard';
@@ -115,6 +116,7 @@ const AppLayout = ({ children }) => {
       case 'trainer':
         return theme.palette.success;
       case 'agent':
+      case 'recruiter':
         return theme.palette.info;
       case 'broker':
         return theme.palette.warning;
@@ -129,14 +131,15 @@ const AppLayout = ({ children }) => {
   const getNavigationItems = () => {
     // user.role is an object with { id, name, ... }, so we need role.name
     const roleName = user?.role?.name || user?.role;
-    const role = typeof roleName === 'string' ? roleName.toLowerCase() : 'candidate';
+    const rawRole = typeof roleName === 'string' ? roleName.toLowerCase() : 'candidate';
+    const role = rawRole === 'agent' ? 'recruiter' : rawRole;
     const baseItems = [
       {
         label: 'Dashboard',
         path: role === 'candidate' ? '/candidate/dashboard' :
           role === 'admin' ? '/admin/dashboard' :
             role === 'trainer' ? '/trainer/dashboard' :
-              role === 'agent' ? '/agent/dashboard' :
+              role === 'recruiter' ? '/recruiter/dashboard' :
                 role === 'broker' ? '/broker/dashboard' :
                   role === 'employer' ? '/employer/dashboard' :
                     `/dashboard/${role}`,
@@ -150,6 +153,7 @@ const AppLayout = ({ children }) => {
         { label: 'Candidates', path: '/admin/candidates', icon: UserGroupIcon },
         { label: 'Courses', path: '/admin/courses', icon: AcademicCapIcon },
         { label: 'Enrollments', path: '/admin/enrollments', icon: ClipboardDocumentListIcon },
+        { label: 'Vetting', path: '/admin/vetting', icon: ShieldCheckIcon },
         { label: 'Documents', path: '/admin/certificates', icon: DocumentTextIcon },
         { label: 'Companies', path: '/admin/companies', icon: BuildingOfficeIcon },
         { label: 'Reports', path: '/admin/reports', icon: ChartBarIcon },
@@ -163,18 +167,17 @@ const AppLayout = ({ children }) => {
         { label: 'Profile', path: '/candidate/profile', icon: UserIcon },
       ],
       trainer: [
-        { label: 'Dashboard', path: '/trainer/dashboard', icon: HomeIcon },
         { label: 'Attendance', path: '/trainer/attendance', icon: CalendarIcon },
-        { label: 'My Courses', path: '/trainer/courses', icon: AcademicCapIcon },
+        { label: 'My Courses', path: '/trainer/my-courses', icon: AcademicCapIcon },
         { label: 'Students', path: '/trainer/students', icon: UserGroupIcon },
         { label: 'Assessments', path: '/trainer/assessments', icon: DocumentTextIcon },
         { label: 'Schedule', path: '/trainer/schedule', icon: CalendarIcon },
       ],
-      agent: [
-        { label: 'Candidates', path: '/agent/candidates', icon: UserGroupIcon },
-        { label: 'Placements', path: '/agent/placements', icon: BriefcaseIcon },
-        { label: 'Companies', path: '/agent/companies', icon: BuildingOfficeIcon },
-        { label: 'Reports', path: '/agent/reports', icon: ChartBarIcon },
+      recruiter: [
+        { label: 'Candidates', path: '/recruiter/candidates', icon: UserGroupIcon },
+        { label: 'Placements', path: '/recruiter/placements', icon: BriefcaseIcon },
+        { label: 'Companies', path: '/recruiter/companies', icon: BuildingOfficeIcon },
+        { label: 'Reports', path: '/recruiter/reports', icon: ChartBarIcon },
       ],
       broker: [
         { label: 'Clients', path: '/broker/clients', icon: UserGroupIcon },
@@ -288,10 +291,10 @@ const AppLayout = ({ children }) => {
 
       {/* Navigation Items */}
       <List sx={{ flex: 1, py: 1 }}>
-        {navigationItems.map((item) => {
+        {navigationItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           return (
-            <ListItem key={item.path} disablePadding sx={{ px: 2 }}>
+            <ListItem key={`${item.path || 'nav'}-${item.label || index}-${index}`} disablePadding sx={{ px: 2 }}>
               <ListItemButton
                 onClick={() => navigate(item.path)}
                 sx={{

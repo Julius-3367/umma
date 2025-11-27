@@ -11,10 +11,9 @@ The UMSL platform now includes a fully functional authentication system with dem
 | **Administrator** | admin@umsl.edu | admin123 | /admin/dashboard |
 | **Trainer/Instructor** | trainer@umsl.edu | trainer123 | /trainer/dashboard |
 | **Student/Candidate** | candidate@umsl.edu | candidate123 | /candidate/dashboard |
-| **Agent** | agent@umsl.edu | agent123 | /agent/dashboard |
 | **Broker** | broker@umsl.edu | broker123 | /broker/dashboard |
-| **Recruiter/Employer** | recruiter@umsl.edu | recruiter123 | /recruiter/dashboard |
-| **Recruiter/Employer** | employer@umsl.edu | employer123 | /employer/dashboard |
+| **Recruiter** | recruiter@umsl.edu | recruiter123 | /recruiter/dashboard |
+| **Employer** | employer@umsl.edu | employer123 | /recruiter/dashboard |
 
 ## 🚀 **Quick Start**
 
@@ -186,7 +185,7 @@ The authentication system is now fully functional and ready for:
 - [ ] Login with admin account works
 - [ ] Login with trainer account works  
 - [ ] Login with candidate account works
-- [ ] Login with agent account works
+- [ ] Login with recruiter account works
 - [ ] Login with broker account works
 - [ ] Login with recruiter account works
 - [ ] Login with employer account works

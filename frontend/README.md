@@ -5,7 +5,7 @@ A production-ready Material UI frontend for the Labour Mobility SaaS platform bu
 ## 🚀 Features
 
 - **Material UI Design System**: Professional enterprise UI with responsive design
-- **Role-Based Access Control**: Support for Admin, Trainer, Candidate, Agent, Broker, and Recruiter roles
+- **Role-Based Access Control**: Support for Admin, Trainer, Candidate, Recruiter, Broker, and Employer roles
 - **Redux Toolkit State Management**: Centralized state with RTK Query for API calls
 - **Protected Routes**: Authentication and authorization with role-based navigation
 - **Data Visualization**: Charts and graphs using Recharts
@@ -109,10 +109,10 @@ src/
 │   ├── Auth/            # Authentication pages
 │   ├── Admin/           # Admin pages
 │   ├── Candidate/       # Candidate pages
-│   ├── Agent/           # Agent pages
+│   ├── Recruiter/       # Recruiter pages
 │   ├── Broker/          # Broker pages
 │   ├── Trainer/         # Trainer pages
-│   └── Recruiter/       # Recruiter pages
+│   └── Employer/        # Employer pages
 ├── theme/               # Material UI theme
 │   └── theme.js         # Theme configuration
 ├── utils/               # Utility functions
@@ -127,9 +127,9 @@ src/
 - **Admin**: Full system access
 - **Trainer**: Course and attendance management
 - **Candidate**: Profile and document management
-- **Agent**: Candidate submission and tracking
+- **Recruiter**: Candidate submission, tracking, and placement management
 - **Broker**: Commission and candidate management
-- **Recruiter**: Job offers and placement management
+- **Employer**: Job management and interview scheduling
 
 ### Protected Routes
 Routes are protected based on user roles:

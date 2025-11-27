@@ -63,13 +63,13 @@ This document outlines the expected API endpoints for the Labour Mobility fronte
 | `/notifications/:id` | PUT | Mark notification as read | - | `{ notification }` |
 | `/notifications` | DELETE | Clear all notifications | - | `{ message }` |
 
-## 🏢 Agent & Broker Endpoints
+## 🏢 Recruiter & Broker Endpoints
 
 | Endpoint | Method | Description | Request Body | Response |
 |----------|--------|-------------|--------------|----------|
-| `/agents` | GET | Get all agents | Query: `{ page, limit, search }` | `{ agents, pagination }` |
-| `/agents/:id/candidates` | GET | Get agent's candidates | - | `{ candidates }` |
-| `/agents/:id/submissions` | GET | Get agent's submissions | - | `{ submissions }` |
+| `/recruiters` | GET | Get all recruiters | Query: `{ page, limit, search }` | `{ recruiters, pagination }` |
+| `/recruiters/:id/candidates` | GET | Get recruiter candidates | - | `{ candidates }` |
+| `/recruiters/:id/submissions` | GET | Get recruiter submissions | - | `{ submissions }` |
 | `/brokers` | GET | Get all brokers | Query: `{ page, limit, search }` | `{ brokers, pagination }` |
 | `/brokers/:id/commissions` | GET | Get broker's commissions | - | `{ commissions }` |
 

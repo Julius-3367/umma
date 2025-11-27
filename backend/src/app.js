@@ -16,6 +16,7 @@ const authGoogleRoutes = require('./routes/authGoogle');
 const candidateRoutes = require('./routes/candidateRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const trainerRoutes = require('./routes/trainerRoutes');
+const recruiterRoutes = require('./routes/recruiterRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const supportTicketRoutes = require('./routes/supportTicketRoutes');
 
@@ -238,6 +239,7 @@ app.use('/api/auth', authGoogleRoutes);
 app.use('/api/candidate', candidateRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/trainer', trainerRoutes);
+app.use('/api/recruiter', recruiterRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/support-tickets', supportTicketRoutes);
 

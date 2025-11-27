@@ -148,6 +148,8 @@ model Tenant {
   certificateTemplates CertificateTemplate[]
   vettingRecords       VettingRecord[]
   placements           Placement[]
+  candidatePipelineEvents CandidatePipelineEvent[]
+  jobOpenings         JobOpening[]
   agents               Agent[]
   brokers              Broker[]
   payments             Payment[]
@@ -234,6 +236,8 @@ model User {
   placementsCreated    Placement[]           @relation("PlacementCreatedBy")
   placementsUpdated    Placement[]           @relation("PlacementUpdatedBy")
   placementsManaged    Placement[]           @relation("PlacementOfficer")
+  jobOpeningsCreated   JobOpening[]          @relation("JobOpeningRecruiter")
+  pipelineEventsAuthored CandidatePipelineEvent[] @relation("PipelineEventAuthor")
   paymentsCreated      Payment[]             @relation("PaymentCreatedBy")
   paymentsUpdated      Payment[]             @relation("PaymentUpdatedBy")
   invoicesCreated      Invoice[]             @relation("InvoiceCreatedBy")
@@ -422,6 +426,7 @@ model Candidate {
   documents     CandidateDocument[]
   payments      Payment[]
   appeals       AttendanceAppeal[]
+  pipelineEvents CandidatePipelineEvent[]
 
   @@index([tenantId, status])
   @@index([tenantId, fullName])
@@ -443,6 +448,26 @@ model CandidateDocument {
 
   @@index([tenantId, documentType])
   @@map("candidate_documents")
+}
+
+model CandidatePipelineEvent {
+  id            Int             @id @default(autoincrement())
+  tenantId      Int
+  candidateId   Int
+  fromStage     CandidateStatus?
+  toStage       CandidateStatus
+  comment       String?         @db.Text
+  isBlocked     Boolean         @default(false)
+  blockerReason String?
+  createdBy     Int?
+  createdAt     DateTime        @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  author    User?     @relation("PipelineEventAuthor", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, candidateId])
+  @@map("candidate_pipeline_events")
 }
 
 model Course {
@@ -586,6 +611,33 @@ model AttendanceAppeal {
   @@index([tenantId, status])
   @@index([attendanceRecordId])
   @@map("attendance_appeals")
+}
+
+model JobOpening {
+  id            Int      @id @default(autoincrement())
+  tenantId      Int
+  recruiterId   Int?
+  jobTitle      String
+  employerName  String?
+  location      String?
+  jobType       String?
+  priority      String?
+  openings      Int?     @default(1)
+  salaryRange   String?
+  status        String   @default("OPEN")
+  interviewDate DateTime?
+  description   String?  @db.Text
+  requirements  String?  @db.Text
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  recruiter User?  @relation("JobOpeningRecruiter", fields: [recruiterId], references: [id], onDelete: SetNull)
+  placements Placement[]
+
+  @@index([tenantId, status])
+  @@map("job_openings")
 }
 
 /// Report Jobs (persisted)
@@ -746,6 +798,7 @@ model Placement {
   placementCompletedDate DateTime?
   createdBy              Int?
   updatedBy              Int?
+  jobOpeningId           Int?
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
@@ -756,6 +809,7 @@ model Placement {
   recruitmentOfficer User?     @relation("PlacementOfficer", fields: [recruitmentOfficerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   createdByUser      User?     @relation("PlacementCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser      User?     @relation("PlacementUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  jobOpening         JobOpening? @relation(fields: [jobOpeningId], references: [id], onDelete: SetNull)
   payments           Payment[]
 
   @@index([tenantId, placementStatus])

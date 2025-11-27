@@ -435,6 +435,58 @@ const getProfile = async (req, res) => {
 };
 
 /**
+ * Update profile basics
+ */
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { firstName, lastName, phone } = req.body;
+
+    const data = {};
+    if (typeof firstName !== 'undefined') data.firstName = firstName;
+    if (typeof lastName !== 'undefined') data.lastName = lastName;
+    if (typeof phone !== 'undefined') data.phone = phone;
+
+    if (!Object.keys(data).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'No profile fields provided',
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data,
+      include: { role: true },
+    });
+
+    await createActivityLog({
+      userId,
+      action: 'PROFILE_UPDATED',
+      resource: 'User',
+      details: { updatedFields: Object.keys(data) },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+    });
+
+    const { password, ...userWithoutPassword } = updatedUser;
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: userWithoutPassword,
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+/**
  * Change password
  */
 const changePassword = async (req, res) => {
@@ -536,6 +588,7 @@ module.exports = {
   refreshToken,
   logout,
   getProfile,
+  updateProfile,
   getCurrentUser,
   changePassword
 };

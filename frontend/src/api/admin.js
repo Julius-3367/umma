@@ -87,6 +87,10 @@ export const adminService = {
   markNotificationAsRead: (id) => axios.patch(`${API_URL}/notifications/${id}/read`),
   markAllNotificationsAsRead: () => axios.patch(`${API_URL}/notifications/mark-all-read`),
   deleteNotification: (id) => axios.delete(`${API_URL}/notifications/${id}`),
+
+  // Vetting
+  getVettingDashboard: (params) => axios.get(`${API_URL}/vetting/dashboard`, { params }),
+  updateVettingRecord: (id, data) => axios.put(`${API_URL}/vetting/${id}`, data),
 };
 
 export default adminService;

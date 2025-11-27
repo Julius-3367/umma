@@ -244,17 +244,22 @@ function extractAuthPayload(payload) {
 
 function normalizeUser(user) {
   if (!user) return user;
+  const normalizeRoleName = (value) => {
+    if (!value || typeof value !== 'string') return value;
+    const lower = value.toLowerCase();
+    return lower === 'agent' ? 'recruiter' : lower;
+  };
   if (user.role && typeof user.role === 'object') {
     const roleName = user.role.name || user.role;
     return {
       ...user,
-      role: typeof roleName === 'string' ? roleName.toLowerCase() : roleName,
+      role: typeof roleName === 'string' ? normalizeRoleName(roleName) : roleName,
     };
   }
   if (typeof user.role === 'string') {
     return {
       ...user,
-      role: user.role.toLowerCase(),
+      role: normalizeRoleName(user.role),
     };
   }
   return user;

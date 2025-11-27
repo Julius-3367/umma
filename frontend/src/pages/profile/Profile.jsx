@@ -155,6 +155,7 @@ const Profile = () => {
       case 'trainer':
         return theme.palette.success;
       case 'agent':
+      case 'recruiter':
         return theme.palette.info;
       case 'broker':
         return theme.palette.warning;

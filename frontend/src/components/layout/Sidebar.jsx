@@ -86,11 +86,11 @@ const Sidebar = ({ navigationItems, onItemClick }) => {
       
       {/* Navigation Items */}
       <List sx={{ flexGrow: 1, pt: 1 }}>
-        {navigationItems.map((item) => {
+          {navigationItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           
           return (
-            <ListItem key={item.path} disablePadding>
+              <ListItem key={`${item.path || 'nav'}-${item.label || index}-${index}`} disablePadding>
               <ListItemButton
                 onClick={() => handleNavigation(item.path)}
                 selected={isActive}

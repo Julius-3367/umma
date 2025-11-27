@@ -219,6 +219,37 @@ router.get('/profile', authenticate, authController.getProfile);
 
 /**
  * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: Update current user profile basics
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/profile', authenticate, validate(schemas.updateProfile), authController.updateProfile);
+
+/**
+ * @swagger
  * /api/auth/change-password:
  *   put:
  *     summary: Change user password

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Grid,
+  Card,
+  CardContent,
+  TextField,
+  MenuItem,
   Button,
   Table,
   TableBody,
@@ -12,561 +14,414 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
   Avatar,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  CircularProgress,
+  Chip,
   ToggleButton,
   ToggleButtonGroup,
-  Paper,
-  Tabs,
-  Tab,
-  Badge,
-  IconButton,
+  CircularProgress,
+  Stack,
+  Divider,
+  Alert,
 } from '@mui/material';
 import {
-  CheckCircle as PresentIcon,
-  Cancel as AbsentIcon,
-  AccessTime as LateIcon,
-  School as CourseIcon,
-  Save as SaveIcon,
-  Download as DownloadIcon,
-  Person as PersonIcon,
+  CalendarToday,
+  CheckCircle,
+  Cancel,
+  AccessTime,
+  Refresh,
+  Save,
   History as HistoryIcon,
-  Gavel as AppealIcon,
-  Pending as PendingIcon,
-  Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
 import { useSnackbar } from 'notistack';
-import adminService from '../../api/admin';
-import attendanceAppealService from '../../api/attendanceAppeal';
-import ReviewAppealDialog from '../../components/attendance/ReviewAppealDialog';
+import trainerService from '../../api/trainer';
+
+const STATUS_OPTIONS = [
+  { value: 'PRESENT', label: 'Present' },
+  { value: 'LATE', label: 'Late' },
+  { value: 'ABSENT', label: 'Absent' },
+  { value: 'EXCUSED', label: 'Excused' },
+];
+
+const dateKey = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  return date.toISOString().slice(0, 10);
+};
 
 const TrainerAttendance = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const [loading, setLoading] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
   const [courses, setCourses] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [candidates, setCandidates] = useState([]);
-  const [attendance, setAttendance] = useState({});
-  const [remarks, setRemarks] = useState({});
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [sessionNumber, setSessionNumber] = useState(1);
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [appeals, setAppeals] = useState([]);
-  const [selectedAppeal, setSelectedAppeal] = useState(null);
-  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [statistics, setStatistics] = useState({
-    present: 0,
-    absent: 0,
-    late: 0,
-    total: 0,
-  });
+  const [students, setStudents] = useState([]);
+  const [attendanceMap, setAttendanceMap] = useState({});
+  const [notesMap, setNotesMap] = useState({});
+  const [history, setHistory] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchMyCourses();
-    fetchAppeals();
-  }, []);
-
-  useEffect(() => {
-    if (selectedCourse) {
-      fetchCandidates();
-      fetchExistingAttendance();
-    }
-  }, [selectedCourse, selectedDate]);
-
-  useEffect(() => {
-    calculateStatistics();
-  }, [attendance, candidates]);
-
-  const fetchMyCourses = async () => {
-    try {
-      // In a real scenario, this would fetch courses assigned to the trainer
-      const response = await adminService.getAllCourses({ status: 'ACTIVE' });
-      const coursesData = response?.data?.data || response?.data || [];
-      setCourses(Array.isArray(coursesData) ? coursesData : []);
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-      enqueueSnackbar('Failed to load courses', { variant: 'error' });
-    }
-  };
-
-  const fetchCandidates = async () => {
-    try {
-      setLoading(true);
-      const response = await adminService.getEnrollments();
-      const enrollmentsData = response?.data?.data?.enrollments || [];
-
-      const courseCandidates = enrollmentsData
-        .filter(e => e.courseId === parseInt(selectedCourse) && e.enrollmentStatus === 'ENROLLED')
-        .map(e => ({
-          id: e.candidateId,
-          enrollmentId: e.id,
-          fullName: e.candidate?.fullName || 'Unknown',
-          email: e.candidate?.user?.email || '',
-        }));
-
-      setCandidates(courseCandidates);
-
-      const initialAttendance = {};
-      courseCandidates.forEach(c => {
-        if (!attendance[c.id]) {
-          initialAttendance[c.id] = null;
+    const fetchCourses = async () => {
+      try {
+        setLoadingCourses(true);
+        const response = await trainerService.getMyCourses();
+        const data = response?.data?.data || [];
+        setCourses(data);
+        if (data.length > 0) {
+          setSelectedCourseId(String(data[0].id));
         }
-      });
-      setAttendance(prev => ({ ...prev, ...initialAttendance }));
-    } catch (error) {
-      console.error('Error fetching candidates:', error);
-      enqueueSnackbar('Failed to load candidates', { variant: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchExistingAttendance = async () => {
-    try {
-      const response = await adminService.getAttendance(selectedCourse, selectedDate);
-      const attendanceData = response?.data?.data || response?.data || [];
-
-      const existingAttendance = {};
-      const existingRemarks = {};
-
-      attendanceData.forEach(record => {
-        existingAttendance[record.candidateId] = record.status;
-        existingRemarks[record.candidateId] = record.remarks || '';
-      });
-
-      setAttendance(existingAttendance);
-      setRemarks(existingRemarks);
-
-      if (attendanceData.length > 0) {
-        setSessionNumber(attendanceData[0].sessionNumber || 1);
+      } catch (error) {
+        console.error('Error loading courses', error);
+        enqueueSnackbar('Failed to load courses', { variant: 'error' });
+      } finally {
+        setLoadingCourses(false);
       }
-    } catch (error) {
-      console.error('Error fetching attendance:', error);
-    }
-  };
-
-  const calculateStatistics = () => {
-    const stats = {
-      present: 0,
-      absent: 0,
-      late: 0,
-      total: candidates.length,
     };
 
-    Object.values(attendance).forEach(status => {
-      if (status === 'PRESENT') stats.present++;
-      else if (status === 'ABSENT') stats.absent++;
-      else if (status === 'LATE') stats.late++;
-    });
+    fetchCourses();
+  }, [enqueueSnackbar]);
 
-    setStatistics(stats);
-  };
+  useEffect(() => {
+    if (!selectedCourseId) {
+      return;
+    }
 
-  const handleAttendanceChange = (candidateId, status) => {
-    setAttendance(prev => ({
-      ...prev,
-      [candidateId]: prev[candidateId] === status ? null : status,
-    }));
-  };
+    const fetchCourseData = async () => {
+      try {
+        setLoadingStudents(true);
+        const [studentsResponse, attendanceResponse] = await Promise.all([
+          trainerService.getCourseStudents(selectedCourseId),
+          trainerService.getCourseAttendance(selectedCourseId),
+        ]);
 
-  const handleRemarksChange = (candidateId, value) => {
-    setRemarks(prev => ({
-      ...prev,
-      [candidateId]: value,
-    }));
-  };
-
-  const markAllPresent = () => {
-    const allPresent = {};
-    candidates.forEach(c => {
-      allPresent[c.id] = 'PRESENT';
-    });
-    setAttendance(allPresent);
-  };
-
-  const handleSaveAttendance = async () => {
-    try {
-      setLoading(true);
-
-      const records = candidates
-        .filter(c => attendance[c.id])
-        .map(c => ({
-          candidateId: c.id,
-          courseId: parseInt(selectedCourse),
-          sessionDate: selectedDate,
-          sessionNumber: sessionNumber,
-          status: attendance[c.id],
-          remarks: remarks[c.id] || '',
-        }));
-
-      if (records.length === 0) {
-        enqueueSnackbar('Please mark attendance for at least one candidate', { variant: 'warning' });
-        return;
+        setStudents(studentsResponse?.data?.data || []);
+        setHistory(attendanceResponse?.data?.data || []);
+      } catch (error) {
+        console.error('Error loading course data', error);
+        enqueueSnackbar('Failed to load course data', { variant: 'error' });
+      } finally {
+        setLoadingStudents(false);
+        setLoadingHistory(false);
       }
+    };
 
-      await adminService.saveAttendance({ records });
+    setLoadingHistory(true);
+    fetchCourseData();
+  }, [selectedCourseId, enqueueSnackbar]);
 
-      enqueueSnackbar(`Attendance saved for ${records.length} candidates`, { variant: 'success' });
-      setSaveDialogOpen(false);
-    } catch (error) {
-      console.error('Error saving attendance:', error);
-      enqueueSnackbar(error.response?.data?.message || 'Failed to save attendance', { variant: 'error' });
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!history.length) {
+      setAttendanceMap({});
+      setNotesMap({});
+      return;
     }
+
+    const map = {};
+    const notes = {};
+    const dayRecords = history.filter((record) => dateKey(record.date) === selectedDate);
+
+    dayRecords.forEach((record) => {
+      map[record.enrollmentId] = record.status;
+      notes[record.enrollmentId] = record.remarks || '';
+      if (record.sessionNumber) {
+        setSessionNumber(record.sessionNumber);
+      }
+    });
+
+    setAttendanceMap(map);
+    setNotesMap(notes);
+  }, [history, selectedDate]);
+
+  const stats = useMemo(() => {
+    const totals = {
+      present: 0,
+      late: 0,
+      absent: 0,
+      excused: 0,
+      total: students.length,
+    };
+
+    students.forEach((enrollment) => {
+      const status = attendanceMap[enrollment.id];
+      if (status === 'PRESENT') totals.present += 1;
+      if (status === 'LATE') totals.late += 1;
+      if (status === 'ABSENT') totals.absent += 1;
+      if (status === 'EXCUSED') totals.excused += 1;
+    });
+
+    return totals;
+  }, [students, attendanceMap]);
+
+  const groupedHistory = useMemo(() => {
+    if (!history.length) return [];
+    const groups = history.reduce((acc, record) => {
+      const key = dateKey(record.date);
+      if (!acc[key]) {
+        acc[key] = { date: key, present: 0, late: 0, absent: 0, excused: 0 };
+      }
+      const bucket = record.status?.toLowerCase();
+      if (bucket && acc[key][bucket] !== undefined) {
+        acc[key][bucket] += 1;
+      }
+      return acc;
+    }, {});
+
+    return Object.values(groups)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 6);
+  }, [history]);
+
+  const handleStatusChange = (enrollmentId, value) => {
+    if (!value) return;
+    setAttendanceMap((prev) => ({
+      ...prev,
+      [enrollmentId]: prev[enrollmentId] === value ? undefined : value,
+    }));
   };
 
-  const fetchAppeals = async () => {
+  const handleNoteChange = (enrollmentId, value) => {
+    setNotesMap((prev) => ({
+      ...prev,
+      [enrollmentId]: value,
+    }));
+  };
+
+  const markAll = (status) => {
+    const updated = {};
+    students.forEach((enrollment) => {
+      updated[enrollment.id] = status;
+    });
+    setAttendanceMap(updated);
+  };
+
+  const handleSave = async () => {
+    if (!selectedCourseId) {
+      enqueueSnackbar('Select a course first', { variant: 'warning' });
+      return;
+    }
+
+    const payloads = students
+      .filter((enrollment) => attendanceMap[enrollment.id])
+      .map((enrollment) => ({
+        enrollmentId: enrollment.id,
+        status: attendanceMap[enrollment.id],
+        remarks: notesMap[enrollment.id] || undefined,
+        date: selectedDate,
+        sessionNumber,
+      }));
+
+    if (!payloads.length) {
+      enqueueSnackbar('Mark at least one student before saving', { variant: 'info' });
+      return;
+    }
+
     try {
-      const response = await attendanceAppealService.getTrainerAppeals({ status: 'PENDING' });
-      setAppeals(response?.data || []);
+      setSaving(true);
+      await Promise.all(payloads.map((record) => trainerService.recordAttendance(record)));
+      enqueueSnackbar('Attendance saved successfully', { variant: 'success' });
+      const refresh = await trainerService.getCourseAttendance(selectedCourseId);
+      setHistory(refresh?.data?.data || []);
     } catch (error) {
-      console.error('Error fetching appeals:', error);
+      console.error('Error saving attendance', error);
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to save attendance', { variant: 'error' });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleReviewAppeal = (appeal) => {
-    setSelectedAppeal(appeal);
-    setReviewDialogOpen(true);
-  };
-
-  const handleReviewComplete = () => {
-    fetchAppeals();
-    if (selectedCourse) {
-      fetchExistingAttendance();
+  const refreshHistory = async () => {
+    if (!selectedCourseId) return;
+    try {
+      setLoadingHistory(true);
+      const response = await trainerService.getCourseAttendance(selectedCourseId);
+      setHistory(response?.data?.data || []);
+    } catch (error) {
+      console.error('Error refreshing attendance history', error);
+      enqueueSnackbar('Unable to refresh attendance history', { variant: 'error' });
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
-  const pendingAppealsCount = appeals.filter(a => a.status === 'PENDING').length;
+  if (loadingCourses) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  const exportToCSV = () => {
-    const courseName = courses.find(c => c.id === parseInt(selectedCourse))?.title || 'Course';
-    const headers = ['Candidate ID', 'Name', 'Email', 'Status', 'Remarks'];
-    const rows = candidates.map(c => [
-      c.id,
-      c.fullName,
-      c.email,
-      attendance[c.id] || 'NOT_MARKED',
-      remarks[c.id] || '',
-    ]);
-
-    const csv = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `attendance_${courseName}_${selectedDate}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'PRESENT': return 'success';
-      case 'ABSENT': return 'error';
-      case 'LATE': return 'warning';
-      default: return 'default';
-    }
-  };
-
-  const attendancePercentage = statistics.total > 0
-    ? Math.round((statistics.present / statistics.total) * 100)
-    : 0;
+  if (!courses.length) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="info">No courses assigned yet. Attendance will be available once you are assigned to a course.</Alert>
+      </Box>
+    );
+  }
 
   return (
-    <Box>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <div>
-          <Typography variant="h4" gutterBottom fontWeight="bold">
-            Mark Attendance
-          </Typography>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box>
+          <Typography variant="h4" gutterBottom>Attendance</Typography>
           <Typography variant="body2" color="text.secondary">
-            Track student attendance for your training sessions
+            Record daily attendance, capture notes, and review recent sessions in one place
           </Typography>
-        </div>
-        <Box display="flex" gap={2}>
+        </Box>
+        <Stack direction="row" spacing={1}>
           <Button
             variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={exportToCSV}
-            disabled={!selectedCourse || candidates.length === 0}
+            startIcon={<Refresh />}
+            onClick={refreshHistory}
+            disabled={loadingStudents || loadingHistory}
           >
-            Export
+            Refresh
           </Button>
           <Button
             variant="contained"
-            startIcon={<SaveIcon />}
-            onClick={() => setSaveDialogOpen(true)}
-            disabled={!selectedCourse || Object.keys(attendance).filter(k => attendance[k]).length === 0}
+            startIcon={<Save />}
+            onClick={handleSave}
+            disabled={saving || loadingStudents}
           >
-            Save Attendance
+            {saving ? 'Saving…' : 'Save Attendance'}
           </Button>
-        </Box>
+        </Stack>
       </Box>
 
-      {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-          <Tab label="Mark Attendance" icon={<PresentIcon />} iconPosition="start" />
-          <Tab
-            label={
-              <Badge badgeContent={pendingAppealsCount} color="error">
-                Appeals
-              </Badge>
-            }
-            icon={<AppealIcon />}
-            iconPosition="start"
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={4}>
+          <TextField
+            select
+            fullWidth
+            label="Course"
+            value={selectedCourseId}
+            onChange={(e) => setSelectedCourseId(e.target.value)}
+          >
+            {courses.map((course) => (
+              <MenuItem key={course.id} value={course.id}>
+                {course.title}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            type="date"
+            label="Session Date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
           />
-          <Tab label="Attendance History" icon={<HistoryIcon />} iconPosition="start" />
-        </Tabs>
-      </Paper>
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Session #"
+            value={sessionNumber}
+            onChange={(e) => setSessionNumber(Number(e.target.value) || 1)}
+            inputProps={{ min: 1 }}
+          />
+        </Grid>
+        <Grid item xs={12} md={2}>
+          <Button fullWidth variant="outlined" sx={{ height: '100%' }} onClick={() => markAll('PRESENT')} disabled={!students.length}>
+            Mark All Present
+          </Button>
+        </Grid>
+      </Grid>
 
-      {tabValue === 0 && (
-        <>
-          {/* Filters */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                  <FormControl fullWidth>
-                    <InputLabel>My Course</InputLabel>
-                    <Select
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                      label="My Course"
-                    >
-                      <MenuItem value="">
-                        <em>Select a course</em>
-                      </MenuItem>
-                      {courses.map((course) => (
-                        <MenuItem key={course.id} value={course.id}>
-                          {course.title} ({course.code})
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label="Session Date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={2}>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Session #"
-                    value={sessionNumber}
-                    onChange={(e) => setSessionNumber(parseInt(e.target.value) || 1)}
-                    inputProps={{ min: 1 }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    onClick={markAllPresent}
-                    disabled={!selectedCourse || candidates.length === 0}
-                    sx={{ height: '56px' }}
-                  >
-                    Mark All Present
-                  </Button>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {[{
+          label: 'Present',
+          value: stats.present,
+          color: 'success.main',
+        }, {
+          label: 'Late',
+          value: stats.late,
+          color: 'warning.main',
+        }, {
+          label: 'Absent',
+          value: stats.absent,
+          color: 'error.main',
+        }, {
+          label: 'Excused',
+          value: stats.excused,
+          color: 'info.main',
+        }].map((stat) => (
+          <Grid item xs={12} sm={6} md={3} key={stat.label}>
+            <Card>
+              <CardContent>
+                <Typography variant="body2" color="text.secondary">{stat.label}</Typography>
+                <Typography variant="h4" sx={{ color: stat.color }}>{stat.value}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-          {/* Statistics */}
-          {selectedCourse && candidates.length > 0 && (
-            <Grid container spacing={2} mb={3}>
-              <Grid item xs={12} sm={3}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <PersonIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                      <div>
-                        <Typography variant="h4">{statistics.total}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Total Students
-                        </Typography>
-                      </div>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <PresentIcon sx={{ fontSize: 40, color: 'success.main' }} />
-                      <div>
-                        <Typography variant="h4" color="success.main">
-                          {statistics.present}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Present ({attendancePercentage}%)
-                        </Typography>
-                      </div>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <LateIcon sx={{ fontSize: 40, color: 'warning.main' }} />
-                      <div>
-                        <Typography variant="h4" color="warning.main">
-                          {statistics.late}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Late
-                        </Typography>
-                      </div>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <AbsentIcon sx={{ fontSize: 40, color: 'error.main' }} />
-                      <div>
-                        <Typography variant="h4" color="error.main">
-                          {statistics.absent}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Absent
-                        </Typography>
-                      </div>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          )}
-
-          {/* Attendance Table */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} lg={8}>
           <Card>
             <CardContent>
-              {!selectedCourse ? (
-                <Box py={8} textAlign="center">
-                  <CourseIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    Select a Course
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Choose your course and session date to mark attendance
-                  </Typography>
-                </Box>
-              ) : loading ? (
-                <Box display="flex" justifyContent="center" py={4}>
+              <Typography variant="h6" gutterBottom>Today's Roster</Typography>
+              {loadingStudents ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
                   <CircularProgress />
                 </Box>
-              ) : candidates.length === 0 ? (
-                <Box py={8} textAlign="center">
-                  <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    No Students Enrolled
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    There are no students enrolled in this course yet
-                  </Typography>
-                </Box>
+              ) : !students.length ? (
+                <Alert severity="info">No enrollments found for this course.</Alert>
               ) : (
                 <TableContainer>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell width="50">#</TableCell>
-                        <TableCell>Student</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell align="center">Mark Attendance</TableCell>
-                        <TableCell>Remarks</TableCell>
+                        <TableCell>Candidate</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Notes</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {candidates.map((candidate, index) => (
-                        <TableRow key={candidate.id} hover>
-                          <TableCell>{index + 1}</TableCell>
+                      {students.map((enrollment) => (
+                        <TableRow key={enrollment.id} hover>
                           <TableCell>
-                            <Box display="flex" alignItems="center" gap={2}>
+                            <Stack direction="row" spacing={2} alignItems="center">
                               <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                {candidate.fullName?.charAt(0) || 'S'}
+                                {`${enrollment.candidate?.firstName?.[0] || ''}${enrollment.candidate?.lastName?.[0] || ''}`.toUpperCase()}
                               </Avatar>
-                              <Typography variant="body1" fontWeight={500}>
-                                {candidate.fullName}
-                              </Typography>
-                            </Box>
+                              <Box>
+                                <Typography variant="subtitle2">
+                                  {enrollment.candidate?.firstName} {enrollment.candidate?.lastName}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {enrollment.candidate?.user?.email || 'No email'}
+                                </Typography>
+                              </Box>
+                            </Stack>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">{candidate.email}</Typography>
-                          </TableCell>
-                          <TableCell align="center">
                             <ToggleButtonGroup
-                              value={attendance[candidate.id]}
-                              exclusive
-                              onChange={(e, value) => value && handleAttendanceChange(candidate.id, value)}
                               size="small"
+                              exclusive
+                              value={attendanceMap[enrollment.id] || ''}
+                              onChange={(_, value) => handleStatusChange(enrollment.id, value)}
                             >
-                              <ToggleButton value="PRESENT" color="success">
-                                <Tooltip title="Present">
-                                  <PresentIcon />
-                                </Tooltip>
-                              </ToggleButton>
-                              <ToggleButton value="LATE" color="warning">
-                                <Tooltip title="Late">
-                                  <LateIcon />
-                                </Tooltip>
-                              </ToggleButton>
-                              <ToggleButton value="ABSENT" color="error">
-                                <Tooltip title="Absent">
-                                  <AbsentIcon />
-                                </Tooltip>
-                              </ToggleButton>
+                              {STATUS_OPTIONS.map((option) => (
+                                <ToggleButton key={option.value} value={option.value}>
+                                  {option.label}
+                                </ToggleButton>
+                              ))}
                             </ToggleButtonGroup>
-                            {attendance[candidate.id] && (
-                              <Chip
-                                label={attendance[candidate.id]}
-                                color={getStatusColor(attendance[candidate.id])}
-                                size="small"
-                                sx={{ ml: 1 }}
-                              />
-                            )}
                           </TableCell>
                           <TableCell>
                             <TextField
                               size="small"
-                              placeholder="Add remarks..."
-                              value={remarks[candidate.id] || ''}
-                              onChange={(e) => handleRemarksChange(candidate.id, e.target.value)}
-                              fullWidth
+                              placeholder="Optional notes"
+                              value={notesMap[enrollment.id] || ''}
+                              onChange={(e) => handleNoteChange(enrollment.id, e.target.value)}
                             />
                           </TableCell>
                         </TableRow>
@@ -577,163 +432,54 @@ const TrainerAttendance = () => {
               )}
             </CardContent>
           </Card>
-        </>
-      )}
+        </Grid>
 
-      {tabValue === 1 && (
-        <Card>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h6">Pending Appeals</Typography>
-              <IconButton onClick={fetchAppeals} size="small">
-                <RefreshIcon />
-              </IconButton>
-            </Box>
-
-            {appeals.length === 0 ? (
-              <Alert severity="info">
-                <Typography variant="body2">
-                  No pending appeals at the moment. Appeals from students will appear here.
-                </Typography>
-              </Alert>
-            ) : (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Student</TableCell>
-                      <TableCell>Course</TableCell>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Original Status</TableCell>
-                      <TableCell>Reason</TableCell>
-                      <TableCell>Submitted</TableCell>
-                      <TableCell align="right">Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {appeals.map((appeal) => (
-                      <TableRow key={appeal.id} hover>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={500}>
-                            {appeal.candidate?.fullName || 
-                             `${appeal.candidate?.user?.firstName} ${appeal.candidate?.user?.lastName}`}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {appeal.candidate?.user?.email}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {appeal.attendanceRecord?.course?.title}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {format(new Date(appeal.attendanceRecord?.date), 'MMM dd, yyyy')}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={appeal.originalStatus}
-                            size="small"
-                            color={appeal.originalStatus === 'ABSENT' ? 'error' : 'warning'}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
-                            {appeal.reason.substring(0, 50)}...
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" color="text.secondary">
-                            {format(new Date(appeal.createdAt), 'MMM dd, hh:mm a')}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            variant="contained"
-                            startIcon={<AppealIcon />}
-                            onClick={() => handleReviewAppeal(appeal)}
-                          >
-                            Review
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {tabValue === 2 && (
-        <Card>
-          <CardContent>
-            <Box py={8} textAlign="center">
-              <HistoryIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Attendance History
-              </Typography>
+        <Grid item xs={12} lg={4}>
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Quick Actions</Typography>
+              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                <Chip label="All Present" onClick={() => markAll('PRESENT')} clickable color="success" variant="outlined" />
+                <Chip label="All Absent" onClick={() => markAll('ABSENT')} clickable color="error" variant="outlined" />
+              </Stack>
               <Typography variant="body2" color="text.secondary">
-                View past attendance records and reports
+                Use quick chips to pre-fill the roster, then fine-tune individual statuses.
               </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
 
-      {/* Save Confirmation Dialog */}
-      <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
-        <DialogTitle>Save Attendance</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Saving attendance for <strong>{Object.keys(attendance).filter(k => attendance[k]).length}</strong> students
-          </Alert>
-          <Typography variant="body2">
-            Course: <strong>{courses.find(c => c.id === parseInt(selectedCourse))?.title}</strong>
-          </Typography>
-          <Typography variant="body2">
-            Date: <strong>{format(new Date(selectedDate), 'MMMM dd, yyyy')}</strong>
-          </Typography>
-          <Typography variant="body2">
-            Session: <strong>#{sessionNumber}</strong>
-          </Typography>
-          <Box mt={2}>
-            <Typography variant="body2" color="text.secondary">
-              • Present: {statistics.present}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              • Late: {statistics.late}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              • Absent: {statistics.absent}
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleSaveAttendance}
-            variant="contained"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-          >
-            Confirm & Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Review Appeal Dialog */}
-      <ReviewAppealDialog
-        open={reviewDialogOpen}
-        onClose={() => setReviewDialogOpen(false)}
-        appeal={selectedAppeal}
-        onReviewComplete={handleReviewComplete}
-        isAdmin={false}
-      />
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6">Recent Sessions</Typography>
+                <HistoryIcon fontSize="small" color="action" />
+              </Box>
+              {loadingHistory ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : !groupedHistory.length ? (
+                <Alert severity="info">No attendance recorded yet.</Alert>
+              ) : (
+                <Stack spacing={2}>
+                  {groupedHistory.map((entry) => (
+                    <Box key={entry.date} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                      <Typography variant="subtitle2">{entry.date}</Typography>
+                      <Divider sx={{ my: 1 }} />
+                      <Stack direction="row" spacing={1}>
+                        <Chip size="small" label={`Present ${entry.present}`} color="success" icon={<CheckCircle fontSize="small" />} />
+                        <Chip size="small" label={`Late ${entry.late}`} color="warning" icon={<AccessTime fontSize="small" />} />
+                        <Chip size="small" label={`Absent ${entry.absent}`} color="error" icon={<Cancel fontSize="small" />} />
+                        <Chip size="small" label={`Excused ${entry.excused}`} color="info" icon={<CalendarToday fontSize="small" />} />
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Box>
   );
 };

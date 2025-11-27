@@ -179,9 +179,8 @@ function verifyThemeMigration() {
     'src/pages/admin/AdminDashboard.jsx',
     'src/pages/candidate/Dashboard.jsx',
     'src/pages/trainer/Dashboard.jsx',
-    'src/pages/agent/Dashboard.jsx',
+    'src/pages/recruiter/Dashboard.jsx',
     'src/pages/broker/Dashboard.jsx',
-    'src/pages/employer/Dashboard.jsx',
   ];
 
   let dashboardsFound = 0;

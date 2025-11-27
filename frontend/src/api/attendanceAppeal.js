@@ -9,7 +9,7 @@ import axiosInstance from './axios';
  */
 export const submitAttendanceAppeal = async (attendanceId, appealData) => {
   const response = await axiosInstance.post(
-    `/api/candidate/attendance/${attendanceId}/appeal`,
+    `/candidate/attendance/${attendanceId}/appeal`,
     appealData
   );
   return response.data;
@@ -19,7 +19,7 @@ export const submitAttendanceAppeal = async (attendanceId, appealData) => {
  * CANDIDATE: Get my appeals
  */
 export const getMyAppeals = async (filters = {}) => {
-  const response = await axiosInstance.get('/api/candidate/attendance/appeals', {
+  const response = await axiosInstance.get('/candidate/attendance/appeals', {
     params: filters,
   });
   return response.data;
@@ -30,7 +30,7 @@ export const getMyAppeals = async (filters = {}) => {
  */
 export const cancelAppeal = async (appealId) => {
   const response = await axiosInstance.delete(
-    `/api/candidate/attendance/appeals/${appealId}`
+    `/candidate/attendance/appeals/${appealId}`
   );
   return response.data;
 };
@@ -39,7 +39,7 @@ export const cancelAppeal = async (appealId) => {
  * TRAINER: Get appeals for my courses
  */
 export const getTrainerAppeals = async (filters = {}) => {
-  const response = await axiosInstance.get('/api/trainer/attendance/appeals', {
+  const response = await axiosInstance.get('/trainer/attendance/appeals', {
     params: filters,
   });
   return response.data;
@@ -50,7 +50,7 @@ export const getTrainerAppeals = async (filters = {}) => {
  */
 export const reviewAppeal = async (appealId, reviewData) => {
   const response = await axiosInstance.put(
-    `/api/trainer/attendance/appeals/${appealId}/review`,
+    `/trainer/attendance/appeals/${appealId}/review`,
     reviewData
   );
   return response.data;
@@ -60,7 +60,7 @@ export const reviewAppeal = async (appealId, reviewData) => {
  * ADMIN: Get all appeals
  */
 export const getAdminAppeals = async (filters = {}) => {
-  const response = await axiosInstance.get('/api/admin/attendance/appeals', {
+  const response = await axiosInstance.get('/admin/attendance/appeals', {
     params: filters,
   });
   return response.data;
@@ -71,7 +71,7 @@ export const getAdminAppeals = async (filters = {}) => {
  */
 export const overrideAppeal = async (appealId, overrideData) => {
   const response = await axiosInstance.put(
-    `/api/admin/attendance/appeals/${appealId}/override`,
+    `/admin/attendance/appeals/${appealId}/override`,
     overrideData
   );
   return response.data;

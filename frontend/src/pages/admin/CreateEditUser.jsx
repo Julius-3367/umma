@@ -26,12 +26,12 @@ const CreateEditUser = () => {
   // Map role names to roleIds
   const getRoleId = (roleName) => {
     const roleMap = {
-      'ADMIN': 1,
-      'CANDIDATE': 2,
-      'TRAINER': 3,
-      'AGENT': 4,
-      'BROKER': 5,
-      'EMPLOYER': 6,
+      ADMIN: 1,
+      CANDIDATE: 2,
+      TRAINER: 3,
+      RECRUITER: 4,
+      BROKER: 5,
+      EMPLOYER: 6,
     };
     return roleMap[roleName] || 2; // Default to CANDIDATE
   };
@@ -138,11 +138,11 @@ const CreateEditUser = () => {
             <InputLabel>Role</InputLabel>
             <Select label="Role" name="roleId" value={form.roleId} onChange={(e) => setForm((s) => ({ ...s, roleId: e.target.value }))}>
               <MenuItem value={1}>Admin</MenuItem>
-              <MenuItem value={2}>Trainer</MenuItem>
-              <MenuItem value={3}>Candidate</MenuItem>
-              <MenuItem value={4}>Agent</MenuItem>
+              <MenuItem value={2}>Candidate</MenuItem>
+              <MenuItem value={3}>Trainer</MenuItem>
+              <MenuItem value={4}>Recruiter</MenuItem>
               <MenuItem value={5}>Broker</MenuItem>
-              <MenuItem value={6}>Recruiter</MenuItem>
+              <MenuItem value={6}>Employer</MenuItem>
             </Select>
           </FormControl>
 

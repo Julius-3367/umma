@@ -37,6 +37,12 @@ export const authAPI = {
     const response = await api.put('/auth/change-password', passwordData);
     return response.data;
   },
+
+  // Update profile basics
+  updateProfile: async (profileData) => {
+    const response = await api.put('/auth/profile', profileData);
+    return response.data;
+  },
 };
 
 export default authAPI;

@@ -28,23 +28,17 @@ Use these credentials to test different user roles:
 - **Role**: Student/Candidate
 - **Expected Redirect**: /candidate/dashboard
 
-### Agent Account
-- **Email**: agent@umsl.edu
-- **Password**: agent123
-- **Role**: Agent
-- **Expected Redirect**: /agent/dashboard
+### Recruiter Account
+- **Email**: recruiter@umsl.edu
+- **Password**: recruiter123
+- **Role**: Recruiter
+- **Expected Redirect**: /recruiter/dashboard
 
 ### Broker Account
 - **Email**: broker@umsl.edu
 - **Password**: broker123
 - **Role**: Broker
 - **Expected Redirect**: /broker/dashboard
-
-### Recruiter Account
-- **Email**: recruiter@umsl.edu
-- **Password**: recruiter123
-- **Role**: Recruiter
-- **Expected Redirect**: /recruiter/dashboard
 
 ## Testing Authentication Flow
 

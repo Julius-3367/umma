@@ -1,12 +1,10 @@
 import axios from 'axios';
 
+const DEFAULT_API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+
 // Create axios instance with default config
-// Note: backend routes are mounted under `/api` (see backend/src/app.js),
-// so default baseURL should include the `/api` prefix to avoid 404s like
-// "Route not found" when frontend calls `/auth/login` (which becomes `/auth/login`
-// without `/api`).
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: DEFAULT_API_BASE,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -25,8 +23,8 @@ const getTokens = () => ({
 
 // Helper function to make URL
 const makeUrl = (endpoint) => {
-  const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-  return `${base}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const normalized = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${DEFAULT_API_BASE}${normalized}`;
 };
 
 /**

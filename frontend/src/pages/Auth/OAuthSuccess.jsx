@@ -10,9 +10,9 @@ const roleRedirectMap = {
   [ROLES.ADMIN]: '/admin/dashboard',
   [ROLES.TRAINER]: '/trainer/dashboard',
   [ROLES.CANDIDATE]: '/candidate/dashboard',
-  [ROLES.AGENT]: '/agent/dashboard',
   [ROLES.BROKER]: '/broker/dashboard',
   [ROLES.RECRUITER]: '/recruiter/dashboard',
+  [ROLES.EMPLOYER]: '/recruiter/dashboard',
 };
 
 const OAuthSuccess = () => {
@@ -40,7 +40,7 @@ const OAuthSuccess = () => {
 
         const roleKey = resolvedUser?.role?.toLowerCase();
         const fallbackPath = '/dashboard';
-        const destination = roleKey === 'employer' ? roleRedirectMap['recruiter'] : roleRedirectMap[roleKey] || fallbackPath;
+        const destination = roleRedirectMap[roleKey] || fallbackPath;
         navigate(destination, { replace: true });
       } catch (error) {
         console.error('OAuth initialization failed:', error);

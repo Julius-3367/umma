@@ -81,13 +81,11 @@ async function main() {
     errors++;
   if (!checkFile('src/pages/candidate/Dashboard.jsx', 'Candidate Dashboard'))
     errors++;
-  if (!checkFile('src/pages/employer/Dashboard.jsx', 'Employer Dashboard'))
+  if (!checkFile('src/pages/recruiter/Dashboard.jsx', 'Recruiter Dashboard'))
     errors++;
   if (!checkFile('src/pages/broker/Dashboard.jsx', 'Broker Dashboard'))
     errors++;
   if (!checkFile('src/pages/trainer/Dashboard.jsx', 'Trainer Dashboard'))
-    warnings++;
-  if (!checkFile('src/pages/agent/Dashboard.jsx', 'Agent Dashboard'))
     warnings++;
 
   // Check essential infrastructure

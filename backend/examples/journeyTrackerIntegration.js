@@ -211,43 +211,6 @@ function calculateProfileCompletion(candidate) {
 // OPTION 2: Database Schema Updates (if using Prisma)
 // =============================================================================
 
-// In: /backend/prisma/schema.prisma
-
-model Candidate {
-  id                    Int @id @default (autoincrement())
-  // ... existing fields
-
-  // Journey tracking fields
-  journeyStage          String @default ("registration") // current stage
-  completedStages       Json @default ("[]")           // array of completed stage IDs
-  stageDates            Json @default ("{}")           // object with stage completion dates
-  stageProgress         Json @default ("{}")           // object with stage progress percentages
-
-  // Vetting fields
-  documentsVerified     Boolean @default (false)
-  backgroundCheckStatus String ?   // PENDING, IN_PROGRESS, APPROVED, REJECTED
-    vettingCompletedAt    DateTime ?
-
-      // Job matching fields
-      jobApplications       Int @default (0)
-  jobOffers             Int @default (0)
-  firstOfferDate        DateTime ?
-
-    // Placement fields
-    placementStatus       String ?   // ACTIVE, PLACED, WITHDRAWN
-      isEmployed            Boolean @default (false)
-  placementDate         DateTime ?
-    employmentStartDate   DateTime ?
-
-  // ... other fields
-}
-
-// =============================================================================
-// Migration Command
-// =============================================================================
-
-/*
-npx prisma migrate dev --name add_journey_tracking
 
 This will:
 1. Add new columns to candidates table

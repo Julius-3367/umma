@@ -36,6 +36,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Tooltip,
+  Stack,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -58,8 +59,10 @@ import {
   ThumbUp as ApprovedIcon,
   ThumbDown as RejectedIcon,
   Refresh as RefreshIcon,
+  History as HistoryIcon,
+  NotificationsActive as NotificationsIcon,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { useSnackbar } from 'notistack';
 import adminService from '../../api/admin';
 import attendanceAppealService from '../../api/attendanceAppeal';
@@ -94,6 +97,11 @@ const Candidates = () => {
     late: 0,
     total: 0,
   });
+  const [attendanceStatsData, setAttendanceStatsData] = useState(null);
+  const [historyRange, setHistoryRange] = useState(14);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [sendingNotifications, setSendingNotifications] = useState(false);
 
   // Appeals state
   const [appeals, setAppeals] = useState([]);
@@ -232,8 +240,9 @@ const Candidates = () => {
     if (selectedCourse) {
       fetchAttendanceCandidates();
       fetchExistingAttendance();
+      fetchAttendanceStats();
     }
-  }, [selectedCourse, selectedDate]);
+  }, [selectedCourse, selectedDate, historyRange]);
 
   useEffect(() => {
     calculateStatistics();
@@ -252,7 +261,7 @@ const Candidates = () => {
 
   const fetchAttendanceCandidates = async () => {
     try {
-      setLoading(true);
+      setAttendanceLoading(true);
       const response = await adminService.getEnrollments();
       const enrollmentsData = response?.data?.data?.enrollments || [];
 
@@ -263,22 +272,31 @@ const Candidates = () => {
           enrollmentId: e.id,
           fullName: e.candidate?.fullName || 'Unknown',
           email: e.candidate?.user?.email || '',
+          userId: e.candidate?.userId || e.candidate?.user?.id,
         }));
 
       setAttendanceCandidates(courseCandidates);
 
-      const initialAttendance = {};
-      courseCandidates.forEach(c => {
-        if (!attendance[c.id]) {
-          initialAttendance[c.id] = null;
-        }
+      setAttendance(prev => {
+        const next = {};
+        courseCandidates.forEach(c => {
+          next[c.id] = prev[c.id] ?? null;
+        });
+        return next;
       });
-      setAttendance(prev => ({ ...prev, ...initialAttendance }));
+
+      setRemarks(prev => {
+        const next = {};
+        courseCandidates.forEach(c => {
+          next[c.id] = prev[c.id] || '';
+        });
+        return next;
+      });
     } catch (error) {
       console.error('Error fetching candidates:', error);
       enqueueSnackbar('Failed to load candidates', { variant: 'error' });
     } finally {
-      setLoading(false);
+      setAttendanceLoading(false);
     }
   };
 
@@ -303,6 +321,22 @@ const Candidates = () => {
       }
     } catch (error) {
       console.error('Error fetching attendance:', error);
+    }
+  };
+
+  const fetchAttendanceStats = async () => {
+    if (!selectedCourse) return;
+
+    try {
+      setStatsLoading(true);
+      const endDate = format(new Date(selectedDate), 'yyyy-MM-dd');
+      const startDate = format(subDays(new Date(selectedDate), historyRange - 1), 'yyyy-MM-dd');
+      const response = await adminService.getAttendanceStatistics(selectedCourse, startDate, endDate);
+      setAttendanceStatsData(response?.data?.data || null);
+    } catch (error) {
+      console.error('Error fetching attendance statistics:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -400,6 +434,37 @@ const Candidates = () => {
     link.download = `attendance_${courseName}_${selectedDate}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleSendAbsenceNotifications = async () => {
+    if (!selectedCourse) {
+      enqueueSnackbar('Select a course before sending notifications', { variant: 'warning' });
+      return;
+    }
+
+    const absentees = attendanceCandidates
+      .filter(candidate => attendance[candidate.id] === 'ABSENT' && candidate.userId)
+      .map(candidate => candidate.userId);
+
+    if (!absentees.length) {
+      enqueueSnackbar('Mark absentees before sending notifications', { variant: 'info' });
+      return;
+    }
+
+    try {
+      setSendingNotifications(true);
+      await adminService.sendAttendanceNotifications({
+        courseId: parseInt(selectedCourse, 10),
+        date: selectedDate,
+        studentIds: absentees,
+      });
+      enqueueSnackbar(`Absence notifications sent to ${absentees.length} candidate(s)`, { variant: 'success' });
+    } catch (error) {
+      console.error('Error sending attendance notifications:', error);
+      enqueueSnackbar(error.response?.data?.message || 'Failed to send notifications', { variant: 'error' });
+    } finally {
+      setSendingNotifications(false);
+    }
   };
 
   const getAttendanceStatusColor = (status) => {

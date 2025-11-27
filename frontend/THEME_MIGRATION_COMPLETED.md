@@ -16,7 +16,7 @@ The UMSL Labor Mobility Platform has been successfully migrated from Tailwind CS
 ### ✅ Created Files (Material-UI Theme-Aware)
 - **`AdminDashboard.jsx`** - Complete admin dashboard with Material-UI components
 - **`Dashboard.jsx` (Candidate)** - Candidate dashboard with theme integration
-- **`Dashboard.jsx` (Agent)** - Agent dashboard with theme-aware components
+- **`Dashboard.jsx` (Recruiter)** - Recruiter dashboard with theme-aware components
 - **`Dashboard.jsx` (Broker)** - Broker dashboard using Material-UI
 - **`Dashboard.jsx` (Employer)** - Employer dashboard with theme styling
 - **`Dashboard.jsx` (Trainer)** - Trainer dashboard with theme components
@@ -83,8 +83,6 @@ src/
 │   ├── candidate/
 │   │   └── Dashboard.jsx ✅ (NEW - Theme-aware)
 │   ├── trainer/
-│   │   └── Dashboard.jsx ✅ (NEW - Theme-aware)
-│   ├── agent/
 │   │   └── Dashboard.jsx ✅ (NEW - Theme-aware)
 │   ├── broker/
 │   │   └── Dashboard.jsx ✅ (NEW - Theme-aware)
@@ -163,7 +161,7 @@ src/
 - 📅 Schedule management
 - 📝 Assessment tools
 
-### Agent Dashboard
+### Recruiter Dashboard
 - 👥 Candidate management
 - 📈 Placement tracking
 - 💰 Commission monitoring

@@ -1009,6 +1009,352 @@ const getAllCandidates = async (req, res) => {
 };
 
 /**
+ * Placement Management
+ */
+
+// Get all placements
+const getAllPlacements = async (req, res) => {
+  try {
+    const { page = 1, limit = 50, status, candidateId } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const where = {};
+
+    if (status) {
+      where.placementStatus = status;
+    }
+
+    if (candidateId) {
+      where.candidateId = parseInt(candidateId);
+    }
+
+    const [placements, total] = await Promise.all([
+      prisma.placement.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: parseInt(limit),
+        include: {
+          candidate: {
+            select: {
+              id: true,
+              fullName: true,
+              nationalIdPassport: true,
+            },
+          },
+          jobOpening: {
+            select: {
+              id: true,
+              jobTitle: true,
+              company: true,
+              country: true,
+            },
+          },
+          recruitmentOfficer: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      prisma.placement.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: placements,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit)),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching placements:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching placements',
+      error: error.message,
+    });
+  }
+};
+
+// Get placement by ID
+const getPlacementById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const placement = await prisma.placement.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            nationalIdPassport: true,
+            email: true,
+            phoneNumber: true,
+          },
+        },
+        jobOpening: {
+          select: {
+            id: true,
+            jobTitle: true,
+            company: true,
+            country: true,
+            salaryRange: true,
+          },
+        },
+        agent: {
+          select: {
+            id: true,
+            agentName: true,
+            email: true,
+          },
+        },
+        broker: {
+          select: {
+            id: true,
+            brokerName: true,
+            email: true,
+          },
+        },
+        recruitmentOfficer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!placement) {
+      return res.status(404).json({
+        success: false,
+        message: 'Placement not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: placement,
+    });
+  } catch (error) {
+    console.error('Error fetching placement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching placement',
+      error: error.message,
+    });
+  }
+};
+
+// Create placement
+const createPlacement = async (req, res) => {
+  try {
+    const {
+      candidateId,
+      jobOpeningId,
+      agentId,
+      brokerId,
+      recruitingAgency,
+      jobRoleOffered,
+      country,
+      employerName,
+      interviewDate,
+      placementStatus = 'INITIATED',
+    } = req.body;
+
+    // Get tenant from authenticated user
+    const tenantId = req.user.tenantId;
+
+    const placement = await prisma.placement.create({
+      data: {
+        tenantId,
+        candidateId: parseInt(candidateId),
+        jobOpeningId: jobOpeningId ? parseInt(jobOpeningId) : null,
+        agentId: agentId ? parseInt(agentId) : null,
+        brokerId: brokerId ? parseInt(brokerId) : null,
+        recruitingAgency,
+        jobRoleOffered,
+        country,
+        employerName,
+        interviewDate: interviewDate ? new Date(interviewDate) : null,
+        placementStatus,
+        recruitmentOfficerId: req.user.id,
+        createdBy: req.user.id,
+      },
+      include: {
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            nationalIdPassport: true,
+          },
+        },
+        jobOpening: {
+          select: {
+            id: true,
+            jobTitle: true,
+            company: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: placement,
+      message: 'Placement created successfully',
+    });
+  } catch (error) {
+    console.error('Error creating placement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating placement',
+      error: error.message,
+    });
+  }
+};
+
+// Update placement
+const updatePlacement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      placementStatus,
+      interviewDate,
+      interviewResult,
+      offerLetterUrl,
+      visaApplicationNo,
+      visaStatus,
+      travelDate,
+      flightDetails,
+      contractUploaded,
+      paymentConfirmation,
+      candidateNotified,
+      acceptanceConfirmed,
+      jobRoleOffered,
+      country,
+      employerName,
+    } = req.body;
+
+    // Check if placement exists
+    const existing = await prisma.placement.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: 'Placement not found',
+      });
+    }
+
+    const updateData = {
+      updatedBy: req.user.id,
+    };
+
+    // Add fields if provided
+    if (placementStatus) updateData.placementStatus = placementStatus;
+    if (interviewDate) updateData.interviewDate = new Date(interviewDate);
+    if (interviewResult) updateData.interviewResult = interviewResult;
+    if (offerLetterUrl) updateData.offerLetterUrl = offerLetterUrl;
+    if (visaApplicationNo) updateData.visaApplicationNo = visaApplicationNo;
+    if (visaStatus) updateData.visaStatus = visaStatus;
+    if (travelDate) updateData.travelDate = new Date(travelDate);
+    if (flightDetails) updateData.flightDetails = flightDetails;
+    if (contractUploaded !== undefined) updateData.contractUploaded = contractUploaded;
+    if (paymentConfirmation !== undefined) updateData.paymentConfirmation = paymentConfirmation;
+    if (candidateNotified !== undefined) updateData.candidateNotified = candidateNotified;
+    if (acceptanceConfirmed !== undefined) updateData.acceptanceConfirmed = acceptanceConfirmed;
+    if (jobRoleOffered) updateData.jobRoleOffered = jobRoleOffered;
+    if (country) updateData.country = country;
+    if (employerName) updateData.employerName = employerName;
+
+    // If moving to COMPLETED status, set completion date
+    if (placementStatus === 'COMPLETED' && existing.placementStatus !== 'COMPLETED') {
+      updateData.placementCompletedDate = new Date();
+    }
+
+    const placement = await prisma.placement.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+      include: {
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            nationalIdPassport: true,
+          },
+        },
+        jobOpening: {
+          select: {
+            id: true,
+            jobTitle: true,
+            company: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: placement,
+      message: 'Placement updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating placement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating placement',
+      error: error.message,
+    });
+  }
+};
+
+// Delete placement
+const deletePlacement = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if placement exists
+    const placement = await prisma.placement.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!placement) {
+      return res.status(404).json({
+        success: false,
+        message: 'Placement not found',
+      });
+    }
+
+    await prisma.placement.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.json({
+      success: true,
+      message: 'Placement deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting placement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting placement',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Get system statistics
  */
 const getStatistics = async (req, res) => {
@@ -3706,6 +4052,285 @@ const updateEnrollmentStatus = async (req, res) => {
   }
 };
 
+const buildVettingDocuments = (record) => {
+  const docConfig = [
+    { key: 'policeDocumentUrl', label: 'Police Clearance', referenceKey: 'policeClearanceNo' },
+    { key: 'medicalReportUrl', label: 'Medical Report', referenceKey: 'medicalReportNo', statusKey: 'medicalStatus' },
+    { key: 'vaccinationProofUrl', label: 'Vaccination Proof' },
+  ];
+
+  return docConfig.map((doc) => {
+    const url = record[doc.key];
+    const statusValue = doc.statusKey && record[doc.statusKey] ? record[doc.statusKey].toLowerCase() : 'submitted';
+
+    return {
+      type: doc.label,
+      status: url ? statusValue : 'missing',
+      url,
+      reference: doc.referenceKey ? record[doc.referenceKey] : null,
+      lastUpdated: record.updatedAt,
+    };
+  });
+};
+
+const getVettingDashboard = async (req, res) => {
+  try {
+    const { status = 'all', search = '', page = 1, limit = 15 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const filters = {};
+
+    if (status && status !== 'all') {
+      filters.vettingStatus = status.toUpperCase();
+    }
+
+    if (search) {
+      filters.OR = [
+        { candidate: { fullName: { contains: search, mode: 'insensitive' } } },
+        { candidate: { nationalIdPassport: { contains: search, mode: 'insensitive' } } },
+        { candidate: { user: { email: { contains: search, mode: 'insensitive' } } } },
+      ];
+    }
+
+    const [records, totalFiltered, totalRecords, pendingCount, inProgressCount, clearedCount, rejectedCount, policeDocs, medicalDocs, vaccinationDocs, missingDocsCount, reviewSamples, activityRecords] = await Promise.all([
+      prisma.vettingRecord.findMany({
+        where: filters,
+        orderBy: { updatedAt: 'desc' },
+        skip,
+        take: parseInt(limit),
+        include: {
+          candidate: {
+            select: {
+              id: true,
+              fullName: true,
+              nationalIdPassport: true,
+              user: {
+                select: {
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
+          verificationOfficer: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+          reviewedByUser: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      }),
+      prisma.vettingRecord.count({ where: filters }),
+      prisma.vettingRecord.count(),
+      prisma.vettingRecord.count({ where: { vettingStatus: 'PENDING' } }),
+      prisma.vettingRecord.count({ where: { vettingStatus: 'IN_PROGRESS' } }),
+      prisma.vettingRecord.count({ where: { vettingStatus: 'CLEARED' } }),
+      prisma.vettingRecord.count({ where: { vettingStatus: 'REJECTED' } }),
+      prisma.vettingRecord.count({ where: { policeDocumentUrl: { not: null } } }),
+      prisma.vettingRecord.count({ where: { medicalReportUrl: { not: null } } }),
+      prisma.vettingRecord.count({ where: { vaccinationProofUrl: { not: null } } }),
+      prisma.vettingRecord.count({
+        where: {
+          OR: [
+            { policeDocumentUrl: null },
+            { medicalReportUrl: null },
+            { vaccinationProofUrl: null },
+          ],
+        },
+      }),
+      prisma.vettingRecord.findMany({
+        where: { reviewDate: { not: null } },
+        select: { createdAt: true, reviewDate: true },
+      }),
+      prisma.vettingRecord.findMany({
+        orderBy: { updatedAt: 'desc' },
+        take: 12,
+        include: {
+          candidate: {
+            select: {
+              id: true,
+              fullName: true,
+              user: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          },
+          reviewedByUser: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const avgReviewHours = reviewSamples.length
+      ? parseFloat(
+          (
+            reviewSamples.reduce((sum, sample) => sum + (sample.reviewDate - sample.createdAt), 0) /
+            reviewSamples.length /
+            (1000 * 60 * 60)
+          ).toFixed(1),
+        )
+      : 0;
+
+    const formattedRecords = records.map((record) => {
+      const documents = buildVettingDocuments(record);
+      const missingDocuments = documents.filter((doc) => doc.status === 'missing').map((doc) => doc.type);
+
+      return {
+        id: record.id,
+        candidateId: record.candidate.id,
+        name: record.candidate.fullName,
+        email: record.candidate.user?.email || null,
+        phone: record.candidate.user?.phone || null,
+        identifier: record.candidate.nationalIdPassport,
+        status: record.vettingStatus,
+        languageTestPassed: record.languageTestPassed || false,
+        medicalStatus: record.medicalStatus || null,
+        reviewer: record.reviewedByUser ? `${record.reviewedByUser.firstName || ''} ${record.reviewedByUser.lastName || ''}`.trim() : null,
+        reviewDate: record.reviewDate,
+        updatedAt: record.updatedAt,
+        documents,
+        missingDocuments,
+        comments: record.comments || '',
+      };
+    });
+
+    const documentsFeed = activityRecords
+      .flatMap((record) =>
+        buildVettingDocuments(record)
+          .filter((doc) => doc.url)
+          .map((doc) => ({
+            id: `${record.id}-${doc.type}`,
+            candidateId: record.candidate.id,
+            candidateName: record.candidate.fullName,
+            email: record.candidate.user?.email || null,
+            type: doc.type,
+            status: doc.status,
+            url: doc.url,
+            updatedAt: doc.lastUpdated,
+          })),
+      )
+      .slice(0, 12);
+
+    const recentActivity = activityRecords.slice(0, 8).map((record) => ({
+      id: record.id,
+      candidateId: record.candidate.id,
+      candidateName: record.candidate.fullName,
+      status: record.vettingStatus,
+      updatedAt: record.updatedAt,
+      reviewer: record.reviewedByUser ? `${record.reviewedByUser.firstName || ''} ${record.reviewedByUser.lastName || ''}`.trim() : null,
+      comments: record.comments || '',
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          total: totalRecords,
+          pending: pendingCount,
+          inProgress: inProgressCount,
+          cleared: clearedCount,
+          rejected: rejectedCount,
+          documentsUploaded: policeDocs + medicalDocs + vaccinationDocs,
+          awaitingDocuments: missingDocsCount,
+          avgReviewHours,
+        },
+        candidates: formattedRecords,
+        documentsFeed,
+        recentActivity,
+        pagination: {
+          total: totalFiltered,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(totalFiltered / parseInt(limit)),
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Get vetting dashboard error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch vetting dashboard data',
+      error: error.message,
+    });
+  }
+};
+
+const updateVettingRecord = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { vettingStatus, comments, languageTestPassed, medicalStatus } = req.body;
+
+    const allowedStatuses = ['PENDING', 'IN_PROGRESS', 'CLEARED', 'REJECTED'];
+    if (vettingStatus && !allowedStatuses.includes(vettingStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid vetting status provided',
+      });
+    }
+
+    const updateData = {
+      ...(vettingStatus ? { vettingStatus } : {}),
+      ...(typeof languageTestPassed === 'boolean' ? { languageTestPassed } : {}),
+      ...(medicalStatus ? { medicalStatus } : {}),
+      updatedBy: req.user.id,
+      comments: comments ?? undefined,
+    };
+
+    if (vettingStatus && ['CLEARED', 'REJECTED'].includes(vettingStatus)) {
+      updateData.reviewedBy = req.user.id;
+      updateData.reviewDate = new Date();
+    }
+
+    const updatedRecord = await prisma.vettingRecord.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+      include: {
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+          },
+        },
+      },
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'VETTING_UPDATE',
+        details: `Updated vetting record for ${updatedRecord.candidate.fullName} to ${updatedRecord.vettingStatus}`,
+        ipAddress: req.ip,
+        tenantId: req.user.tenantId,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Vetting record updated successfully',
+      data: updatedRecord,
+    });
+  } catch (error) {
+    console.error('Update vetting record error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update vetting record',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getAllUsers,
@@ -3756,6 +4381,12 @@ module.exports = {
   createCompany,
   updateCompany,
   deleteCompany,
+  // Placement Management
+  getAllPlacements,
+  getPlacementById,
+  createPlacement,
+  updatePlacement,
+  deletePlacement,
   // Notifications
   getNotifications,
   markNotificationAsRead,
@@ -3768,4 +4399,6 @@ module.exports = {
   getReportStatus,
   downloadReport,
   getReports,
+  getVettingDashboard,
+  updateVettingRecord,
 };

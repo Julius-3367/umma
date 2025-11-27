@@ -120,21 +120,21 @@ export const brokerDashboard = {
 };
 
 /**
- * Agent Dashboard
+ * Recruiter Dashboard
  */
-export const agentDashboard = {
+export const recruiterDashboard = {
   async getDashboard() {
-    const res = await api.get('/agent/dashboard');
+    const res = await api.get('/recruiter/dashboard');
     return unwrap(res);
   },
 
   async getMyCandidates() {
-    const res = await api.get('/agent/candidates');
+    const res = await api.get('/recruiter/candidates');
     return unwrap(res);
   },
 
   async getPlacements() {
-    const res = await api.get('/agent/placements');
+    const res = await api.get('/recruiter/placements');
     return unwrap(res);
   },
 };
@@ -149,7 +149,8 @@ export const getDashboardService = (role) => {
     trainer: trainerDashboard,
     employer: employerDashboard,
     broker: brokerDashboard,
-    agent: agentDashboard,
+    recruiter: recruiterDashboard,
+    agent: recruiterDashboard,
   };
 
   return services[role?.toLowerCase()] || null;
@@ -161,6 +162,7 @@ export default {
   trainer: trainerDashboard,
   employer: employerDashboard,
   broker: brokerDashboard,
-  agent: agentDashboard,
+  recruiter: recruiterDashboard,
+  agent: recruiterDashboard,
   getDashboardService,
 };

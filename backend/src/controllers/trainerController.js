@@ -344,8 +344,15 @@ const getCourseStudents = async (req, res) => {
  */
 const recordAttendance = async (req, res) => {
   try {
-    const { enrollmentId, status, remarks } = req.body;
+    const { enrollmentId, status, remarks, date, sessionNumber } = req.body;
     const trainerId = req.user.id;
+
+    if (!enrollmentId || !status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Enrollment ID and status are required',
+      });
+    }
 
     const enrollment = await prisma.enrollment.findUnique({
       where: { id: parseInt(enrollmentId) },
@@ -367,13 +374,50 @@ const recordAttendance = async (req, res) => {
       });
     }
 
+    const attendanceDate = date ? new Date(date) : new Date();
+    const startOfDay = new Date(attendanceDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(attendanceDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingRecord = await prisma.attendanceRecord.findFirst({
+      where: {
+        enrollmentId: parseInt(enrollmentId),
+        courseId: enrollment.courseId,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    if (existingRecord) {
+      const updatedAttendance = await prisma.attendanceRecord.update({
+        where: { id: existingRecord.id },
+        data: {
+          status,
+          remarks,
+          sessionNumber: sessionNumber ?? existingRecord.sessionNumber,
+          date: attendanceDate,
+          recordedBy: trainerId,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: 'Attendance updated successfully',
+        data: updatedAttendance,
+      });
+    }
+
     const attendance = await prisma.attendanceRecord.create({
       data: {
         tenantId: enrollment.tenantId,
         enrollmentId: parseInt(enrollmentId),
         courseId: enrollment.courseId,
-        date: new Date(),
-        status: status,
+        date: attendanceDate,
+        sessionNumber: sessionNumber || null,
+        status,
         remarks,
         recordedBy: trainerId,
       },

@@ -269,10 +269,18 @@ For any questions or feedback, please contact us at [your-email@example.com](mai
 
 ## 🔐 Default Credentials
 
-After running the seed script, you can login with:
+After running the seed script (`cd backend && npx prisma db seed`), you can login with:
 
 - **Admin**: `admin@labourmobility.com` / `admin123`
 - **Trainer**: `trainer@labourmobility.com` / `trainer123`
+- **Candidate**: `candidate@labourmobility.com` / `candidate123`
+- **Recruiter**: `recruiter@labourmobility.com` / `recruiter123`
+
+> **Note**: If you've already created users and need to update roles, re-run the seed script. It will automatically upgrade any legacy "Agent" role users to "Recruiter" role.
+- **Candidate**: `candidate@labourmobility.com` / `candidate123`
+- **Recruiter**: `recruiter@labourmobility.com` / `recruiter123`
+
+> Run `cd backend && npx prisma db seed` after configuring your `.env` to recreate all demo accounts.
 
 ## 📊 Database Schema
 

@@ -9,10 +9,9 @@ export const ROLES = {
   ADMIN: 'admin',
   TRAINER: 'trainer',
   CANDIDATE: 'candidate',
-  AGENT: 'agent',
   BROKER: 'broker',
   RECRUITER: 'recruiter',
-  EMPLOYER: 'recruiter',
+  EMPLOYER: 'employer',
 };
 
 // Role hierarchy for permissions
@@ -22,7 +21,6 @@ export const ROLE_HIERARCHY = {
   [ROLES.EMPLOYER]: 5,
   [ROLES.TRAINER]: 4,
   [ROLES.BROKER]: 3,
-  [ROLES.AGENT]: 2,
   [ROLES.CANDIDATE]: 1,
 };
 
@@ -87,9 +85,9 @@ export const getRoleDisplayName = (role) => {
     [ROLES.ADMIN]: 'Administrator',
     [ROLES.TRAINER]: 'Trainer',
     [ROLES.CANDIDATE]: 'Candidate',
-    [ROLES.AGENT]: 'Agent',
     [ROLES.BROKER]: 'Broker',
     [ROLES.RECRUITER]: 'Recruiter',
+    [ROLES.EMPLOYER]: 'Employer',
   };
   
   return roleNames[role] || role;
@@ -105,9 +103,9 @@ export const getRoleColor = (role) => {
     [ROLES.ADMIN]: '#f44336', // Red
     [ROLES.TRAINER]: '#2196f3', // Blue
     [ROLES.CANDIDATE]: '#4caf50', // Green
-    [ROLES.AGENT]: '#ff9800', // Orange
     [ROLES.BROKER]: '#9c27b0', // Purple
-    [ROLES.RECRUITER]: '#00bcd4', // Cyan
+    [ROLES.RECRUITER]: '#ff9800', // Orange
+    [ROLES.EMPLOYER]: '#00bcd4', // Cyan
   };
   
   return roleColors[role] || '#757575'; // Default gray
@@ -129,7 +127,7 @@ export const getNavigationItems = (role) => {
       { label: 'Courses', path: '/admin/courses', icon: 'School' },
       { label: 'Attendance', path: '/admin/attendance', icon: 'EventNote' },
       { label: 'Appeals', path: '/admin/appeals', icon: 'Gavel' },
-      { label: 'Agents', path: '/admin/agents', icon: 'Business' },
+      { label: 'Recruiters', path: '/admin/users', icon: 'Business' },
       { label: 'Brokers', path: '/admin/brokers', icon: 'AccountBalance' },
       { label: 'Users', path: '/admin/users', icon: 'ManageAccounts' },
       { label: 'Reports', path: '/admin/reports', icon: 'Assessment' },
@@ -144,18 +142,13 @@ export const getNavigationItems = (role) => {
       { label: 'Documents', path: '/candidate/uploads', icon: 'Upload' },
       { label: 'Status', path: '/candidate/status', icon: 'Timeline' },
     ],
-    [ROLES.AGENT]: [
-      { label: 'My Candidates', path: '/agent/candidates', icon: 'People' },
-      { label: 'Submissions', path: '/agent/submissions', icon: 'Send' },
-    ],
     [ROLES.BROKER]: [
       { label: 'My Candidates', path: '/broker/candidates', icon: 'People' },
       { label: 'Commissions', path: '/broker/commissions', icon: 'AttachMoney' },
     ],
     [ROLES.RECRUITER]: [
-      { label: 'Job Offers', path: '/recruiter/offers', icon: 'Work' },
-      { label: 'Interviews', path: '/recruiter/interviews', icon: 'VideoCall' },
-      { label: 'Placements', path: '/recruiter/placements', icon: 'CheckCircle' },
+      { label: 'My Candidates', path: '/recruiter/candidates', icon: 'People' },
+      { label: 'Submissions', path: '/recruiter/submissions', icon: 'Send' },
     ],
     [ROLES.EMPLOYER]: [
       { label: "Dashboard", path: "/employer/dashboard", icon: "Business" },

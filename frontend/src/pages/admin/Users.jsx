@@ -183,7 +183,6 @@ const Users = () => {
               <MenuItem value="Admin">Admin</MenuItem>
               <MenuItem value="Trainer">Trainer</MenuItem>
               <MenuItem value="Candidate">Candidate</MenuItem>
-              <MenuItem value="Agent">Agent</MenuItem>
               <MenuItem value="Broker">Broker</MenuItem>
               <MenuItem value="Recruiter">Recruiter</MenuItem>
             </Select>

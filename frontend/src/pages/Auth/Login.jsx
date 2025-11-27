@@ -79,13 +79,12 @@ const Login = () => {
         console.log('User authenticated, redirecting...', { user, role: user.role });
         // Map role to correct path
         const rolePathMap = {
-          'admin': '/admin/dashboard',
-          'candidate': '/candidate/dashboard',
-          'trainer': '/trainer/dashboard',
-          'agent': '/agent/dashboard',
-          'broker': '/broker/dashboard',
-          'employer': '/employer/dashboard',
-          'recruiter': '/employer/dashboard',
+          admin: '/admin/dashboard',
+          candidate: '/candidate/dashboard',
+          trainer: '/trainer/dashboard',
+          recruiter: '/recruiter/dashboard',
+          broker: '/broker/dashboard',
+          employer: '/recruiter/dashboard',
         };
         const rolePath = rolePathMap[user.role?.toLowerCase()] || '/candidate/dashboard';
         const from = location.state?.from?.pathname || rolePath;

@@ -22,6 +22,13 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const theme = useTheme();
   const location = useLocation();
   const { isAuthenticated, user, status } = useSelector((state) => state.auth);
+  const resolveUserRole = () => {
+    const rawRole = user?.role?.name || user?.role;
+    if (typeof rawRole !== 'string') return '';
+    const normalized = rawRole.toLowerCase();
+    return normalized === 'agent' ? 'recruiter' : normalized;
+  };
+  const userRole = resolveUserRole();
 
   // Show loading state while checking authentication
   if (status === 'loading') {
@@ -51,7 +58,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // Check role-based access if roles are specified
-  if (allowedRoles.length > 0 && !allowedRoles.some(role => role.toLowerCase() === user.role?.toLowerCase())) {
+  if (allowedRoles.length > 0 && !allowedRoles.some((role) => role.toLowerCase() === userRole)) {
     return (
       <Box
         sx={{
@@ -148,8 +155,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
               <Button
                 variant="contained"
                 onClick={() => {
-                  const userRole = user?.role?.toLowerCase() || 'candidate';
-                  window.location.href = `/dashboard/${userRole}`;
+                  const destinationRole = userRole || 'candidate';
+                  window.location.href = `/dashboard/${destinationRole}`;
                 }}
                 size="large"
               >
