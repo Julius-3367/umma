@@ -38,4 +38,11 @@ router.put('/assessments/:id', trainerController.updateAssessment);
 router.get('/attendance/appeals', appealController.getTrainerAppeals);
 router.put('/attendance/appeals/:appealId/review', appealController.reviewAppeal);
 
+/**
+ * Cohort Management
+ */
+router.get('/cohorts', trainerController.getMyCohorts);
+router.get('/cohorts/:cohortId/sessions', trainerController.getCohortSessions);
+router.put('/cohorts/:cohortId/sessions/:sessionId', trainerController.updateCohortSession);
+
 module.exports = router;

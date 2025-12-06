@@ -20,6 +20,7 @@ const recruiterRoutes = require('./routes/recruiterRoutes');
 const brokerRoutes = require('./routes/brokerRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const supportTicketRoutes = require('./routes/supportTicketRoutes');
+const cohortRoutes = require('./routes/cohortRoutes');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -244,6 +245,7 @@ app.use('/api/recruiter', recruiterRoutes);
 app.use('/api/broker', brokerRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/support-tickets', supportTicketRoutes);
+app.use('/api/cohorts', cohortRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

@@ -76,6 +76,36 @@ enum PlacementStatus {
   CANCELLED
 }
 
+enum CohortStatus {
+  DRAFT
+  PUBLISHED
+  ENROLLMENT_OPEN
+  ENROLLMENT_CLOSED
+  IN_TRAINING
+  ASSESSMENT_IN_PROGRESS
+  VETTING_IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum CohortEnrollmentStatus {
+  APPLIED
+  APPROVED
+  REJECTED
+  WAITLISTED
+  ENROLLED
+  WITHDRAWN
+  COMPLETED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
 enum PaymentStatus {
   PAID
   PENDING
@@ -133,33 +163,34 @@ model Tenant {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  roles                Role[]
-  users                User[]
-  userTenants          UserTenant[]
-  activityLogs         ActivityLog[]
-  candidates           Candidate[]
-  candidateDocuments   CandidateDocument[]
-  courses              Course[]
-  companies            Company[]
-  enrollments          Enrollment[]
-  attendanceRecords    AttendanceRecord[]
-  attendanceAppeals    AttendanceAppeal[]
-  assessments          Assessment[]
-  certificates         Certificate[]
-  certificateTemplates CertificateTemplate[]
-  vettingRecords       VettingRecord[]
-  placements           Placement[]
+  roles                   Role[]
+  users                   User[]
+  userTenants             UserTenant[]
+  activityLogs            ActivityLog[]
+  candidates              Candidate[]
+  candidateDocuments      CandidateDocument[]
+  courses                 Course[]
+  companies               Company[]
+  enrollments             Enrollment[]
+  attendanceRecords       AttendanceRecord[]
+  attendanceAppeals       AttendanceAppeal[]
+  assessments             Assessment[]
+  certificates            Certificate[]
+  certificateTemplates    CertificateTemplate[]
+  vettingRecords          VettingRecord[]
+  placements              Placement[]
   candidatePipelineEvents CandidatePipelineEvent[]
-  jobOpenings         JobOpening[]
-  agents               Agent[]
-  brokers              Broker[]
-  payments             Payment[]
-  invoices             Invoice[]
-  notifications        Notification[]
-  settings             Setting[]
-  reportJobs           ReportJob[]
-  messages             Message[]
-  supportTickets       SupportTicket[]
+  jobOpenings             JobOpening[]
+  agents                  Agent[]
+  brokers                 Broker[]
+  payments                Payment[]
+  invoices                Invoice[]
+  notifications           Notification[]
+  settings                Setting[]
+  reportJobs              ReportJob[]
+  messages                Message[]
+  supportTickets          SupportTicket[]
+  cohorts                 Cohort[]
 
   @@map("tenants")
 }
@@ -204,58 +235,68 @@ model User {
   createdBy        Int?
   updatedBy        Int?
 
-  role                 Role                  @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tenant               Tenant?               @relation(fields: [tenantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sessions             Session[]
-  activityLogs         ActivityLog[]
-  createdUsers         User[]                @relation("UserCreatedBy")
-  updatedUsers         User[]                @relation("UserUpdatedBy")
-  createdByUser        User?                 @relation("UserCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser        User?                 @relation("UserUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  userTenants          UserTenant[]
-  agentsCreated        Agent[]               @relation("AgentCreatedBy")
-  agentsUpdated        Agent[]               @relation("AgentUpdatedBy")
-  brokersCreated       Broker[]              @relation("BrokerCreatedBy")
-  brokersUpdated       Broker[]              @relation("BrokerUpdatedBy")
-  candidateProfile     Candidate?            @relation("CandidateAccount")
-  candidatesCreated    Candidate[]           @relation("CandidateCreatedBy")
-  candidatesUpdated    Candidate[]           @relation("CandidateUpdatedBy")
-  candidateDocuments   CandidateDocument[]   @relation("CandidateDocumentUploadedBy")
-  coursesCreated       Course[]              @relation("CourseCreatedBy")
-  coursesUpdated       Course[]              @relation("CourseUpdatedBy")
-  enrollmentsCreated   Enrollment[]          @relation("EnrollmentCreatedBy")
-  enrollmentsUpdated   Enrollment[]          @relation("EnrollmentUpdatedBy")
-  attendanceRecorded   AttendanceRecord[]    @relation("AttendanceRecordedBy")
-  assessmentsCreated   Assessment[]          @relation("AssessmentCreatedBy")
-  assessmentsUpdated   Assessment[]          @relation("AssessmentUpdatedBy")
-  certificatesIssued   Certificate[]         @relation("CertificateIssuedBy")
-  templatesCreated     CertificateTemplate[] @relation("TemplateCreatedBy")
-  vettingCreated       VettingRecord[]       @relation("VettingCreatedBy")
-  vettingUpdated       VettingRecord[]       @relation("VettingUpdatedBy")
-  vettingVerified      VettingRecord[]       @relation("VettingVerifiedBy")
-  vettingReviewed      VettingRecord[]       @relation("VettingReviewedBy")
-  placementsCreated    Placement[]           @relation("PlacementCreatedBy")
-  placementsUpdated    Placement[]           @relation("PlacementUpdatedBy")
-  placementsManaged    Placement[]           @relation("PlacementOfficer")
-  jobOpeningsCreated   JobOpening[]          @relation("JobOpeningRecruiter")
+  role                   Role                     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant                 Tenant?                  @relation(fields: [tenantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sessions               Session[]
+  activityLogs           ActivityLog[]
+  createdUsers           User[]                   @relation("UserCreatedBy")
+  updatedUsers           User[]                   @relation("UserUpdatedBy")
+  createdByUser          User?                    @relation("UserCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser          User?                    @relation("UserUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userTenants            UserTenant[]
+  agentsCreated          Agent[]                  @relation("AgentCreatedBy")
+  agentsUpdated          Agent[]                  @relation("AgentUpdatedBy")
+  brokersCreated         Broker[]                 @relation("BrokerCreatedBy")
+  brokersUpdated         Broker[]                 @relation("BrokerUpdatedBy")
+  candidateProfile       Candidate?               @relation("CandidateAccount")
+  candidatesCreated      Candidate[]              @relation("CandidateCreatedBy")
+  candidatesUpdated      Candidate[]              @relation("CandidateUpdatedBy")
+  candidateDocuments     CandidateDocument[]      @relation("CandidateDocumentUploadedBy")
+  coursesCreated         Course[]                 @relation("CourseCreatedBy")
+  coursesUpdated         Course[]                 @relation("CourseUpdatedBy")
+  enrollmentsCreated     Enrollment[]             @relation("EnrollmentCreatedBy")
+  enrollmentsUpdated     Enrollment[]             @relation("EnrollmentUpdatedBy")
+  attendanceRecorded     AttendanceRecord[]       @relation("AttendanceRecordedBy")
+  assessmentsCreated     Assessment[]             @relation("AssessmentCreatedBy")
+  assessmentsUpdated     Assessment[]             @relation("AssessmentUpdatedBy")
+  certificatesIssued     Certificate[]            @relation("CertificateIssuedBy")
+  templatesCreated       CertificateTemplate[]    @relation("TemplateCreatedBy")
+  vettingCreated         VettingRecord[]          @relation("VettingCreatedBy")
+  vettingUpdated         VettingRecord[]          @relation("VettingUpdatedBy")
+  vettingVerified        VettingRecord[]          @relation("VettingVerifiedBy")
+  vettingReviewed        VettingRecord[]          @relation("VettingReviewedBy")
+  placementsCreated      Placement[]              @relation("PlacementCreatedBy")
+  placementsUpdated      Placement[]              @relation("PlacementUpdatedBy")
+  placementsManaged      Placement[]              @relation("PlacementOfficer")
+  jobOpeningsCreated     JobOpening[]             @relation("JobOpeningRecruiter")
   pipelineEventsAuthored CandidatePipelineEvent[] @relation("PipelineEventAuthor")
-  paymentsCreated      Payment[]             @relation("PaymentCreatedBy")
-  paymentsUpdated      Payment[]             @relation("PaymentUpdatedBy")
-  invoicesCreated      Invoice[]             @relation("InvoiceCreatedBy")
-  invoicesUpdated      Invoice[]             @relation("InvoiceUpdatedBy")
-  notificationsSent    Notification[]        @relation("NotificationCreatedBy")
-  notificationsUpdated Notification[]        @relation("NotificationUpdatedBy")
-  notifications        Notification[]        @relation("NotificationRecipient")
-  settingsCreated      Setting[]             @relation("SettingCreatedBy")
-  settingsUpdated      Setting[]             @relation("SettingUpdatedBy")
-  companiesCreated     Company[]             @relation("CompanyCreatedBy")
-  companiesUpdated     Company[]             @relation("CompanyUpdatedBy")
-  messagesSent         Message[]             @relation("MessageSender")
-  messagesReceived     Message[]             @relation("MessageRecipient")
-  ticketsCreated       SupportTicket[]       @relation("TicketCreatedBy")
-  ticketsAssigned      SupportTicket[]       @relation("TicketAssignedTo")
-  ticketComments       SupportTicketComment[]
-  appealsReviewed      AttendanceAppeal[]    @relation("AppealReviewer")
+  paymentsCreated        Payment[]                @relation("PaymentCreatedBy")
+  paymentsUpdated        Payment[]                @relation("PaymentUpdatedBy")
+  invoicesCreated        Invoice[]                @relation("InvoiceCreatedBy")
+  invoicesUpdated        Invoice[]                @relation("InvoiceUpdatedBy")
+  notificationsSent      Notification[]           @relation("NotificationCreatedBy")
+  notificationsUpdated   Notification[]           @relation("NotificationUpdatedBy")
+  notifications          Notification[]           @relation("NotificationRecipient")
+  settingsCreated        Setting[]                @relation("SettingCreatedBy")
+  settingsUpdated        Setting[]                @relation("SettingUpdatedBy")
+  companiesCreated       Company[]                @relation("CompanyCreatedBy")
+  companiesUpdated       Company[]                @relation("CompanyUpdatedBy")
+  messagesSent           Message[]                @relation("MessageSender")
+  messagesReceived       Message[]                @relation("MessageRecipient")
+  ticketsCreated         SupportTicket[]          @relation("TicketCreatedBy")
+  ticketsAssigned        SupportTicket[]          @relation("TicketAssignedTo")
+  ticketComments         SupportTicketComment[]
+  appealsReviewed        AttendanceAppeal[]       @relation("AppealReviewer")
+
+  // Cohort relations
+  cohortsAsLead             Cohort[]                @relation("CohortLeadTrainer")
+  cohortsCreated            Cohort[]                @relation("CohortCreatedBy")
+  cohortsUpdated            Cohort[]                @relation("CohortUpdatedBy")
+  cohortEnrollmentsReviewed CohortEnrollment[]      @relation("CohortEnrollmentReviewer")
+  sessionsAsFacilitator     CohortSession[]         @relation("SessionFacilitator")
+  sessionsCreated           CohortSession[]         @relation("SessionCreatedBy")
+  sessionsUpdated           CohortSession[]         @relation("SessionUpdatedBy")
+  cohortSummariesGenerated  CohortProgressSummary[]
 
   @@map("users")
 }
@@ -415,19 +456,20 @@ model Candidate {
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
-  tenant        Tenant              @relation(fields: [tenantId], references: [id])
-  user          User?               @relation("CandidateAccount", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  agent         Agent?              @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  broker        Broker?             @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser User?               @relation("CandidateCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?               @relation("CandidateUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  enrollments   Enrollment[]
-  vetting       VettingRecord[]
-  placements    Placement[]
-  documents     CandidateDocument[]
-  payments      Payment[]
-  appeals       AttendanceAppeal[]
-  pipelineEvents CandidatePipelineEvent[]
+  tenant            Tenant                   @relation(fields: [tenantId], references: [id])
+  user              User?                    @relation("CandidateAccount", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  agent             Agent?                   @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  broker            Broker?                  @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser     User?                    @relation("CandidateCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser     User?                    @relation("CandidateUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments       Enrollment[]
+  vetting           VettingRecord[]
+  placements        Placement[]
+  documents         CandidateDocument[]
+  payments          Payment[]
+  appeals           AttendanceAppeal[]
+  pipelineEvents    CandidatePipelineEvent[]
+  cohortEnrollments CohortEnrollment[]
 
   @@index([tenantId, status])
   @@index([tenantId, fullName])
@@ -452,16 +494,16 @@ model CandidateDocument {
 }
 
 model CandidatePipelineEvent {
-  id            Int             @id @default(autoincrement())
+  id            Int              @id @default(autoincrement())
   tenantId      Int
   candidateId   Int
   fromStage     CandidateStatus?
   toStage       CandidateStatus
-  comment       String?         @db.Text
-  isBlocked     Boolean         @default(false)
+  comment       String?          @db.Text
+  isBlocked     Boolean          @default(false)
   blockerReason String?
   createdBy     Int?
-  createdAt     DateTime        @default(now())
+  createdAt     DateTime         @default(now())
 
   tenant    Tenant    @relation(fields: [tenantId], references: [id])
   candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
@@ -495,6 +537,7 @@ model Course {
   attendance    AttendanceRecord[]
   assessments   Assessment[]
   certificates  Certificate[]
+  cohorts       Cohort[]
   createdByUser User?              @relation("CourseCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User?              @relation("CourseUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -547,15 +590,16 @@ model Enrollment {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  tenant        Tenant             @relation(fields: [tenantId], references: [id])
-  course        Course             @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  candidate     Candidate          @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  agent         Agent?             @relation(fields: [agentId], references: [id])
-  attendance    AttendanceRecord[]
-  assessments   Assessment[]
-  certificates  Certificate[]
-  createdByUser User?              @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser User?              @relation("EnrollmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant            Tenant             @relation(fields: [tenantId], references: [id])
+  course            Course             @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  candidate         Candidate          @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  agent             Agent?             @relation(fields: [agentId], references: [id])
+  attendance        AttendanceRecord[]
+  assessments       Assessment[]
+  certificates      Certificate[]
+  cohortEnrollments CohortEnrollment[]
+  createdByUser     User?              @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser     User?              @relation("EnrollmentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([tenantId, courseId, candidateId])
   @@index([tenantId, enrollmentStatus])
@@ -575,10 +619,10 @@ model AttendanceRecord {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
-  tenant         Tenant              @relation(fields: [tenantId], references: [id])
-  course         Course              @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  enrollment     Enrollment          @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  recordedByUser User?               @relation("AttendanceRecordedBy", fields: [recordedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant         Tenant             @relation(fields: [tenantId], references: [id])
+  course         Course             @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollment     Enrollment         @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recordedByUser User?              @relation("AttendanceRecordedBy", fields: [recordedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   appeals        AttendanceAppeal[]
 
   @@unique([tenantId, enrollmentId, date])
@@ -588,20 +632,20 @@ model AttendanceRecord {
 
 /// Attendance Appeals - Candidates can appeal attendance records
 model AttendanceAppeal {
-  id                  Int           @id @default(autoincrement())
+  id                  Int               @id @default(autoincrement())
   tenantId            Int
   attendanceRecordId  Int
   candidateId         Int
-  reason              String        @db.Text
-  supportingDocuments String?       @db.Text // JSON array of file paths
-  status              AppealStatus  @default(PENDING)
+  reason              String            @db.Text
+  supportingDocuments String?           @db.Text // JSON array of file paths
+  status              AppealStatus      @default(PENDING)
   reviewedBy          Int?
   reviewedAt          DateTime?
-  reviewerComments    String?       @db.Text
+  reviewerComments    String?           @db.Text
   originalStatus      AttendanceStatus
   requestedStatus     AttendanceStatus?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   tenant           Tenant           @relation(fields: [tenantId], references: [id])
   attendanceRecord AttendanceRecord @relation(fields: [attendanceRecordId], references: [id], onDelete: Cascade)
@@ -615,7 +659,7 @@ model AttendanceAppeal {
 }
 
 model JobOpening {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   tenantId      Int
   recruiterId   Int?
   jobTitle      String
@@ -623,18 +667,18 @@ model JobOpening {
   location      String?
   jobType       String?
   priority      String?
-  openings      Int?     @default(1)
+  openings      Int?      @default(1)
   salaryRange   String?
-  status        String   @default("OPEN")
+  status        String    @default("OPEN")
   interviewDate DateTime?
-  description   String?  @db.Text
-  requirements  String?  @db.Text
+  description   String?   @db.Text
+  requirements  String?   @db.Text
   metadata      Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  tenant    Tenant @relation(fields: [tenantId], references: [id])
-  recruiter User?  @relation("JobOpeningRecruiter", fields: [recruiterId], references: [id], onDelete: SetNull)
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  recruiter  User?       @relation("JobOpeningRecruiter", fields: [recruiterId], references: [id], onDelete: SetNull)
   placements Placement[]
 
   @@index([tenantId, status])
@@ -808,13 +852,13 @@ model Placement {
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
-  tenant             Tenant    @relation(fields: [tenantId], references: [id])
-  candidate          Candidate @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  agent              Agent?    @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  broker             Broker?   @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  recruitmentOfficer User?     @relation("PlacementOfficer", fields: [recruitmentOfficerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdByUser      User?     @relation("PlacementCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  updatedByUser      User?     @relation("PlacementUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant             Tenant      @relation(fields: [tenantId], references: [id])
+  candidate          Candidate   @relation(fields: [candidateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  agent              Agent?      @relation(fields: [agentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  broker             Broker?     @relation(fields: [brokerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recruitmentOfficer User?       @relation("PlacementOfficer", fields: [recruitmentOfficerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser      User?       @relation("PlacementCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser      User?       @relation("PlacementUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   jobOpening         JobOpening? @relation(fields: [jobOpeningId], references: [id], onDelete: SetNull)
   payments           Payment[]
 
@@ -923,23 +967,23 @@ model Setting {
 }
 
 model Message {
-  id           Int            @id @default(autoincrement())
-  tenantId     Int
-  senderId     Int
-  recipientId  Int
-  subject      String
-  message      String         @db.Text
-  isRead       Boolean        @default(false)
-  readAt       DateTime?
-  parentId     Int?           // For replies/threading
-  attachments  Json?          // Array of attachment URLs
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id          Int       @id @default(autoincrement())
+  tenantId    Int
+  senderId    Int
+  recipientId Int
+  subject     String
+  message     String    @db.Text
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  parentId    Int? // For replies/threading
+  attachments Json? // Array of attachment URLs
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  tenant    Tenant  @relation(fields: [tenantId], references: [id])
-  sender    User    @relation("MessageSender", fields: [senderId], references: [id], onDelete: NoAction)
-  recipient User    @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: NoAction)
-  parent    Message? @relation("MessageReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  sender    User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: NoAction)
+  recipient User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: NoAction)
+  parent    Message?  @relation("MessageReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   replies   Message[] @relation("MessageReplies")
 
   @@index([tenantId, recipientId, isRead])
@@ -948,24 +992,24 @@ model Message {
 }
 
 model SupportTicket {
-  id          Int               @id @default(autoincrement())
-  tenantId    Int
-  userId      Int
-  ticketNumber String           @unique
-  subject     String
-  description String            @db.Text
-  category    String            // e.g., "Technical", "Enrollment", "Certificate", "General"
-  priority    TicketPriority    @default(MEDIUM)
-  status      TicketStatus      @default(OPEN)
-  assignedTo  Int?
-  resolution  String?           @db.Text
-  resolvedAt  DateTime?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id           Int            @id @default(autoincrement())
+  tenantId     Int
+  userId       Int
+  ticketNumber String         @unique
+  subject      String
+  description  String         @db.Text
+  category     String // e.g., "Technical", "Enrollment", "Certificate", "General"
+  priority     TicketPriority @default(MEDIUM)
+  status       TicketStatus   @default(OPEN)
+  assignedTo   Int?
+  resolution   String?        @db.Text
+  resolvedAt   DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
-  tenant         Tenant              @relation(fields: [tenantId], references: [id])
-  user           User                @relation("TicketCreatedBy", fields: [userId], references: [id], onDelete: NoAction)
-  assignedToUser User?               @relation("TicketAssignedTo", fields: [assignedTo], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id])
+  user           User                   @relation("TicketCreatedBy", fields: [userId], references: [id], onDelete: NoAction)
+  assignedToUser User?                  @relation("TicketAssignedTo", fields: [assignedTo], references: [id], onDelete: NoAction, onUpdate: NoAction)
   comments       SupportTicketComment[]
 
   @@index([tenantId, status])
@@ -974,13 +1018,13 @@ model SupportTicket {
 }
 
 model SupportTicketComment {
-  id        Int      @id @default(autoincrement())
-  ticketId  Int
-  userId    Int
-  comment   String   @db.Text
-  isInternal Boolean @default(false) // Internal notes visible only to admins
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  ticketId   Int
+  userId     Int
+  comment    String   @db.Text
+  isInternal Boolean  @default(false) // Internal notes visible only to admins
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   user   User          @relation(fields: [userId], references: [id], onDelete: NoAction)
@@ -1002,4 +1046,181 @@ enum TicketStatus {
   WAITING_RESPONSE
   RESOLVED
   CLOSED
+}
+
+// ===================================
+// COHORT MANAGEMENT MODELS
+// ===================================
+
+model Cohort {
+  id                 Int          @id @default(autoincrement())
+  tenantId           Int
+  courseId           Int
+  cohortCode         String       @unique @db.VarChar(50)
+  cohortName         String       @db.VarChar(255)
+  description        String?      @db.Text
+  startDate          DateTime
+  endDate            DateTime
+  enrollmentDeadline DateTime
+  maxCapacity        Int
+  currentEnrollment  Int          @default(0)
+  status             CohortStatus @default(DRAFT)
+  leadTrainerId      Int?
+  location           String?      @db.VarChar(255)
+  scheduleInfo       String?      @db.Text
+
+  // Computed metrics (updated via triggers/jobs)
+  attendanceRate        Float? @default(0)
+  assessmentAverage     Float? @default(0)
+  vettingCompletionRate Float? @default(0)
+  placementReadyCount   Int    @default(0)
+
+  createdBy Int
+  updatedBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  course        Course @relation(fields: [courseId], references: [id])
+  leadTrainer   User?  @relation("CohortLeadTrainer", fields: [leadTrainerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User   @relation("CohortCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?  @relation("CohortUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  enrollments       CohortEnrollment[]
+  sessions          CohortSession[]
+  progressSummaries CohortProgressSummary[]
+
+  @@index([tenantId, courseId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("cohorts")
+}
+
+model CohortEnrollment {
+  id              Int                    @id @default(autoincrement())
+  cohortId        Int
+  candidateId     Int
+  enrollmentId    Int? // Link to main enrollment record
+  applicationDate DateTime               @default(now())
+  approvalDate    DateTime?
+  status          CohortEnrollmentStatus @default(APPLIED)
+
+  // Progress tracking
+  attendanceCount     Int           @default(0)
+  totalSessions       Int           @default(0)
+  attendanceRate      Float         @default(0)
+  assessmentsPassed   Int           @default(0)
+  assessmentsFailed   Int           @default(0)
+  vettingStatus       VettingStatus @default(PENDING)
+  certificationIssued Boolean       @default(false)
+  placementReady      Boolean       @default(false)
+
+  reviewedBy       Int?
+  reviewNotes      String?   @db.Text
+  withdrawalReason String?   @db.Text
+  withdrawalDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cohort     Cohort      @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  candidate  Candidate   @relation(fields: [candidateId], references: [id])
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reviewer   User?       @relation("CohortEnrollmentReviewer", fields: [reviewedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([cohortId, candidateId])
+  @@index([cohortId, status])
+  @@index([candidateId])
+  @@map("cohort_enrollments")
+}
+
+model CohortSession {
+  id            Int           @id @default(autoincrement())
+  cohortId      Int
+  sessionNumber Int
+  sessionTitle  String        @db.VarChar(255)
+  sessionDate   DateTime
+  startTime     DateTime
+  endTime       DateTime
+  facilitatorId Int?
+  location      String?       @db.VarChar(255)
+  topics        String?       @db.Text
+  materials     String?       @db.Text
+  status        SessionStatus @default(SCHEDULED)
+
+  // Actual timing
+  actualStartTime DateTime?
+  actualEndTime   DateTime?
+
+  // Attendance tracking
+  expectedAttendees Int   @default(0)
+  actualAttendees   Int   @default(0)
+  attendanceRate    Float @default(0)
+
+  notes     String?  @db.Text
+  createdBy Int
+  updatedBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cohort        Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  facilitator   User?  @relation("SessionFacilitator", fields: [facilitatorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdByUser User   @relation("SessionCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  updatedByUser User?  @relation("SessionUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([cohortId])
+  @@index([sessionDate])
+  @@map("cohort_sessions")
+}
+
+model CohortProgressSummary {
+  id          Int      @id @default(autoincrement())
+  cohortId    Int
+  summaryDate DateTime @default(now())
+
+  // Enrollment metrics
+  totalEnrolled     Int
+  activeStudents    Int
+  withdrawnStudents Int
+
+  // Attendance metrics
+  totalSessionsScheduled     Int
+  totalSessionsCompleted     Int
+  overallAttendanceRate      Float
+  studentsWithPoorAttendance Int // < 75%
+
+  // Assessment metrics
+  totalAssessmentsScheduled Int
+  totalAssessmentsCompleted Int
+  averageScore              Float
+  passRate                  Float
+  studentsPassedAll         Int
+  studentsWithFailures      Int
+
+  // Vetting metrics
+  vettingPending        Int
+  vettingInProgress     Int
+  vettingCleared        Int
+  vettingRejected       Int
+  vettingCompletionRate Float
+
+  // Certification metrics
+  certificatesIssued  Int
+  certificatesPending Int
+
+  // Placement metrics
+  placementReady      Int
+  placementInProgress Int
+  placementCompleted  Int
+  placementReadyRate  Float
+
+  generatedBy Int?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  cohort          Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  generatedByUser User?  @relation(fields: [generatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([cohortId, summaryDate])
+  @@map("cohort_progress_summaries")
 }

@@ -659,6 +659,163 @@ const getCourseAttendance = async (req, res) => {
   }
 };
 
+/**
+ * Get trainer's cohorts
+ */
+const getMyCohorts = async (req, res) => {
+  try {
+    const trainerId = req.user.id;
+    const { status, page = 1, limit = 20 } = req.query;
+
+    const where = {
+      leadTrainerId: trainerId,
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [cohorts, total] = await Promise.all([
+      prisma.cohort.findMany({
+        where,
+        include: {
+          course: {
+            select: {
+              title: true,
+              code: true,
+            },
+          },
+          _count: {
+            select: {
+              enrollments: true,
+              sessions: true,
+            },
+          },
+        },
+        orderBy: { startDate: 'desc' },
+        skip: (parseInt(page) - 1) * parseInt(limit),
+        take: parseInt(limit),
+      }),
+      prisma.cohort.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: cohorts,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit)),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching cohorts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching cohorts',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get cohort sessions for a trainer
+ */
+const getCohortSessions = async (req, res) => {
+  try {
+    const { cohortId } = req.params;
+    const trainerId = req.user.id;
+
+    // Verify trainer has access to this cohort
+    const cohort = await prisma.cohort.findUnique({
+      where: { id: parseInt(cohortId) },
+    });
+
+    if (!cohort) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cohort not found',
+      });
+    }
+
+    if (cohort.leadTrainerId !== trainerId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied',
+      });
+    }
+
+    const sessions = await prisma.cohortSession.findMany({
+      where: { cohortId: parseInt(cohortId) },
+      orderBy: { sessionNumber: 'asc' },
+    });
+
+    res.json({
+      success: true,
+      data: sessions,
+    });
+  } catch (error) {
+    console.error('Error fetching cohort sessions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching cohort sessions',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Update cohort session (for attendance tracking)
+ */
+const updateCohortSession = async (req, res) => {
+  try {
+    const { cohortId, sessionId } = req.params;
+    const trainerId = req.user.id;
+    const updateData = req.body;
+
+    // Verify trainer has access to this cohort
+    const cohort = await prisma.cohort.findUnique({
+      where: { id: parseInt(cohortId) },
+    });
+
+    if (!cohort) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cohort not found',
+      });
+    }
+
+    if (cohort.leadTrainerId !== trainerId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied',
+      });
+    }
+
+    const session = await prisma.cohortSession.update({
+      where: { id: parseInt(sessionId) },
+      data: {
+        ...updateData,
+        updatedBy: trainerId,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Session updated successfully',
+      data: session,
+    });
+  } catch (error) {
+    console.error('Error updating session:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating session',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getMyCourses,
@@ -668,4 +825,7 @@ module.exports = {
   createAssessment,
   updateAssessment,
   getCourseAttendance,
+  getMyCohorts,
+  getCohortSessions,
+  updateCohortSession,
 };

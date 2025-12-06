@@ -90,6 +90,7 @@ async function main() {
     where: { name: 'Admin' }
   });
 
+  let admin;
   if (adminRole) {
     const existingAdmin = await prisma.user.findUnique({
       where: { email: 'admin@labourmobility.com' }
@@ -98,7 +99,7 @@ async function main() {
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('admin123', 12);
       
-      await prisma.user.create({
+      admin = await prisma.user.create({
         data: {
           email: 'admin@labourmobility.com',
           password: hashedPassword,
@@ -111,6 +112,7 @@ async function main() {
       });
       console.log('✅ Created admin user: admin@labourmobility.com');
     } else {
+      admin = existingAdmin;
       console.log('⏭️  Admin user already exists');
     }
   }
@@ -599,6 +601,164 @@ async function main() {
     }
   }
 
+  // Create cohorts
+  const course = await prisma.course.findFirst({
+    where: { status: 'ACTIVE' }
+  });
+
+  const trainer = await prisma.user.findUnique({
+    where: { email: 'trainer@labourmobility.com' }
+  });
+
+  if (course && trainer && admin) {
+    console.log('📚 Creating cohorts...');
+
+    const cohortsData = [
+      {
+        tenantId: 1,
+        courseId: course.id,
+        cohortCode: 'COH-2024-001',
+        cohortName: 'January 2024 Batch',
+        description: 'First cohort of 2024 for healthcare workers',
+        startDate: new Date('2024-01-15'),
+        endDate: new Date('2024-01-29'),
+        enrollmentDeadline: new Date('2024-01-10'),
+        maxCapacity: 25,
+        currentEnrollment: 0,
+        status: 'COMPLETED',
+        leadTrainerId: trainer.id,
+        location: 'Nairobi Training Center',
+        scheduleInfo: 'Monday to Friday, 9:00 AM - 5:00 PM',
+        createdBy: admin.id,
+      },
+      {
+        tenantId: 1,
+        courseId: course.id,
+        cohortCode: 'COH-2024-002',
+        cohortName: 'March 2024 Batch',
+        description: 'Second cohort of 2024 for healthcare workers',
+        startDate: new Date('2024-03-01'),
+        endDate: new Date('2024-03-15'),
+        enrollmentDeadline: new Date('2024-02-25'),
+        maxCapacity: 30,
+        currentEnrollment: 0,
+        status: 'IN_TRAINING',
+        leadTrainerId: trainer.id,
+        location: 'Nairobi Training Center',
+        scheduleInfo: 'Monday to Friday, 9:00 AM - 5:00 PM',
+        createdBy: admin.id,
+      },
+      {
+        tenantId: 1,
+        courseId: course.id,
+        cohortCode: 'COH-2025-001',
+        cohortName: 'January 2025 Batch',
+        description: 'First cohort of 2025 for healthcare workers',
+        startDate: new Date('2025-01-15'),
+        endDate: new Date('2025-01-29'),
+        enrollmentDeadline: new Date('2025-01-10'),
+        maxCapacity: 30,
+        currentEnrollment: 0,
+        status: 'ENROLLMENT_OPEN',
+        leadTrainerId: trainer.id,
+        location: 'Nairobi Training Center',
+        scheduleInfo: 'Monday to Friday, 9:00 AM - 5:00 PM',
+        createdBy: admin.id,
+      },
+    ];
+
+    for (const cohortData of cohortsData) {
+      const existing = await prisma.cohort.findUnique({
+        where: { cohortCode: cohortData.cohortCode }
+      });
+
+      if (!existing) {
+        const cohort = await prisma.cohort.create({ data: cohortData });
+        console.log(`✅ Created cohort: ${cohortData.cohortName}`);
+
+        // Create sessions for the cohort
+        if (cohortData.status !== 'DRAFT') {
+          const sessionsData = [];
+          const daysOfTraining = Math.ceil((cohortData.endDate - cohortData.startDate) / (1000 * 60 * 60 * 24));
+          
+          for (let day = 1; day <= Math.min(daysOfTraining, 10); day++) {
+            const sessionDate = new Date(cohortData.startDate);
+            sessionDate.setDate(sessionDate.getDate() + (day - 1));
+            
+            sessionsData.push({
+              cohortId: cohort.id,
+              sessionNumber: day,
+              sessionTitle: `Session ${day}: Healthcare Training`,
+              sessionDate,
+              startTime: new Date(sessionDate.setHours(9, 0, 0)),
+              endTime: new Date(sessionDate.setHours(17, 0, 0)),
+              facilitatorId: trainer.id,
+              location: cohortData.location,
+              topics: 'Patient care, safety protocols, and documentation',
+              status: cohortData.status === 'COMPLETED' ? 'COMPLETED' : 'SCHEDULED',
+              expectedAttendees: cohortData.maxCapacity,
+              createdBy: admin.id,
+            });
+          }
+
+          for (const sessionData of sessionsData) {
+            await prisma.cohortSession.create({ data: sessionData });
+          }
+          console.log(`✅ Created ${sessionsData.length} sessions for cohort: ${cohortData.cohortName}`);
+        }
+
+        // Enroll some candidates if there are any
+        const candidates = await prisma.candidate.findMany({
+          take: 5,
+          where: { status: 'ENROLLED' }
+        });
+
+        for (const candidate of candidates) {
+          const enrollment = await prisma.enrollment.findFirst({
+            where: {
+              candidateId: candidate.id,
+              courseId: course.id
+            }
+          });
+
+          if (enrollment && cohortData.status !== 'DRAFT') {
+            await prisma.cohortEnrollment.create({
+              data: {
+                cohortId: cohort.id,
+                candidateId: candidate.id,
+                enrollmentId: enrollment.id,
+                status: 'ENROLLED',
+                attendanceCount: cohortData.status === 'COMPLETED' ? 10 : 5,
+                totalSessions: 10,
+                attendanceRate: cohortData.status === 'COMPLETED' ? 100 : 50,
+                assessmentsPassed: cohortData.status === 'COMPLETED' ? 1 : 0,
+                vettingStatus: cohortData.status === 'COMPLETED' ? 'CLEARED' : 'PENDING',
+                certificationIssued: cohortData.status === 'COMPLETED',
+                placementReady: cohortData.status === 'COMPLETED',
+                reviewedBy: admin.id,
+                approvalDate: new Date(),
+              }
+            });
+          }
+        }
+
+        // Update cohort enrollment count
+        const enrolledCount = await prisma.cohortEnrollment.count({
+          where: { cohortId: cohort.id, status: 'ENROLLED' }
+        });
+
+        await prisma.cohort.update({
+          where: { id: cohort.id },
+          data: { currentEnrollment: enrolledCount }
+        });
+
+        console.log(`✅ Enrolled ${enrolledCount} students in cohort: ${cohortData.cohortName}`);
+      } else {
+        console.log(`⏭️  Cohort already exists: ${cohortData.cohortName}`);
+      }
+    }
+  }
+
   console.log('🎉 Database seed completed successfully!');
   console.log(`
 📋 Default Users Created:
@@ -611,6 +771,7 @@ async function main() {
    5 Courses
    4 Enrollments
    3 Assessments
+   3 Cohorts with Sessions and Enrollments
   `);
 }
 
