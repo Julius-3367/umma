@@ -56,10 +56,25 @@ const CohortForm = () => {
         adminService.getAllCourses({ limit: 1000 }),
         adminService.getAllUsers({ role: 'TRAINER', limit: 1000 }),
       ]);
-      setCourses(coursesRes.data.courses || []);
-      setTrainers(usersRes.data.users || []);
+      
+      console.log('Courses response:', coursesRes.data);
+      console.log('Users response:', usersRes.data);
+      
+      const coursesList = coursesRes.data?.courses || [];
+      const usersList = usersRes.data?.users || [];
+      
+      setCourses(coursesList);
+      setTrainers(usersList);
+      
+      if (coursesList.length === 0) {
+        setError('No courses found. Please create a course first.');
+      }
+      if (usersList.length === 0) {
+        setError('No trainers found. Please create a trainer user first.');
+      }
     } catch (err) {
       console.error('Error fetching dropdown data:', err);
+      setError(`Failed to load form data: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -256,13 +271,14 @@ const CohortForm = () => {
               value={formData.courseId}
               onChange={handleChange}
               error={Boolean(formErrors.courseId)}
-              helperText={formErrors.courseId}
+              helperText={formErrors.courseId || `${courses.length} course(s) available`}
               required
+              disabled={courses.length === 0}
             >
               <MenuItem value="">Select a course</MenuItem>
               {courses.map((course) => (
                 <MenuItem key={course.id} value={course.id}>
-                  {course.name}
+                  {course.title || course.name}
                 </MenuItem>
               ))}
             </TextField>
@@ -277,8 +293,9 @@ const CohortForm = () => {
               value={formData.leadTrainerId}
               onChange={handleChange}
               error={Boolean(formErrors.leadTrainerId)}
-              helperText={formErrors.leadTrainerId}
+              helperText={formErrors.leadTrainerId || `${trainers.length} trainer(s) available`}
               required
+              disabled={trainers.length === 0}
             >
               <MenuItem value="">Select a trainer</MenuItem>
               {trainers.map((trainer) => (
