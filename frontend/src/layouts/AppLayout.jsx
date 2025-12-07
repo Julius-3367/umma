@@ -26,6 +26,7 @@ import {
   Stack,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -397,6 +398,9 @@ const AppLayout = ({ children }) => {
               </Badge>
             </IconButton>
           </Tooltip>
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           {/* Profile Menu */}
           <Button

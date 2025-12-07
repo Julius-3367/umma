@@ -10,6 +10,11 @@ import { store, persistor } from './app/store';
 
 console.log('📦 Imports loaded, store:', store ? 'OK' : 'MISSING');
 
+// Import i18n configuration
+import './i18n/config';
+
+console.log('🌍 i18n loaded');
+
 // Import theme provider
 import ThemeProvider from './providers/ThemeProvider.jsx';
 import { theme } from './theme/theme.js';
