@@ -39,23 +39,29 @@ import {
   Event,
   Assessment as AssessmentIcon,
   School,
-  CheckCircle,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  HourglassEmpty as PendingIcon,
   Groups,
   TrendingUp,
 } from '@mui/icons-material';
 import { cohortService } from '../../api/cohort';
 import { adminService } from '../../api/admin';
 import { format } from 'date-fns';
+import axios from '../../api/axios';
+import { useSnackbar } from 'notistack';
 
 const CohortDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const [cohort, setCohort] = useState(null);
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
   const [tabValue, setTabValue] = useState(0);
+  const [enrollmentsSubTab, setEnrollmentsSubTab] = useState(0); // 0: Applications, 1: Enrolled
   const [enrollDialog, setEnrollDialog] = useState(false);
   const [candidates, setCandidates] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState('');
@@ -75,7 +81,12 @@ const CohortDetails = () => {
         cohortService.getCohortById(id),
         cohortService.getCohortProgress(id),
       ]);
-      setCohort(cohortRes.data);
+      console.log('Cohort Response:', cohortRes.data);
+      // Handle both response formats: { success, data: {...} } and direct data
+      const cohortData = cohortRes.data?.data || cohortRes.data;
+      console.log('Cohort Data:', cohortData);
+      console.log('Enrollments:', cohortData.enrollments);
+      setCohort(cohortData);
       setProgress(progressRes.data);
     } catch (err) {
       console.error('Error fetching cohort details:', err);
@@ -138,6 +149,38 @@ const CohortDetails = () => {
       setError(err.response?.data?.message || 'Failed to update metrics');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleApproveApplication = async (applicationId) => {
+    try {
+      await axios.post(`/admin/cohort-applications/${applicationId}/approve`);
+      enqueueSnackbar('Application approved successfully!', { variant: 'success' });
+      fetchCohortDetails();
+    } catch (err) {
+      console.error('Error approving application:', err);
+      enqueueSnackbar(err.response?.data?.message || 'Failed to approve application', {
+        variant: 'error',
+      });
+    }
+  };
+
+  const handleRejectApplication = async (applicationId) => {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (!reason) {
+      enqueueSnackbar('Rejection reason is required', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      await axios.post(`/admin/cohort-applications/${applicationId}/reject`, { reason });
+      enqueueSnackbar('Application rejected', { variant: 'info' });
+      fetchCohortDetails();
+    } catch (err) {
+      console.error('Error rejecting application:', err);
+      enqueueSnackbar(err.response?.data?.message || 'Failed to reject application', {
+        variant: 'error',
+      });
     }
   };
 
@@ -384,76 +427,201 @@ const CohortDetails = () => {
         {/* Enrollments Tab */}
         {tabValue === 0 && (
           <Box sx={{ p: 3 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" fontWeight="bold">
-                Enrolled Students ({progress?.enrollments?.length || 0})
-              </Typography>
-              {cohort.status === 'ENROLLMENT_OPEN' && (
-                <Button
-                  variant="contained"
-                  startIcon={<PersonAdd />}
-                  onClick={() => setEnrollDialog(true)}
-                >
-                  Enroll Student
-                </Button>
-              )}
-            </Stack>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Student</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Enrollment Date</TableCell>
-                    <TableCell align="center">Attendance</TableCell>
-                    <TableCell align="center">Assessments</TableCell>
-                    <TableCell>Vetting Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {progress?.enrollments?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center">
-                        <Typography color="text.secondary">No students enrolled yet</Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    progress?.enrollments?.map((enrollment) => (
-                      <TableRow key={enrollment.id}>
-                        <TableCell>
-                          {enrollment.candidate
-                            ? `${enrollment.candidate.firstName} ${enrollment.candidate.lastName}`
-                            : 'N/A'}
-                        </TableCell>
-                        <TableCell>{enrollment.candidate?.email || 'N/A'}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={enrollment.enrollmentStatus.replace(/_/g, ' ')}
-                            size="small"
-                            color={enrollment.enrollmentStatus === 'COMPLETED' ? 'success' : 'default'}
-                          />
-                        </TableCell>
-                        <TableCell>{formatDate(enrollment.enrolledAt)}</TableCell>
-                        <TableCell align="center">
-                          {enrollment.attendanceRate?.toFixed(1) || 0}%
-                        </TableCell>
-                        <TableCell align="center">
-                          {enrollment.averageAssessmentScore?.toFixed(1) || 0}%
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={enrollment.vettingStatus || 'Pending'}
-                            size="small"
-                            color={enrollment.vettingStatus === 'APPROVED' ? 'success' : 'default'}
-                          />
-                        </TableCell>
+            {/* Sub-tabs for Applications and Enrolled */}
+            <Tabs value={enrollmentsSubTab} onChange={(e, v) => setEnrollmentsSubTab(v)} sx={{ mb: 3 }}>
+              <Tab
+                label={`Applications (${
+                  cohort.enrollments?.filter((e) => e.status === 'APPLIED').length || 0
+                })`}
+              />
+              <Tab
+                label={`Enrolled (${
+                  cohort.enrollments?.filter((e) => e.status === 'ENROLLED' || e.status === 'APPROVED')
+                    .length || 0
+                })`}
+              />
+            </Tabs>
+
+            {/* Applications Sub-tab */}
+            {enrollmentsSubTab === 0 && (
+              <>
+                <Typography variant="h6" fontWeight="bold" mb={2}>
+                  Pending Applications
+                </Typography>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Candidate</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Applied On</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
                       </TableRow>
-                    ))
+                    </TableHead>
+                    <TableBody>
+                      {cohort.enrollments?.filter((e) => e.status === 'APPLIED').length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center">
+                            <Typography color="text.secondary">No pending applications</Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        cohort.enrollments
+                          ?.filter((e) => e.status === 'APPLIED')
+                          .map((enrollment) => (
+                            <TableRow key={enrollment.id}>
+                              <TableCell>
+                                {enrollment.candidate?.fullName ||
+                                  `${enrollment.candidate?.firstName || ''} ${
+                                    enrollment.candidate?.lastName || ''
+                                  }`}
+                              </TableCell>
+                              <TableCell>
+                                {enrollment.candidate?.email ||
+                                  enrollment.candidate?.user?.email ||
+                                  'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {enrollment.applicationDate
+                                  ? format(new Date(enrollment.applicationDate), 'MMM dd, yyyy')
+                                  : 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  icon={<PendingIcon />}
+                                  label="APPLIED"
+                                  size="small"
+                                  color="warning"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Stack direction="row" spacing={1}>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<CheckCircleIcon />}
+                                    onClick={() => handleApproveApplication(enrollment.id)}
+                                  >
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<CancelIcon />}
+                                    onClick={() => handleRejectApplication(enrollment.id)}
+                                  >
+                                    Reject
+                                  </Button>
+                                </Stack>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            )}
+
+            {/* Enrolled Students Sub-tab */}
+            {enrollmentsSubTab === 1 && (
+              <>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6" fontWeight="bold">
+                    Enrolled Students (
+                    {cohort.enrollments?.filter(
+                      (e) => e.status === 'ENROLLED' || e.status === 'APPROVED'
+                    ).length || 0}
+                    )
+                  </Typography>
+                  {cohort.status === 'ENROLLMENT_OPEN' && (
+                    <Button
+                      variant="contained"
+                      startIcon={<PersonAdd />}
+                      onClick={() => setEnrollDialog(true)}
+                    >
+                      Enroll Student
+                    </Button>
                   )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                </Stack>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Student</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Enrollment Date</TableCell>
+                        <TableCell align="center">Attendance</TableCell>
+                        <TableCell align="center">Assessments</TableCell>
+                        <TableCell>Vetting Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {cohort.enrollments?.filter(
+                        (e) => e.status === 'ENROLLED' || e.status === 'APPROVED'
+                      ).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center">
+                            <Typography color="text.secondary">No students enrolled yet</Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        cohort.enrollments
+                          ?.filter((e) => e.status === 'ENROLLED' || e.status === 'APPROVED')
+                          .map((enrollment) => (
+                            <TableRow key={enrollment.id}>
+                              <TableCell>
+                                {enrollment.candidate?.fullName ||
+                                  `${enrollment.candidate?.firstName || ''} ${
+                                    enrollment.candidate?.lastName || ''
+                                  }`}
+                              </TableCell>
+                              <TableCell>
+                                {enrollment.candidate?.email ||
+                                  enrollment.candidate?.user?.email ||
+                                  'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={enrollment.status?.replace(/_/g, ' ') || 'ENROLLED'}
+                                  size="small"
+                                  color={enrollment.status === 'COMPLETED' ? 'success' : 'primary'}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {enrollment.approvalDate
+                                  ? format(new Date(enrollment.approvalDate), 'MMM dd, yyyy')
+                                  : enrollment.applicationDate
+                                  ? format(new Date(enrollment.applicationDate), 'MMM dd, yyyy')
+                                  : 'N/A'}
+                              </TableCell>
+                              <TableCell align="center">
+                                {enrollment.attendanceRate?.toFixed(1) || 0}%
+                              </TableCell>
+                              <TableCell align="center">
+                                {enrollment.assessmentsPassed || 0} / {enrollment.totalSessions || 0}
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={enrollment.vettingStatus || 'PENDING'}
+                                  size="small"
+                                  color={
+                                    enrollment.vettingStatus === 'CLEARED' ? 'success' : 'default'
+                                  }
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            )}
           </Box>
         )}
 

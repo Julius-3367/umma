@@ -172,6 +172,45 @@ export const candidateService = {
     const res = await api.post(`/candidate/cohorts/${cohortId}/apply`);
     return unwrap(res);
   },
+
+  // VETTING ENDPOINTS
+
+  // Get vetting status
+  async getVettingStatus() {
+    const res = await api.get('/candidate/vetting');
+    return unwrap(res);
+  },
+
+  // Apply for vetting (creates vetting record)
+  async applyForVetting(enrollmentId, vettingData) {
+    const res = await api.post('/candidate/vetting/apply', {
+      enrollmentId,
+      ...vettingData,
+    });
+    return unwrap(res);
+  },
+
+  // Update vetting documents
+  async updateVettingDocuments(vettingId, formData) {
+    const token = localStorage.getItem('accessToken');
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+    const response = await fetch(`${baseURL}/candidate/vetting/${vettingId}/documents`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Document upload failed');
+    }
+
+    const result = await response.json();
+    return unwrap(result);
+  },
 };
 
 export default candidateService;

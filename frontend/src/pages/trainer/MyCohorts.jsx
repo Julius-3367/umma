@@ -40,7 +40,9 @@ const MyCohorts = () => {
       setLoading(true);
       setError(null);
       const response = await trainerService.getMyCohorts();
-      setCohorts(response.data.cohorts || []);
+      console.log('Cohorts response:', response.data);
+      // API returns { success: true, data: [...], pagination: {...} }
+      setCohorts(response.data.data || response.data.cohorts || []);
     } catch (err) {
       console.error('Error fetching cohorts:', err);
       setError(err.response?.data?.message || 'Failed to fetch cohorts');

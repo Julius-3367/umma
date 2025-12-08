@@ -131,4 +131,11 @@ router.put('/attendance/appeals/:appealId/override', authorize(['Admin']), appea
 router.get('/vetting/dashboard', authorize(['Admin']), adminController.getVettingDashboard);
 router.put('/vetting/:id', authorize(['Admin']), adminController.updateVettingRecord);
 
+/**
+ * Cohort Application Management (Admin only)
+ */
+router.get('/cohort-applications', authorize(['Admin']), adminController.getCohortApplications);
+router.post('/cohort-applications/:id/approve', authorize(['Admin']), adminController.approveCohortApplication);
+router.post('/cohort-applications/:id/reject', authorize(['Admin']), adminController.rejectCohortApplication);
+
 module.exports = router;

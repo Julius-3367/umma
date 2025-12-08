@@ -2507,6 +2507,7 @@ const getMyCohorts = async (req, res) => {
         cohortCode: ce.cohort.cohortCode,
         course: ce.cohort.course,
         status: ce.status,
+        vettingStatus: ce.vettingStatus, // Include vetting status
         applicationDate: ce.applicationDate,
         approvalDate: ce.approvalDate,
         startDate: ce.cohort.startDate,
@@ -2522,6 +2523,204 @@ const getMyCohorts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch cohorts',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+// Get vetting status
+const getVettingStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Find candidate profile
+    const candidate = await prisma.candidate.findUnique({
+      where: { userId: userId },
+    });
+
+    if (!candidate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Candidate profile not found',
+      });
+    }
+
+    const vettingRecords = await prisma.vettingRecord.findMany({
+      where: { candidateId: candidate.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: vettingRecords,
+    });
+  } catch (error) {
+    console.error('Get vetting status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch vetting status',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+// Apply for vetting
+const applyForVetting = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { enrollmentId, policeClearanceNo, medicalReportNo } = req.body;
+
+    // Find candidate profile
+    const candidate = await prisma.candidate.findUnique({
+      where: { userId: userId },
+    });
+
+    if (!candidate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Candidate profile not found',
+      });
+    }
+
+    const candidateId = candidate.id;
+
+    // Check if enrollment exists and belongs to this candidate
+    const enrollment = await prisma.cohortEnrollment.findFirst({
+      where: {
+        id: parseInt(enrollmentId),
+        candidateId: candidateId,
+        status: 'ENROLLED', // Must be enrolled to apply for vetting
+      },
+    });
+
+    if (!enrollment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Valid enrollment not found. You must be enrolled in a cohort to apply for vetting.',
+      });
+    }
+
+    // Check if vetting record already exists for this candidate
+    const existingVetting = await prisma.vettingRecord.findFirst({
+      where: {
+        candidateId: candidateId,
+        vettingStatus: {
+          in: ['PENDING', 'PENDING_DOCUMENTS', 'IN_PROGRESS'],
+        },
+      },
+    });
+
+    if (existingVetting) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending vetting application',
+        data: existingVetting,
+      });
+    }
+
+    // Create vetting record
+    const vettingRecord = await prisma.vettingRecord.create({
+      data: {
+        tenantId: req.user.tenantId || 1,
+        candidateId: candidateId,
+        policeClearanceNo: policeClearanceNo || null,
+        medicalReportNo: medicalReportNo || null,
+        vettingStatus: 'PENDING_DOCUMENTS',
+        createdBy: req.user.id,
+      },
+    });
+
+    // Update enrollment vetting status
+    await prisma.cohortEnrollment.update({
+      where: { id: parseInt(enrollmentId) },
+      data: { vettingStatus: 'PENDING' },
+    });
+
+    res.json({
+      success: true,
+      message: 'Vetting application submitted successfully. Please upload required documents.',
+      data: vettingRecord,
+    });
+  } catch (error) {
+    console.error('Apply for vetting error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to submit vetting application',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+// Update vetting documents
+const updateVettingDocuments = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { vettingId } = req.params;
+
+    // Find candidate profile
+    const candidate = await prisma.candidate.findUnique({
+      where: { userId: userId },
+    });
+
+    if (!candidate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Candidate profile not found',
+      });
+    }
+
+    // Verify vetting record belongs to this candidate
+    const vettingRecord = await prisma.vettingRecord.findFirst({
+      where: {
+        id: parseInt(vettingId),
+        candidateId: candidate.id,
+      },
+    });
+
+    if (!vettingRecord) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vetting record not found',
+      });
+    }
+
+    const updateData = {
+      updatedBy: req.user.id,
+    };
+
+    // Handle file uploads
+    if (req.files) {
+      if (req.files.policeDocument && req.files.policeDocument[0]) {
+        updateData.policeDocumentUrl = req.files.policeDocument[0].path;
+      }
+      if (req.files.medicalReport && req.files.medicalReport[0]) {
+        updateData.medicalReportUrl = req.files.medicalReport[0].path;
+      }
+      if (req.files.vaccinationProof && req.files.vaccinationProof[0]) {
+        updateData.vaccinationProofUrl = req.files.vaccinationProof[0].path;
+      }
+    }
+
+    // Update status if documents are uploaded
+    if (updateData.policeDocumentUrl || updateData.medicalReportUrl) {
+      updateData.vettingStatus = 'IN_PROGRESS';
+    }
+
+    const updatedVetting = await prisma.vettingRecord.update({
+      where: { id: parseInt(vettingId) },
+      data: updateData,
+    });
+
+    res.json({
+      success: true,
+      message: 'Vetting documents uploaded successfully',
+      data: updatedVetting,
+    });
+  } catch (error) {
+    console.error('Update vetting documents error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload vetting documents',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
@@ -2554,4 +2753,8 @@ module.exports = {
   getAvailableCohorts,
   applyForCohort,
   getMyCohorts,
+  // Vetting endpoints
+  getVettingStatus,
+  applyForVetting,
+  updateVettingDocuments,
 };

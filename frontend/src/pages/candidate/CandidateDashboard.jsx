@@ -452,6 +452,39 @@ const CandidateDashboard = () => {
         )}
       </Grid>
 
+      {/* New Cohorts Available Alert */}
+      {availableCohorts && availableCohorts.length > 0 && (
+        <Alert
+          severity="success"
+          sx={{
+            mb: 3,
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'success.main',
+          }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => handleQuickAction('/candidate/browse-cohorts')}
+              endIcon={<ArrowForwardIcon />}
+            >
+              Browse All
+            </Button>
+          }
+        >
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+            🎉 New Training Cohorts Available!
+          </Typography>
+          <Typography variant="body2">
+            {availableCohorts.length} new cohort{availableCohorts.length !== 1 && 's'} ready for enrollment. 
+            Apply now to secure your spot before {' '}
+            {availableCohorts[0]?.enrollmentDeadline && 
+              format(new Date(availableCohorts[0].enrollmentDeadline), 'MMM dd, yyyy')}
+          </Typography>
+        </Alert>
+      )}
+
       <Grid container spacing={3}>
         {/* Active Courses Section */}
         <Grid item xs={12} lg={8}>
@@ -518,6 +551,48 @@ const CandidateDashboard = () => {
                 Navigate to key areas
               </Typography>
               <Stack spacing={1.5}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Groups />}
+                  onClick={() => handleQuickAction('/candidate/browse-cohorts')}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    py: 1.5,
+                    borderColor: alpha('#9C27B0', 0.3),
+                    '&:hover': {
+                      borderColor: '#9C27B0',
+                      bgcolor: alpha('#9C27B0', 0.05),
+                    }
+                  }}
+                >
+                  Browse Cohorts
+                  {availableCohorts && availableCohorts.length > 0 && (
+                    <Chip
+                      label={availableCohorts.length}
+                      size="small"
+                      color="error"
+                      sx={{ ml: 'auto', height: 20, minWidth: 20 }}
+                    />
+                  )}
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<AssignmentIcon />}
+                  onClick={() => handleQuickAction('/candidate/my-applications')}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    py: 1.5,
+                    borderColor: alpha('#3F51B5', 0.3),
+                    '&:hover': {
+                      borderColor: '#3F51B5',
+                      bgcolor: alpha('#3F51B5', 0.05),
+                    }
+                  }}
+                >
+                  My Applications
+                </Button>
                 <Button
                   fullWidth
                   variant="outlined"

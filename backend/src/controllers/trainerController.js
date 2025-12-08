@@ -437,8 +437,10 @@ const getCourseStudents = async (req, res) => {
           select: {
             id: true,
             fullName: true,
-            dateOfBirth: true,
-            nationalId: true,
+            dob: true,
+            nationalIdPassport: true,
+            gender: true,
+            county: true,
             user: {
               select: {
                 email: true,

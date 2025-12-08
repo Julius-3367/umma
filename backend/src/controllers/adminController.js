@@ -2,6 +2,7 @@ const prisma = require('../config/database');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const cohortAutomationService = require('../services/cohortAutomationService');
 
 // Simple in-memory job tracker for report generation (keeps demo-lightweight)
 const reportJobs = new Map();
@@ -4399,6 +4400,200 @@ const updateVettingRecord = async (req, res) => {
   }
 };
 
+// Cohort Application Management
+const getCohortApplications = async (req, res) => {
+  try {
+    const applications = await prisma.cohortEnrollment.findMany({
+      include: {
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            user: {
+              select: {
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+        cohort: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
+        },
+        enrollment: {
+          select: {
+            id: true,
+            vettingStatus: true,
+            certificateIssued: true,
+          },
+        },
+      },
+      orderBy: {
+        applicationDate: 'desc',
+      },
+    });
+
+    res.json(applications);
+  } catch (error) {
+    console.error('Error fetching cohort applications:', error);
+    res.status(500).json({ message: 'Failed to fetch applications' });
+  }
+};
+
+const approveCohortApplication = async (req, res) => {
+  console.log('🔵 APPROVE FUNCTION CALLED - ID:', req.params.id);
+  try {
+    const { id } = req.params;
+    console.log('🔵 Fetching application with ID:', id);
+
+    // Find the application
+    const application = await prisma.cohortEnrollment.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        cohort: true,
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            user: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        },
+        enrollment: true,
+      },
+    });
+
+    console.log('🔵 Application found:', application ? 'YES' : 'NO');
+    if (application) {
+      console.log('🔵 Application status:', application.status);
+    }
+
+    if (!application) {
+      console.log('❌ Application not found');
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    if (application.status !== 'APPLIED') {
+      console.log('❌ Application already processed, status:', application.status);
+      return res.status(400).json({ message: 'Application has already been processed' });
+    }
+
+    console.log('🔵 Checking cohort capacity...');
+    
+    // Check capacity
+    const canEnroll = await cohortAutomationService.canEnroll(application.cohort.id);
+    console.log('🔵 Capacity check result:', canEnroll);
+    if (!canEnroll.canEnroll) {
+      console.log('❌ Cannot enroll:', canEnroll.reason);
+      return res.status(400).json({ message: canEnroll.reason || 'Cannot enroll in this cohort' });
+    }
+
+    console.log('🔵 Updating application status to ENROLLED...');
+    // Update application status to ENROLLED
+    const updatedApplication = await prisma.cohortEnrollment.update({
+      where: { id: parseInt(id) },
+      data: {
+        status: 'ENROLLED',
+        approvalDate: new Date(),
+      },
+    });
+
+    console.log('🔵 Incrementing cohort enrollment count...');
+    // Increment cohort enrollment count
+    await cohortAutomationService.incrementEnrollmentCount(application.cohort.id);
+
+    // Sync with main enrollment if it exists
+    if (application.enrollmentId) {
+      await cohortAutomationService.syncEnrollmentStatus(
+        application.enrollmentId,
+        'ENROLLED'
+      );
+    }
+
+    // TODO: Send notification email to candidate
+    const candidateEmail = application.candidate?.user?.email || application.candidate?.email || 'unknown';
+    console.log(`✅ Cohort application approved for ${candidateEmail}`);
+
+    res.json({
+      message: 'Application approved successfully',
+      application: updatedApplication,
+    });
+  } catch (error) {
+    console.error('Error approving application:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Failed to approve application',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+const rejectCohortApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    // Find the application
+    const application = await prisma.cohortEnrollment.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        candidate: {
+          select: {
+            id: true,
+            fullName: true,
+            user: {
+              select: {
+                email: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    if (application.status !== 'APPLIED') {
+      return res.status(400).json({ message: 'Application has already been processed' });
+    }
+
+    // Update application status to REJECTED
+    const updatedApplication = await prisma.cohortEnrollment.update({
+      where: { id: parseInt(id) },
+      data: {
+        status: 'REJECTED',
+        reviewNotes: reason,
+      },
+    });
+
+    // TODO: Send rejection email to candidate with reason
+    console.log(`❌ Cohort application rejected for ${application.candidate.user?.email || application.candidate.fullName}: ${reason}`);
+
+    res.json({
+      message: 'Application rejected',
+      application: updatedApplication,
+    });
+  } catch (error) {
+    console.error('Error rejecting application:', error);
+    res.status(500).json({ message: 'Failed to reject application' });
+  }
+};
+
 module.exports = {
   getDashboard,
   getAllUsers,
@@ -4469,4 +4664,8 @@ module.exports = {
   getReports,
   getVettingDashboard,
   updateVettingRecord,
+  // Cohort Applications
+  getCohortApplications,
+  approveCohortApplication,
+  rejectCohortApplication,
 };

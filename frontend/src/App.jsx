@@ -37,6 +37,7 @@ import AttendanceManagement from './pages/admin/AttendanceManagement';
 import AppealsManagement from './pages/admin/AppealsManagement';
 import CertificateManagement from './pages/admin/CertificateManagement';
 import VettingDashboard from './pages/admin/VettingDashboard';
+import CohortApplications from './pages/admin/CohortApplications';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
 import CandidateCourses from './pages/candidate/MyCourses';
 import CandidateDocuments from './pages/candidate/Documents';
@@ -46,6 +47,8 @@ import CandidateCertificates from './pages/candidate/CertificatesPage';
 import CandidateProfile from './pages/candidate/ProfileSettings';
 import CandidateCourseDetails from './pages/candidate/CourseDetails';
 import PlacementPage from './pages/candidate/PlacementPage';
+import BrowseCohorts from './pages/candidate/BrowseCohorts';
+import MyApplications from './pages/candidate/MyApplications';
 import AdminCourseDetails from './pages/admin/CourseDetails';
 import AdminCohorts from './pages/admin/Cohorts';
 import AdminCohortDetails from './pages/admin/CohortDetails';
@@ -55,6 +58,7 @@ import CandidateNotifications from './pages/candidate/Notifications';
 import TrainerDashboard from './pages/trainer/Dashboard';
 import TrainerAttendance from './pages/trainer/Attendance';
 import TrainerMyCohorts from './pages/trainer/MyCohorts';
+import TrainerCohortDetails from './pages/trainer/CohortDetails';
 import RecruiterDashboard from './pages/recruiter/Dashboard';
 import RecruiterCandidates from './pages/recruiter/Candidates';
 import RecruiterPlacements from './pages/recruiter/Placements';
@@ -332,6 +336,7 @@ const App = () => {
                   <Route path="cohorts/create" element={<AdminCohortForm />} />
                   <Route path="cohorts/:id" element={<AdminCohortDetails />} />
                   <Route path="cohorts/:id/edit" element={<AdminCohortForm />} />
+                  <Route path="cohort-applications" element={<CohortApplications />} />
                   <Route path="enrollments" element={<AdminEnrollments />} />
                   <Route path="candidates" element={<AdminCandidates />} />
                   <Route path="candidates/:id" element={<AdminCandidateDetails />} />
@@ -360,6 +365,8 @@ const App = () => {
               <AppLayout>
                 <Routes>
                   <Route path="dashboard" element={<CandidateDashboard />} />
+                  <Route path="browse-cohorts" element={<BrowseCohorts />} />
+                  <Route path="my-applications" element={<MyApplications />} />
                   <Route path="courses" element={<CandidateCourses />} />
                   <Route path="courses/:courseId" element={<CandidateCourseDetails />} />
                   <Route path="documents" element={<CandidateDocuments />} />
@@ -393,6 +400,7 @@ const App = () => {
                     <Route path="attendance" element={<TrainerAttendance />} />
                     <Route path="my-courses" element={<MyCourses />} />
                     <Route path="cohorts" element={<TrainerMyCohorts />} />
+                    <Route path="cohorts/:id" element={<TrainerCohortDetails />} />
                     <Route path="students" element={<TrainerStudents />} />
                     <Route path="assessments" element={<TrainerAssessments />} />
                     <Route path="schedule" element={<TrainerSchedule />} />

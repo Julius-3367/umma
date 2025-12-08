@@ -163,6 +163,8 @@ const AppLayout = ({ children }) => {
         { label: 'Settings', path: '/admin/settings', icon: Cog6ToothIcon },
       ],
       candidate: [
+        { label: 'Browse Cohorts', path: '/candidate/browse-cohorts', icon: UserGroupIcon },
+        { label: 'My Applications', path: '/candidate/my-applications', icon: ClipboardDocumentListIcon },
         { label: 'My Courses', path: '/candidate/courses', icon: AcademicCapIcon },
         { label: 'Attendance', path: '/candidate/attendance', icon: CalendarIcon },
         { label: 'Assessments', path: '/candidate/assessments', icon: ChartBarIcon },

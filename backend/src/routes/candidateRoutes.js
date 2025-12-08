@@ -529,4 +529,84 @@ router.get('/cohorts', candidateController.getMyCohorts);
  */
 router.post('/cohorts/:cohortId/apply', candidateController.applyForCohort);
 
+/**
+ * @swagger
+ * /api/candidate/vetting:
+ *   get:
+ *     summary: Get candidate's vetting status
+ *     tags: [Candidate]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Vetting status retrieved successfully
+ */
+router.get('/vetting', candidateController.getVettingStatus);
+
+/**
+ * @swagger
+ * /api/candidate/vetting/apply:
+ *   post:
+ *     summary: Apply for vetting
+ *     tags: [Candidate]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               enrollmentId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Vetting application submitted successfully
+ */
+router.post('/vetting/apply', candidateController.applyForVetting);
+
+/**
+ * @swagger
+ * /api/candidate/vetting/{vettingId}/documents:
+ *   put:
+ *     summary: Upload vetting documents
+ *     tags: [Candidate]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: vettingId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               policeDocument:
+ *                 type: string
+ *                 format: binary
+ *               medicalReport:
+ *                 type: string
+ *                 format: binary
+ *               vaccinationProof:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Documents uploaded successfully
+ */
+router.put('/vetting/:vettingId/documents', 
+  upload.fields([
+    { name: 'policeDocument', maxCount: 1 },
+    { name: 'medicalReport', maxCount: 1 },
+    { name: 'vaccinationProof', maxCount: 1 }
+  ]), 
+  candidateController.updateVettingDocuments
+);
+
 module.exports = router;
