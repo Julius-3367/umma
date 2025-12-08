@@ -3,10 +3,11 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const cohortAutomationService = require('../services/cohortAutomationService');
+const reportService = require('../services/reportService');
 
 // Simple in-memory job tracker for report generation (keeps demo-lightweight)
 const reportJobs = new Map();
-const REPORTS_DIR = path.join(__dirname, '..', '..', 'uploads', 'reports');
+const REPORTS_DIR = reportService.REPORTS_DIR;
 
 // Ensure reports directory exists
 try {
@@ -3577,13 +3578,21 @@ const generateReport = async (req, res) => {
   try {
     const { type = 'generic', format = 'csv', startDate, endDate } = req.body || {};
 
-    const jobId = `r_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    // Validate report type
+    const validTypes = ['enrollments', 'courses', 'candidates', 'attendance', 'vetting', 'certificates', 'trainers', 'cohorts', 'financial'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid report type. Valid types: ${validTypes.join(', ')}`,
+      });
+    }
+
     const createdAt = new Date();
 
     // Persist a job record in the database so it survives restarts
     const dbJob = await prisma.reportJob.create({
       data: {
-        tenantId: req.user?.tenantId || 1,
+        tenantId: req.user?.tenantId || null,
         type,
         format,
         status: 'queued',
@@ -3619,78 +3628,68 @@ const generateReport = async (req, res) => {
         const processingJob = { ...job, status: 'processing', startedAt: startedAt.toISOString() };
         reportJobs.set(job.id, processingJob);
 
-        // Data selection based on type (simple examples)
-        let rows = [];
-        if (type === 'users') {
-          rows = await prisma.user.findMany({
-            select: { id: true, email: true, firstName: true, lastName: true, createdAt: true },
-            orderBy: { createdAt: 'desc' },
-            take: 1000,
-          });
-        } else if (type === 'courses') {
-          rows = await prisma.course.findMany({
-            select: { id: true, title: true, code: true, category: true, createdAt: true },
-            orderBy: { createdAt: 'desc' },
-            take: 1000,
-          });
-        } else {
-          // default sample
-          rows = [{ info: `Report for type '${type}' not implemented; this is a sample row.` }];
-        }
+        // Generate report data using the report service
+        const reportData = await reportService.generateReportData(
+          type,
+          startDate,
+          endDate,
+          req.user?.tenantId
+        );
 
-        // Ensure directory exists (best-effort)
-        try { fs.mkdirSync(REPORTS_DIR, { recursive: true }); } catch (e) { /* ignore */ }
-
-        // Write CSV file (simple, no external deps)
-        const fileName = `${job.id}.csv`;
-        const filePath = path.join(REPORTS_DIR, fileName);
-        const out = fs.createWriteStream(filePath, { encoding: 'utf8' });
-
-        if (rows.length > 0) {
-          const headers = Object.keys(rows[0]);
-          out.write(headers.join(',') + '\n');
-          for (const r of rows) {
-            const line = headers.map(h => {
-              const v = r[h] === null || r[h] === undefined ? '' : String(r[h]);
-              // basic sanitization: remove newlines and commas
-              return v.replace(/\n/g, ' ').replace(/\r/g, ' ').replace(/,/g, ' ');
-            }).join(',');
-            out.write(line + '\n');
-          }
-        } else {
-          out.write('message\n');
-          out.write('no-data\n');
-        }
-
-        out.end();
-        await new Promise((resolve) => out.on('finish', resolve));
+        // Save report to file
+        const fileName = `${job.id}.${format}`;
+        await reportService.saveReportToFile(reportData, format, fileName);
 
         const downloadUrl = `/uploads/reports/${fileName}`;
         const completedAt = new Date();
 
         // update DB record
-        await prisma.reportJob.update({ where: { id: dbJob.id }, data: { status: 'completed', completedAt, downloadUrl } });
+        await prisma.reportJob.update({
+          where: { id: dbJob.id },
+          data: {
+            status: 'completed',
+            completedAt,
+            downloadUrl,
+            meta: {
+              ...dbJob.meta,
+              recordCount: reportData.length,
+            },
+          },
+        });
 
-        const completedJob = { ...processingJob, status: 'completed', completedAt: completedAt.toISOString(), downloadUrl };
+        const completedJob = {
+          ...processingJob,
+          status: 'completed',
+          completedAt: completedAt.toISOString(),
+          downloadUrl,
+          recordCount: reportData.length,
+        };
         reportJobs.set(job.id, completedJob);
+
+        console.log(`Report ${job.id} completed: ${reportData.length} records`);
       } catch (err) {
+        console.error(`Report ${job.id} failed:`, err);
         const failedAt = new Date();
         // try update DB
         try {
-          await prisma.reportJob.update({ where: { id: dbJob.id }, data: { status: 'failed', error: err.message, completedAt: failedAt } });
-        } catch (uerr) {
-          console.error('Failed to update DB report job status:', uerr.message);
+          await prisma.reportJob.update({
+            where: { id: dbJob.id },
+            data: { status: 'failed', error: err.message, completedAt: failedAt },
+          });
+        } catch (dbErr) {
+          console.error('Failed to update DB on error:', dbErr);
         }
-
-        const failedJob = { ...reportJobs.get(job.id), status: 'failed', error: err.message, failedAt: failedAt.toISOString() };
+        const failedJob = { ...job, status: 'failed', error: err.message, completedAt: failedAt.toISOString() };
         reportJobs.set(job.id, failedJob);
-        console.error('Report processing failed for job', job.id, err);
       }
     })();
-
   } catch (error) {
     console.error('Error queueing report:', error);
-    res.status(500).json({ success: false, message: 'Failed to queue report', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to queue report',
+      error: error.message,
+    });
   }
 };
 

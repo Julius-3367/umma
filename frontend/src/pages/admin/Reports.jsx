@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -17,6 +17,15 @@ import {
   Chip,
   Divider,
   Alert,
+  CircularProgress,
+  LinearProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
 } from '@mui/material';
 import {
   Assessment as AssessmentIcon,
@@ -27,10 +36,17 @@ import {
   Business as BusinessIcon,
   TrendingUp as TrendingUpIcon,
   Download as DownloadIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  HourglassEmpty as PendingIcon,
+  Refresh as RefreshIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format as formatDate } from 'date-fns';
+import adminService from '../../api/admin';
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState({
@@ -38,52 +54,120 @@ const Reports = () => {
     endDate: null,
   });
   const [selectedReport, setSelectedReport] = useState('');
-  const [format, setFormat] = useState('pdf');
+  const [format, setFormat] = useState('csv');
   const [generating, setGenerating] = useState(false);
+  const [generatingJobId, setGeneratingJobId] = useState(null);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [recentReports, setRecentReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+
+  // Load recent reports on mount
+  useEffect(() => {
+    fetchRecentReports();
+  }, []);
+
+  // Poll for job status if generating
+  useEffect(() => {
+    if (!generatingJobId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await adminService.getReportStatus(generatingJobId);
+        const job = response.data;
+
+        if (job.status === 'completed') {
+          setSuccess(`Report generated successfully! ${job.recordCount || 0} records`);
+          setGenerating(false);
+          setGeneratingJobId(null);
+          fetchRecentReports();
+        } else if (job.status === 'failed') {
+          setError(`Report generation failed: ${job.error || 'Unknown error'}`);
+          setGenerating(false);
+          setGeneratingJobId(null);
+        }
+      } catch (err) {
+        console.error('Error polling job status:', err);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [generatingJobId]);
+
+  const fetchRecentReports = async () => {
+    try {
+      setLoadingReports(true);
+      const response = await adminService.getReports();
+      setRecentReports(response.data || []);
+    } catch (err) {
+      console.error('Error fetching reports:', err);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
 
   const reportTypes = [
     {
-      id: 'users',
-      title: 'User Analytics Report',
-      description: 'Detailed analysis of user registrations, activity, and demographics',
+      id: 'enrollments',
+      title: 'Enrollment Statistics Report',
+      description: 'Detailed enrollment data including status, dates, and candidate information',
       icon: <PeopleIcon fontSize="large" color="primary" />,
-      category: 'Users',
+      category: 'Enrollments',
     },
     {
       id: 'courses',
       title: 'Course Performance Report',
-      description: 'Course enrollments, completion rates, and trainer performance',
+      description: 'Course statistics, cohorts, enrollments, and completion rates',
       icon: <SchoolIcon fontSize="large" color="primary" />,
       category: 'Courses',
     },
     {
-      id: 'enrollments',
-      title: 'Enrollment Statistics',
-      description: 'Enrollment trends, dropout rates, and success metrics',
-      icon: <TrendingUpIcon fontSize="large" color="primary" />,
-      category: 'Enrollments',
+      id: 'candidates',
+      title: 'Candidate Progress Report',
+      description: 'Candidate profiles, enrollments, completion status, and vetting records',
+      icon: <PeopleIcon fontSize="large" color="secondary" />,
+      category: 'Candidates',
     },
     {
-      id: 'companies',
-      title: 'Company Partnership Report',
-      description: 'Company partnerships, placements, and industry distribution',
+      id: 'cohorts',
+      title: 'Cohort Summary Report',
+      description: 'Cohort details, capacity, enrollment numbers, and session counts',
+      icon: <SchoolIcon fontSize="large" color="secondary" />,
+      category: 'Cohorts',
+    },
+    {
+      id: 'attendance',
+      title: 'Attendance Records Report',
+      description: 'Detailed attendance data with check-in/out times and status',
+      icon: <TrendingUpIcon fontSize="large" color="primary" />,
+      category: 'Attendance',
+    },
+    {
+      id: 'vetting',
+      title: 'Vetting Process Report',
+      description: 'Vetting applications, document status, and verification progress',
       icon: <BusinessIcon fontSize="large" color="primary" />,
-      category: 'Companies',
+      category: 'Vetting',
+    },
+    {
+      id: 'trainers',
+      title: 'Trainer Performance Report',
+      description: 'Trainer workload, cohorts led, student counts, and session statistics',
+      icon: <AssessmentIcon fontSize="large" color="primary" />,
+      category: 'Trainers',
     },
     {
       id: 'certificates',
       title: 'Certificate Issuance Report',
-      description: 'Certificates issued, pending approvals, and rejection reasons',
-      icon: <AssessmentIcon fontSize="large" color="primary" />,
+      description: 'Certificates issued, candidate details, and revocation status',
+      icon: <AssessmentIcon fontSize="large" color="secondary" />,
       category: 'Certificates',
     },
     {
       id: 'financial',
-      title: 'Financial Overview',
-      description: 'Revenue, payments, and financial transactions summary',
-      icon: <TrendingUpIcon fontSize="large" color="primary" />,
+      title: 'Financial Overview Report',
+      description: 'Payment records, revenue tracking, and financial transactions',
+      icon: <TrendingUpIcon fontSize="large" color="secondary" />,
       category: 'Finance',
     },
   ];
@@ -94,27 +178,43 @@ const Reports = () => {
       setError('');
       setSuccess('');
       
-      // TODO: Implement actual report generation API call
-      // const response = await adminService.generateReport({
-      //   reportType: reportId,
-      //   format: format,
-      //   startDate: dateRange.startDate,
-      //   endDate: dateRange.endDate,
-      // });
+      const response = await adminService.generateReport({
+        type: reportId,
+        format: format,
+        startDate: dateRange.startDate ? formatDate(new Date(dateRange.startDate), 'yyyy-MM-dd') : null,
+        endDate: dateRange.endDate ? formatDate(new Date(dateRange.endDate), 'yyyy-MM-dd') : null,
+      });
       
-      // Simulate report generation
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      setSuccess(`Report "${reportTypes.find(r => r.id === reportId)?.title}" generated successfully!`);
-      
-      // Trigger download (simulated)
-      console.log('Downloading report:', reportId, format);
-      
+      if (response.data.jobId) {
+        setGeneratingJobId(response.data.jobId);
+        setSuccess('Report generation started. Please wait...');
+      }
     } catch (err) {
       console.error('Error generating report:', err);
       setError(err.response?.data?.message || 'Failed to generate report');
-    } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDownloadReport = async (jobId, downloadUrl) => {
+    try {
+      window.open(`http://localhost:5000${downloadUrl}`, '_blank');
+    } catch (err) {
+      console.error('Error downloading report:', err);
+      setError('Failed to download report');
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircleIcon color="success" />;
+      case 'failed':
+        return <ErrorIcon color="error" />;
+      case 'processing':
+        return <CircularProgress size={20} />;
+      default:
+        return <PendingIcon color="warning" />;
     }
   };
 
@@ -167,22 +267,16 @@ const Reports = () => {
                   label="Export Format"
                   onChange={(e) => setFormat(e.target.value)}
                 >
-                  <MenuItem value="pdf">
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <PdfIcon fontSize="small" />
-                      <span>PDF Document</span>
-                    </Stack>
-                  </MenuItem>
-                  <MenuItem value="excel">
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <ExcelIcon fontSize="small" />
-                      <span>Excel Spreadsheet</span>
-                    </Stack>
-                  </MenuItem>
                   <MenuItem value="csv">
                     <Stack direction="row" spacing={1} alignItems="center">
                       <ExcelIcon fontSize="small" />
                       <span>CSV File</span>
+                    </Stack>
+                  </MenuItem>
+                  <MenuItem value="json">
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <ExcelIcon fontSize="small" />
+                      <span>JSON File</span>
                     </Stack>
                   </MenuItem>
                 </Select>
@@ -247,15 +341,90 @@ const Reports = () => {
           ))}
         </Grid>
 
-        {/* Recent Reports Section (Future Enhancement) */}
+        {/* Recent Reports Section */}
         <Paper sx={{ p: 3, mt: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Recent Reports
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              Recent Reports
+            </Typography>
+            <Button
+              startIcon={<RefreshIcon />}
+              onClick={fetchRecentReports}
+              disabled={loadingReports}
+            >
+              Refresh
+            </Button>
+          </Box>
           <Divider sx={{ mb: 2 }} />
-          <Typography variant="body2" color="text.secondary" align="center" py={4}>
-            No recent reports. Generated reports will appear here.
-          </Typography>
+          
+          {loadingReports ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : recentReports.length === 0 ? (
+            <Typography variant="body2" color="text.secondary" align="center" py={4}>
+              No recent reports. Generated reports will appear here.
+            </Typography>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Format</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Records</TableCell>
+                    <TableCell>Created</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {recentReports.map((report) => (
+                    <TableRow key={report.id} hover>
+                      <TableCell>
+                        <Chip
+                          label={report.type}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>{report.format.toUpperCase()}</TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          {getStatusIcon(report.status)}
+                          <span>{report.status}</span>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        {report.meta?.recordCount || 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(report.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell align="right">
+                        {report.status === 'completed' && report.downloadUrl && (
+                          <Button
+                            size="small"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => handleDownloadReport(report.id, report.downloadUrl)}
+                          >
+                            Download
+                          </Button>
+                        )}
+                        {report.status === 'failed' && (
+                          <Chip label={report.error || 'Failed'} size="small" color="error" />
+                        )}
+                        {report.status === 'processing' && (
+                          <LinearProgress sx={{ width: 100 }} />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Paper>
       </Box>
     </LocalizationProvider>

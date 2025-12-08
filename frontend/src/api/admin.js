@@ -91,6 +91,14 @@ export const adminService = {
   // Vetting
   getVettingDashboard: (params) => axios.get(`${API_URL}/vetting/dashboard`, { params }),
   updateVettingRecord: (id, data) => axios.put(`${API_URL}/vetting/${id}`, data),
+
+  // Reports
+  generateReport: (data) => axios.post(`${API_URL}/reports/generate`, data),
+  getReportStatus: (jobId) => axios.get(`${API_URL}/reports/status/${jobId}`),
+  downloadReport: (jobId) => axios.get(`${API_URL}/reports/download/${jobId}`, {
+    responseType: 'blob',
+  }),
+  getReports: (params) => axios.get(`${API_URL}/reports`, { params }),
 };
 
 export default adminService;
