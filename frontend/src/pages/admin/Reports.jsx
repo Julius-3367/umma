@@ -54,7 +54,7 @@ const Reports = () => {
     endDate: null,
   });
   const [selectedReport, setSelectedReport] = useState('');
-  const [format, setFormat] = useState('csv');
+  const [format, setFormat] = useState('pdf');
   const [generating, setGenerating] = useState(false);
   const [generatingJobId, setGeneratingJobId] = useState(null);
   const [success, setSuccess] = useState('');
@@ -98,9 +98,12 @@ const Reports = () => {
     try {
       setLoadingReports(true);
       const response = await adminService.getReports();
-      setRecentReports(response.data || []);
+      // Ensure we always have an array
+      const reports = Array.isArray(response.data) ? response.data : (response.data?.reports || []);
+      setRecentReports(reports);
     } catch (err) {
       console.error('Error fetching reports:', err);
+      setRecentReports([]); // Set empty array on error
     } finally {
       setLoadingReports(false);
     }
@@ -267,6 +270,12 @@ const Reports = () => {
                   label="Export Format"
                   onChange={(e) => setFormat(e.target.value)}
                 >
+                  <MenuItem value="pdf">
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <PdfIcon fontSize="small" />
+                      <span>PDF Document</span>
+                    </Stack>
+                  </MenuItem>
                   <MenuItem value="csv">
                     <Stack direction="row" spacing={1} alignItems="center">
                       <ExcelIcon fontSize="small" />

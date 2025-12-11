@@ -119,10 +119,17 @@ const Candidates = () => {
       setLoading(true);
       const response = await adminService.getAllCandidates();
       console.log('📋 Candidates API response:', response);
+      console.log('📋 Response structure:', {
+        hasData: !!response?.data,
+        hasDataData: !!response?.data?.data,
+        dataCandidates: !!response?.data?.candidates,
+        dataDataCandidates: !!response?.data?.data?.candidates
+      });
 
-      // Backend returns: { success: true, data: [...], pagination: {...} }
-      const candidatesData = response?.data?.data || response?.data || [];
+      // Axios wraps the API response in data, so it's response.data.data.candidates
+      const candidatesData = response?.data?.data?.candidates || response?.data?.candidates || [];
       console.log('📋 Extracted candidates:', candidatesData);
+      console.log('📋 Number of candidates:', candidatesData.length);
 
       setCandidates(Array.isArray(candidatesData) ? candidatesData : []);
     } catch (error) {

@@ -80,13 +80,6 @@ const AssessmentsPage = () => {
     fetchAssessments();
   }, []);
 
-  const getGradeColor = (grade) => {
-    if (grade === 'A') return 'success';
-    if (grade === 'B+' || grade === 'B') return 'primary';
-    if (grade === 'C') return 'warning';
-    return 'error';
-  };
-
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
@@ -308,7 +301,6 @@ const AssessmentsPage = () => {
                       <TableCell>Assessment</TableCell>
                       <TableCell>Date</TableCell>
                       <TableCell>Score</TableCell>
-                      <TableCell>Grade</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell>Actions</TableCell>
                     </TableRow>
@@ -328,9 +320,6 @@ const AssessmentsPage = () => {
                             />
                             <Typography variant="body2">{assessment.score}/{assessment.totalMarks}</Typography>
                           </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={assessment.grade} size="small" color={getGradeColor(assessment.grade)} />
                         </TableCell>
                         <TableCell>
                           <Chip

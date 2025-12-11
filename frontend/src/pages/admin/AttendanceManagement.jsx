@@ -81,9 +81,11 @@ const AttendanceManagement = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await adminService.getAllCourses({ status: 'ACTIVE' });
-      const coursesData = response?.data?.data || response?.data || [];
-      setCourses(Array.isArray(coursesData) ? coursesData : []);
+      const response = await adminService.getAllCourses();
+      // API returns: { success, data: { courses, total, ... } }
+      const coursesData = response?.data?.courses || [];
+      const activeCourses = coursesData.filter(c => c.status === 'ACTIVE' || c.status === 'PUBLISHED');
+      setCourses(Array.isArray(activeCourses) ? activeCourses : []);
     } catch (error) {
       console.error('Error fetching courses:', error);
       enqueueSnackbar('Failed to load courses', { variant: 'error' });

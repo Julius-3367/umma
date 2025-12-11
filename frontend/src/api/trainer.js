@@ -19,6 +19,11 @@ export const trainerService = {
   createAssessment: (data) => axios.post(`${API_URL}/assessments`, data),
   updateAssessment: (id, data) => axios.put(`${API_URL}/assessments/${id}`, data),
 
+  // Candidates
+  getAllCandidates: (params) => axios.get(`${API_URL}/candidates`, { params }),
+  getCandidateProfile: (candidateId) => axios.get(`${API_URL}/candidates/${candidateId}`),
+  createCandidateAssessment: (candidateId, data) => axios.post(`${API_URL}/candidates/${candidateId}/assessments`, data),
+
   // Cohorts
   getMyCohorts: () => axios.get(`${API_URL}/cohorts`),
   getCohortSessions: (cohortId) => axios.get(`${API_URL}/cohorts/${cohortId}/sessions`),

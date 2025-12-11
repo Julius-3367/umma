@@ -145,10 +145,14 @@ const Certificates = () => {
       const response = await adminService.getCertificates({
         status: filterStatus !== 'all' ? filterStatus : undefined,
       });
-      setCertificates(response.data.data || []);
+      console.log('📜 Certificates API response:', response);
+      console.log('📜 Response data:', response.data);
+      console.log('📜 Certificates array:', response.data.data);
+      setCertificates(response.data.data || response.data || []);
     } catch (error) {
       console.error('Error fetching certificates:', error);
-      showSnackbar('Error fetching certificates', 'error');
+      console.error('Error details:', error.response);
+      showSnackbar(error.response?.data?.message || 'Error fetching certificates', 'error');
     } finally {
       setLoading(false);
     }
@@ -340,7 +344,9 @@ const Certificates = () => {
       fetchStatistics();
     } catch (error) {
       console.error('Error reissuing certificate:', error);
-      showSnackbar('Error reissuing certificate', 'error');
+      console.error('Error response:', error.response);
+      const errorMessage = error.response?.data?.message || error.message || 'Error reissuing certificate';
+      showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
     }

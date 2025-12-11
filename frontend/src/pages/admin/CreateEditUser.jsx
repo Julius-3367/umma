@@ -12,7 +12,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Alert,
 } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { adminService } from '../../api/admin';
 
@@ -27,17 +29,24 @@ const CreateEditUser = () => {
   const getRoleId = (roleName) => {
     const roleMap = {
       ADMIN: 1,
+      Admin: 1,
       CANDIDATE: 2,
+      Candidate: 2,
       TRAINER: 3,
+      Trainer: 3,
       RECRUITER: 4,
+      Recruiter: 4,
       BROKER: 5,
+      Broker: 5,
       EMPLOYER: 6,
+      Employer: 6,
     };
     return roleMap[roleName] || 2; // Default to CANDIDATE
   };
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -45,6 +54,7 @@ const CreateEditUser = () => {
     lastName: '',
     phone: '',
     roleId: location.state?.defaultRole ? getRoleId(location.state.defaultRole) : 2,
+    status: 'ACTIVE',
   });
 
   useEffect(() => {
@@ -55,6 +65,7 @@ const CreateEditUser = () => {
   const fetchUser = async () => {
     try {
       setLoading(true);
+      setError(null);
       const resp = await adminService.getUserById(id);
       const u = resp.data.data;
       setForm({
@@ -63,10 +74,12 @@ const CreateEditUser = () => {
         firstName: u.firstName || '',
         lastName: u.lastName || '',
         phone: u.phone || '',
-        roleId: u.role?.id || 2,
+        roleId: u.role?.id || u.roleId || 2,
+        status: u.status || 'ACTIVE',
       });
     } catch (err) {
-      console.error('Failed to fetch user', err);
+      console.error('Failed to fetch user:', err);
+      setError(err.response?.data?.message || 'Failed to load user');
       enqueueSnackbar('Failed to load user', { variant: 'error' });
     } finally {
       setLoading(false);
@@ -80,31 +93,49 @@ const CreateEditUser = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!form.email || !form.firstName || !form.lastName) {
+      enqueueSnackbar('Please fill in all required fields', { variant: 'warning' });
+      return;
+    }
+
+    if (!isEdit && !form.password) {
+      enqueueSnackbar('Password is required for new users', { variant: 'warning' });
+      return;
+    }
+
     try {
       setSaving(true);
+      setError(null);
+      
       const payload = {
         email: form.email,
         firstName: form.firstName,
         lastName: form.lastName,
         phone: form.phone,
-        roleId: form.roleId,
+        roleId: parseInt(form.roleId),
+        status: form.status,
       };
 
-      if (!isEdit && form.password) payload.password = form.password;
-      if (isEdit && form.password) payload.password = form.password; // optional password change
+      // Add password only if provided
+      if (form.password) {
+        payload.password = form.password;
+      }
 
       if (isEdit) {
         await adminService.updateUser(id, payload);
         enqueueSnackbar('User updated successfully', { variant: 'success' });
       } else {
-        await adminService.createUser({ ...payload, password: form.password });
+        await adminService.createUser(payload);
         enqueueSnackbar('User created successfully', { variant: 'success' });
       }
 
       navigate('/admin/users');
     } catch (err) {
-      console.error('Save error', err);
+      console.error('Save error:', err);
       const msg = err.response?.data?.message || 'Failed to save user';
+      setError(msg);
       enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setSaving(false);
@@ -113,7 +144,7 @@ const CreateEditUser = () => {
 
   if (loading) {
     return (
-      <Box p={3} display="flex" justifyContent="center">
+      <Box p={3} display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
         <CircularProgress />
       </Box>
     );
@@ -121,22 +152,86 @@ const CreateEditUser = () => {
 
   return (
     <Box p={3}>
-      <Paper sx={{ p: 3, maxWidth: 800, mx: 'auto' }} component="form" onSubmit={handleSubmit}>
-        <Typography variant="h5" gutterBottom>
+      <Box display="flex" alignItems="center" mb={3}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBack />}
+          onClick={() => navigate('/admin/users')}
+          sx={{ mr: 2 }}
+        >
+          Back
+        </Button>
+        <Typography variant="h4" fontWeight="bold">
           {isEdit ? 'Edit User' : 'Create New User'}
         </Typography>
-        <Stack spacing={2}>
-          <TextField label="Email" name="email" value={form.email} onChange={handleChange} required />
-          <TextField label="Password" name="password" type="password" value={form.password} onChange={handleChange} helperText={isEdit ? 'Leave blank to keep current password' : ''} required={!isEdit} />
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="First name" name="firstName" value={form.firstName} onChange={handleChange} fullWidth />
-            <TextField label="Last name" name="lastName" value={form.lastName} onChange={handleChange} fullWidth />
-          </Stack>
-          <TextField label="Phone number" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} />
+      </Box>
 
-          <FormControl size="small">
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <Paper sx={{ p: 3, maxWidth: 800 }} component="form" onSubmit={handleSubmit}>
+        <Stack spacing={3}>
+          <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            fullWidth
+            disabled={isEdit} // Don't allow email changes
+          />
+          
+          <TextField
+            label="Password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            helperText={isEdit ? 'Leave blank to keep current password' : 'Required for new users'}
+            required={!isEdit}
+            fullWidth
+          />
+          
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField
+              label="First Name"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Last Name"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+              required
+              fullWidth
+            />
+          </Stack>
+          
+          <TextField
+            label="Phone Number"
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            fullWidth
+          />
+
+          <FormControl fullWidth>
             <InputLabel>Role</InputLabel>
-            <Select label="Role" name="roleId" value={form.roleId} onChange={(e) => setForm((s) => ({ ...s, roleId: e.target.value }))}>
+            <Select
+              label="Role"
+              name="roleId"
+              value={form.roleId}
+              onChange={(e) => setForm((s) => ({ ...s, roleId: e.target.value }))}
+              required
+            >
               <MenuItem value={1}>Admin</MenuItem>
               <MenuItem value={2}>Candidate</MenuItem>
               <MenuItem value={3}>Trainer</MenuItem>
@@ -146,8 +241,25 @@ const CreateEditUser = () => {
             </Select>
           </FormControl>
 
+          <FormControl fullWidth>
+            <InputLabel>Status</InputLabel>
+            <Select
+              label="Status"
+              name="status"
+              value={form.status}
+              onChange={(e) => setForm((s) => ({ ...s, status: e.target.value }))}
+              required
+            >
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="INACTIVE">Inactive</MenuItem>
+              <MenuItem value="SUSPENDED">Suspended</MenuItem>
+            </Select>
+          </FormControl>
+
           <Stack direction="row" spacing={2} justifyContent="flex-end">
-            <Button onClick={() => navigate('/admin/users')}>Cancel</Button>
+            <Button onClick={() => navigate('/admin/users')} disabled={saving}>
+              Cancel
+            </Button>
             <Button type="submit" variant="contained" disabled={saving}>
               {saving ? 'Saving...' : isEdit ? 'Update User' : 'Create User'}
             </Button>

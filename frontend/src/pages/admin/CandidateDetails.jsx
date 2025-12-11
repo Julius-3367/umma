@@ -64,28 +64,28 @@ const CandidateDetails = () => {
   const fetchCandidateDetails = async () => {
     try {
       setLoading(true);
-      // Fetch candidate details
-      const candidatesResponse = await adminService.getAllCandidates();
-      const allCandidates = candidatesResponse?.data?.candidates || [];
-      const candidateData = allCandidates.find(c => c.id === parseInt(id));
-
-      if (!candidateData) {
+      // Fetch candidate details using the new getCandidateById API
+      const response = await adminService.getCandidateById(id);
+      
+      if (!response.data) {
         enqueueSnackbar('Candidate not found', { variant: 'error' });
         navigate('/admin/candidates');
         return;
       }
 
+      const candidateData = response.data.data || response.data;
       setCandidate(candidateData);
-
-      // Fetch enrollments
-      const enrollmentsResponse = await adminService.getEnrollments();
-      const allEnrollments = enrollmentsResponse?.data?.enrollments || enrollmentsResponse?.enrollments || [];
-      const candidateEnrollments = allEnrollments.filter(e => e.candidateId === parseInt(id));
-      setEnrollments(candidateEnrollments);
+      
+      // Set enrollments from the candidate data
+      setEnrollments(candidateData.enrollments || []);
+      
+      // Set attendance from the candidate data
+      setAttendance(candidateData.attendanceRecords || []);
 
     } catch (error) {
       console.error('Error fetching candidate details:', error);
-      enqueueSnackbar('Failed to load candidate details', { variant: 'error' });
+      enqueueSnackbar(error.response?.data?.message || 'Failed to load candidate details', { variant: 'error' });
+      navigate('/admin/candidates');
     } finally {
       setLoading(false);
     }
@@ -150,11 +150,11 @@ const CandidateDetails = () => {
                 <PersonIcon sx={{ fontSize: 60 }} />
               </Avatar>
               <Typography variant="h5" gutterBottom textAlign="center">
-                {candidate.fullName || `${candidate.firstName} ${candidate.lastName}`}
+                {candidate.fullName || `${candidate.user?.firstName || ''} ${candidate.user?.lastName || ''}`.trim() || 'Unknown'}
               </Typography>
               <Chip
-                label={candidate.status || 'Active'}
-                color={candidate.status === 'ACTIVE' ? 'success' : 'default'}
+                label={candidate.status || candidate.user?.status || 'Active'}
+                color={(candidate.status || candidate.user?.status) === 'ACTIVE' ? 'success' : 'default'}
                 size="small"
               />
               <Button
@@ -176,7 +176,7 @@ const CandidateDetails = () => {
                       <Typography variant="caption" color="text.secondary">
                         Email
                       </Typography>
-                      <Typography variant="body1">{candidate.email || 'N/A'}</Typography>
+                      <Typography variant="body1">{candidate.user?.email || candidate.email || 'N/A'}</Typography>
                     </Box>
                   </Box>
                 </Grid>
@@ -188,7 +188,7 @@ const CandidateDetails = () => {
                       <Typography variant="caption" color="text.secondary">
                         Phone
                       </Typography>
-                      <Typography variant="body1">{candidate.phone || 'N/A'}</Typography>
+                      <Typography variant="body1">{candidate.user?.phone || candidate.phone || 'N/A'}</Typography>
                     </Box>
                   </Box>
                 </Grid>
@@ -198,9 +198,9 @@ const CandidateDetails = () => {
                     <LocationIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Box>
                       <Typography variant="caption" color="text.secondary">
-                        Address
+                        County
                       </Typography>
-                      <Typography variant="body1">{candidate.address || 'N/A'}</Typography>
+                      <Typography variant="body1">{candidate.county || 'N/A'}</Typography>
                     </Box>
                   </Box>
                 </Grid>
@@ -213,8 +213,8 @@ const CandidateDetails = () => {
                         Date of Birth
                       </Typography>
                       <Typography variant="body1">
-                        {candidate.dateOfBirth
-                          ? format(new Date(candidate.dateOfBirth), 'MMM dd, yyyy')
+                        {candidate.dob
+                          ? format(new Date(candidate.dob), 'MMM dd, yyyy')
                           : 'N/A'}
                       </Typography>
                     </Box>
@@ -226,10 +226,10 @@ const CandidateDetails = () => {
                     <WorkIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Box>
                       <Typography variant="caption" color="text.secondary">
-                        Work Experience
+                        Previous Role
                       </Typography>
                       <Typography variant="body1">
-                        {candidate.workExperience || 'N/A'}
+                        {candidate.previousRole || 'N/A'}
                       </Typography>
                     </Box>
                   </Box>
@@ -243,7 +243,7 @@ const CandidateDetails = () => {
                         Education Level
                       </Typography>
                       <Typography variant="body1">
-                        {candidate.educationLevel || 'N/A'}
+                        {candidate.highestEducation || 'N/A'}
                       </Typography>
                     </Box>
                   </Box>
@@ -411,11 +411,57 @@ const CandidateDetails = () => {
 
           {/* Attendance Tab */}
           {tabValue === 1 && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" align="center" py={4}>
-                Attendance records will be displayed here
-              </Typography>
-            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Course</TableCell>
+                    <TableCell>Session Date</TableCell>
+                    <TableCell>Session #</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Remarks</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {attendance.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        <Typography variant="body2" color="text.secondary" py={4}>
+                          No attendance records found
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    attendance.map((record) => (
+                      <TableRow key={record.id} hover>
+                        <TableCell>{record.course?.title || 'N/A'}</TableCell>
+                        <TableCell>
+                          {record.sessionDate
+                            ? format(new Date(record.sessionDate), 'MMM dd, yyyy')
+                            : 'N/A'}
+                        </TableCell>
+                        <TableCell>{record.sessionNumber || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={record.status}
+                            color={
+                              record.status === 'PRESENT' ? 'success' :
+                              record.status === 'LATE' ? 'warning' : 'error'
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {record.remarks || '-'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
 
           {/* Documents Tab */}

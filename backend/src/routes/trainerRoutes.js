@@ -22,6 +22,13 @@ router.get('/courses/:courseId/students', trainerController.getCourseStudents);
 router.get('/courses/:courseId/attendance', trainerController.getCourseAttendance);
 
 /**
+ * Candidate Management
+ */
+router.get('/candidates', trainerController.getAllMyCandidates);
+router.get('/candidates/:candidateId', trainerController.getCandidateProfile);
+router.post('/candidates/:candidateId/assessments', trainerController.createCandidateAssessment);
+
+/**
  * Attendance
  */
 router.post('/attendance', trainerController.recordAttendance);

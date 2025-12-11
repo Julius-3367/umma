@@ -44,19 +44,30 @@ import {
   TrendingDown,
   EventAvailable,
   Schedule,
+  Gavel as AppealIcon,
+  Pending as PendingIcon,
+  ThumbUp as ApprovedIcon,
+  ThumbDown as RejectedIcon,
 } from '@mui/icons-material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
+import { useSnackbar } from 'notistack';
 import { candidateService } from '../../api/candidate';
+import attendanceAppealService from '../../api/attendanceAppeal';
+import SubmitAppealDialog from '../../components/attendance/SubmitAppealDialog';
 
 const AttendancePage = () => {
   const theme = useTheme();
+  const { enqueueSnackbar } = useSnackbar();
   const [viewMode, setViewMode] = useState('list');
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [certificateDialog, setCertificateDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [attendanceData, setAttendanceData] = useState([]);
+  const [appeals, setAppeals] = useState([]);
+  const [appealDialogOpen, setAppealDialogOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [stats, setStats] = useState({
     totalDays: 0,
     present: 0,
@@ -101,6 +112,67 @@ const AttendancePage = () => {
 
     fetchAttendance();
   }, [selectedMonth]);
+
+  // Fetch appeals
+  useEffect(() => {
+    fetchAppeals();
+  }, []);
+
+  const fetchAppeals = async () => {
+    try {
+      const response = await attendanceAppealService.getMyAppeals();
+      setAppeals(response?.data || []);
+    } catch (error) {
+      console.error('Error fetching appeals:', error);
+    }
+  };
+
+  const handleOpenAppealDialog = (record) => {
+    setSelectedRecord(record);
+    setAppealDialogOpen(true);
+  };
+
+  const handleAppealSubmitted = () => {
+    fetchAppeals();
+    enqueueSnackbar('Appeal submitted successfully!', { variant: 'success' });
+  };
+
+  const getAppealForRecord = (recordId) => {
+    return appeals.find(appeal => appeal.attendanceRecordId === recordId);
+  };
+
+  const canAppeal = (record) => {
+    if (!record) return false;
+    // Can only appeal ABSENT or LATE records
+    const status = record.status?.toUpperCase();
+    if (!['ABSENT', 'LATE'].includes(status)) return false;
+    // Check if already has active appeal
+    const existingAppeal = getAppealForRecord(record.id);
+    return !existingAppeal || existingAppeal.status === 'REJECTED';
+  };
+
+  const getAppealStatusChip = (appeal) => {
+    if (!appeal) return null;
+
+    const statusConfig = {
+      PENDING: { label: 'Appeal Pending', color: 'warning', icon: <PendingIcon fontSize="small" /> },
+      APPROVED: { label: 'Appeal Approved', color: 'success', icon: <ApprovedIcon fontSize="small" /> },
+      REJECTED: { label: 'Appeal Rejected', color: 'error', icon: <RejectedIcon fontSize="small" /> },
+      CANCELLED: { label: 'Appeal Cancelled', color: 'default', icon: null },
+    };
+
+    const config = statusConfig[appeal.status] || statusConfig.PENDING;
+
+    return (
+      <Chip
+        label={config.label}
+        color={config.color}
+        size="small"
+        icon={config.icon}
+        sx={{ ml: 1 }}
+      />
+    );
+  };
 
   const getStatusColor = (status) => {
     const statusLower = status?.toLowerCase();
@@ -336,35 +408,78 @@ const AttendancePage = () => {
                         <TableCell>Course</TableCell>
                         <TableCell>Status</TableCell>
                         <TableCell>Remarks</TableCell>
+                        <TableCell align="right">Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {attendanceData.map((record, index) => (
-                        <TableRow key={index} hover>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight={500}>
-                              {format(new Date(record.date), 'MMM dd, yyyy')}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {format(new Date(record.date), 'EEEE')}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>{record.courseName}</TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={getStatusIcon(record.status)}
-                              label={record.status.toUpperCase()}
-                              color={getStatusColor(record.status)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" color="text.secondary">
-                              {record.remarks || '-'}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {attendanceData.map((record, index) => {
+                        const appeal = getAppealForRecord(record.id);
+                        return (
+                          <TableRow key={index} hover>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={500}>
+                                {format(new Date(record.date), 'MMM dd, yyyy')}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {format(new Date(record.date), 'EEEE')}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>{record.courseName}</TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center" flexWrap="wrap">
+                                <Chip
+                                  icon={getStatusIcon(record.status)}
+                                  label={record.status.toUpperCase()}
+                                  color={getStatusColor(record.status)}
+                                  size="small"
+                                />
+                                {appeal && getAppealStatusChip(appeal)}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" color="text.secondary">
+                                {record.remarks || '-'}
+                              </Typography>
+                              {appeal && appeal.reviewerComments && (
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                                  <strong>Review:</strong> {appeal.reviewerComments}
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell align="right">
+                              {canAppeal(record) ? (
+                                <Button
+                                  size="small"
+                                  startIcon={<AppealIcon />}
+                                  onClick={() => handleOpenAppealDialog(record)}
+                                  color="primary"
+                                  variant="outlined"
+                                >
+                                  Appeal
+                                </Button>
+                              ) : appeal && appeal.status === 'PENDING' ? (
+                                <Chip
+                                  label="Under Review"
+                                  size="small"
+                                  color="warning"
+                                  variant="outlined"
+                                />
+                              ) : appeal && appeal.status === 'APPROVED' ? (
+                                <Chip
+                                  label="Approved"
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                />
+                              ) : (
+                                <Typography variant="caption" color="text.secondary">
+                                  -
+                                </Typography>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -468,6 +583,14 @@ const AttendancePage = () => {
               </Button>
             </DialogActions>
           </Dialog>
+
+          {/* Submit Appeal Dialog */}
+          <SubmitAppealDialog
+            open={appealDialogOpen}
+            onClose={() => setAppealDialogOpen(false)}
+            attendanceRecord={selectedRecord}
+            onAppealSubmitted={handleAppealSubmitted}
+          />
         </>
       )}
     </Box>

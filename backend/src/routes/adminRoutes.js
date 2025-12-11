@@ -43,6 +43,9 @@ router.delete('/companies/:id', authorize(['Admin']), adminController.deleteComp
  * Candidate Management (Admin + Recruiter)
  */
 router.get('/candidates', authorize(['Admin', 'Recruiter']), adminController.getAllCandidates);
+router.get('/candidates/:id', authorize(['Admin', 'Recruiter']), adminController.getCandidateById);
+router.put('/candidates/:id', authorize(['Admin']), adminController.updateCandidate);
+router.delete('/candidates/:id', authorize(['Admin']), adminController.deleteCandidate);
 
 /**
  * Placement Management (Admin + Recruiter)

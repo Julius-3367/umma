@@ -1,6 +1,7 @@
 const prisma = require('../config/database');
 const fs = require('fs');
 const path = require('path');
+const PDFDocument = require('pdfkit');
 
 const REPORTS_DIR = path.join(__dirname, '..', '..', 'uploads', 'reports');
 
@@ -439,6 +440,100 @@ function convertToCSV(data) {
 }
 
 /**
+ * Convert data to PDF format
+ */
+async function convertToPDF(data, reportType, filePath) {
+  return new Promise((resolve, reject) => {
+    if (!data || data.length === 0) {
+      reject(new Error('No data available'));
+      return;
+    }
+
+    const doc = new PDFDocument({ margin: 50, size: 'A4', layout: 'landscape' });
+    const stream = fs.createWriteStream(filePath);
+
+    doc.pipe(stream);
+
+    // Header
+    doc.fontSize(18).text(`${reportType.toUpperCase()} REPORT`, { align: 'center' });
+    doc.fontSize(10).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(10).text(`Total Records: ${data.length}`, { align: 'center' });
+    doc.moveDown(2);
+
+    // Table headers
+    const headers = Object.keys(data[0]);
+    const columnWidth = (doc.page.width - 100) / headers.length;
+    let yPosition = doc.y;
+
+    // Draw header row
+    doc.fontSize(9).fillColor('black');
+    headers.forEach((header, i) => {
+      doc.rect(50 + (i * columnWidth), yPosition, columnWidth, 20).stroke();
+      doc.text(header, 52 + (i * columnWidth), yPosition + 5, {
+        width: columnWidth - 4,
+        height: 20,
+        ellipsis: true
+      });
+    });
+
+    yPosition += 20;
+
+    // Draw data rows (limit to first 100 rows for PDF readability)
+    const displayData = data.slice(0, 100);
+    doc.fontSize(8);
+
+    displayData.forEach((row, rowIndex) => {
+      // Check if we need a new page
+      if (yPosition > doc.page.height - 100) {
+        doc.addPage();
+        yPosition = 50;
+
+        // Redraw headers on new page
+        doc.fontSize(9);
+        headers.forEach((header, i) => {
+          doc.rect(50 + (i * columnWidth), yPosition, columnWidth, 20).stroke();
+          doc.text(header, 52 + (i * columnWidth), yPosition + 5, {
+            width: columnWidth - 4,
+            height: 20,
+            ellipsis: true
+          });
+        });
+        yPosition += 20;
+        doc.fontSize(8);
+      }
+
+      headers.forEach((header, i) => {
+        const value = row[header] !== null && row[header] !== undefined ? String(row[header]) : 'N/A';
+        doc.rect(50 + (i * columnWidth), yPosition, columnWidth, 15).stroke();
+        doc.text(value, 52 + (i * columnWidth), yPosition + 3, {
+          width: columnWidth - 4,
+          height: 15,
+          ellipsis: true
+        });
+      });
+
+      yPosition += 15;
+    });
+
+    // Footer note if data was truncated
+    if (data.length > 100) {
+      doc.moveDown(2);
+      doc.fontSize(8).fillColor('red');
+      doc.text(
+        `Note: PDF displays first 100 records out of ${data.length} total records. Download CSV for complete data.`,
+        { align: 'center' }
+      );
+    }
+
+    doc.end();
+
+    stream.on('finish', () => resolve(filePath));
+    stream.on('error', reject);
+  });
+}
+
+/**
  * Main report generation function
  */
 async function generateReportData(type, startDate, endDate, tenantId) {
@@ -482,7 +577,7 @@ async function generateReportData(type, startDate, endDate, tenantId) {
 /**
  * Save report to file
  */
-async function saveReportToFile(data, format, fileName) {
+async function saveReportToFile(data, format, fileName, reportType) {
   const filePath = path.join(REPORTS_DIR, fileName);
 
   if (format === 'csv') {
@@ -490,6 +585,8 @@ async function saveReportToFile(data, format, fileName) {
     fs.writeFileSync(filePath, csvContent, 'utf8');
   } else if (format === 'json') {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+  } else if (format === 'pdf') {
+    await convertToPDF(data, reportType, filePath);
   } else {
     throw new Error(`Unsupported format: ${format}`);
   }

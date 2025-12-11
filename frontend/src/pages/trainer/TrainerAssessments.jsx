@@ -86,6 +86,11 @@ const TrainerAssessments = () => {
       try {
         setLoadingDetails(true);
         const response = await trainerService.getCourseDetails(selectedCourseId);
+        console.log('📊 Course Details Response:', response?.data?.data);
+        console.log('📋 Assessments:', response?.data?.data?.assessments);
+        if (response?.data?.data?.assessments?.length > 0) {
+          console.log('📝 Sample Assessment:', response.data.data.assessments[0]);
+        }
         setCourseDetails(response?.data?.data || null);
       } catch (error) {
         console.error('Error loading course details', error);
@@ -343,24 +348,30 @@ const TrainerAssessments = () => {
                 <TableRow key={assessment.id} hover>
                   <TableCell>
                     <Typography variant="subtitle2">
-                      {assessment.enrollment?.candidate?.fullName || 'Candidate'}
+                      {assessment.enrollment?.candidate?.fullName || 'Unknown'}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {assessment.enrollment?.candidate?.user?.email || 'Email unavailable'}
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {assessment.enrollment?.candidate?.user?.email || ''}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AssessmentIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{assessment.assessmentType}</Typography>
+                      <Typography variant="body2">{assessment.assessmentType || 'Assessment'}</Typography>
                     </Box>
-                    <Typography variant="caption" color="text.secondary">
-                      {assessment.trainerComments || 'No notes'}
+                    {assessment.trainerComments && (
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                        {assessment.trainerComments}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight="medium">
+                      {assessment.score != null ? `${assessment.score}%` : 'N/A'}
                     </Typography>
                   </TableCell>
-                  <TableCell>{assessment.score ?? 'N/A'}%</TableCell>
                   <TableCell>
-                    {assessment.assessmentDate ? new Date(assessment.assessmentDate).toLocaleDateString() : 'N/A'}
+                    {assessment.date ? new Date(assessment.date).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -390,7 +401,7 @@ const TrainerAssessments = () => {
               >
                 {enrollments.map((enrollment) => (
                   <MenuItem key={enrollment.id} value={enrollment.id}>
-                    {enrollment.candidate?.firstName} {enrollment.candidate?.lastName}
+                    {enrollment.candidate?.fullName || enrollment.candidate?.user?.email || 'Unknown Student'}
                   </MenuItem>
                 ))}
               </TextField>

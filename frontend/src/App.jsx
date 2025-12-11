@@ -22,6 +22,7 @@ import NotFound from './pages/NotFound';
 // Dashboard Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
+import UserDetails from './pages/admin/UserDetails';
 import CreateEditUser from './pages/admin/CreateEditUser';
 import AdminCourses from './pages/admin/Courses';
 import AdminCreateCourse from './pages/admin/CreateCourse';
@@ -41,7 +42,7 @@ import CohortApplications from './pages/admin/CohortApplications';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
 import CandidateCourses from './pages/candidate/MyCourses';
 import CandidateDocuments from './pages/candidate/Documents';
-import CandidateAttendance from './pages/candidate/AttendancePage';
+import CandidateAttendance from './pages/candidate/Attendance';
 import CandidateAssessments from './pages/candidate/AssessmentsPage';
 import CandidateCertificates from './pages/candidate/CertificatesPage';
 import CandidateProfile from './pages/candidate/ProfileSettings';
@@ -326,7 +327,7 @@ const App = () => {
                   <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="users/new" element={<CreateEditUser />} />
-                  <Route path="users/:id" element={<CreateEditUser />} />
+                  <Route path="users/:id" element={<UserDetails />} />
                   <Route path="users/:id/edit" element={<CreateEditUser />} />
                   <Route path="courses" element={<AdminCourses />} />
                   <Route path="courses/:courseId" element={<AdminCourseDetails />} />

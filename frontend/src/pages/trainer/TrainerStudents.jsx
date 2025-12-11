@@ -23,15 +23,23 @@ import {
   IconButton,
   Button,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   Refresh as RefreshIcon,
   ArrowForward as ArrowForwardIcon,
+  Visibility as VisibilityIcon,
+  Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import trainerService from '../../api/trainer';
+import CandidateProfileDialog from '../../components/trainer/CandidateProfileDialog';
 
 const TrainerStudents = () => {
   const navigate = useNavigate();
@@ -45,6 +53,21 @@ const TrainerStudents = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [reloadKey, setReloadKey] = useState(0);
+  
+  // Profile dialog state
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [selectedCandidateId, setSelectedCandidateId] = useState(null);
+  
+  // Assessment dialog state
+  const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
+  const [assessmentCandidate, setAssessmentCandidate] = useState(null);
+  const [assessmentForm, setAssessmentForm] = useState({
+    assessmentType: 'Quiz',
+    score: '',
+    resultCategory: 'PASS',
+    trainerComments: '',
+  });
+  const [savingAssessment, setSavingAssessment] = useState(false);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -91,6 +114,45 @@ const TrainerStudents = () => {
   }, [selectedCourseId, enqueueSnackbar, reloadKey]);
 
   const handleRefresh = () => setReloadKey((prev) => prev + 1);
+
+  const handleViewProfile = (candidateId) => {
+    setSelectedCandidateId(candidateId);
+    setProfileDialogOpen(true);
+  };
+
+  const handleOpenAssessment = (enrollment) => {
+    setAssessmentCandidate(enrollment);
+    setAssessmentForm({
+      assessmentType: 'Quiz',
+      score: '',
+      resultCategory: 'PASS',
+      trainerComments: '',
+    });
+    setAssessmentDialogOpen(true);
+  };
+
+  const handleCreateAssessment = async () => {
+    if (!assessmentForm.score || !assessmentCandidate) {
+      enqueueSnackbar('Please fill in all required fields', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      setSavingAssessment(true);
+      await trainerService.createCandidateAssessment(assessmentCandidate.candidate.id, {
+        courseId: selectedCourseId,
+        ...assessmentForm,
+      });
+      enqueueSnackbar('Assessment recorded successfully', { variant: 'success' });
+      setAssessmentDialogOpen(false);
+      handleRefresh();
+    } catch (error) {
+      console.error('Error creating assessment:', error);
+      enqueueSnackbar(error.response?.data?.message || 'Failed to create assessment', { variant: 'error' });
+    } finally {
+      setSavingAssessment(false);
+    }
+  };
 
   const filteredStudents = useMemo(() => {
     let filtered = [...students];
@@ -318,9 +380,26 @@ const TrainerStudents = () => {
                     {enrollment.enrolledAt ? new Date(enrollment.enrolledAt).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small" onClick={() => navigate(`/trainer/courses/${selectedCourseId}/students`)}>
-                      <ArrowForwardIcon fontSize="small" />
-                    </IconButton>
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Tooltip title="View Profile">
+                        <IconButton 
+                          size="small" 
+                          color="primary"
+                          onClick={() => handleViewProfile(enrollment.candidate?.id)}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Run Assessment">
+                        <IconButton 
+                          size="small" 
+                          color="success"
+                          onClick={() => handleOpenAssessment(enrollment)}
+                        >
+                          <AssessmentIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
@@ -328,6 +407,95 @@ const TrainerStudents = () => {
           </Table>
         </TableContainer>
       )}
+
+      {/* Candidate Profile Dialog */}
+      <CandidateProfileDialog
+        open={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+        candidateId={selectedCandidateId}
+      />
+
+      {/* Assessment Dialog */}
+      <Dialog 
+        open={assessmentDialogOpen} 
+        onClose={() => setAssessmentDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Record Assessment
+          {assessmentCandidate && (
+            <Typography variant="body2" color="text.secondary">
+              {assessmentCandidate.candidate?.firstName} {assessmentCandidate.candidate?.lastName}
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                label="Assessment Type"
+                value={assessmentForm.assessmentType}
+                onChange={(e) => setAssessmentForm({ ...assessmentForm, assessmentType: e.target.value })}
+              >
+                <MenuItem value="Quiz">Quiz</MenuItem>
+                <MenuItem value="Assignment">Assignment</MenuItem>
+                <MenuItem value="Midterm">Midterm</MenuItem>
+                <MenuItem value="Final">Final</MenuItem>
+                <MenuItem value="Project">Project</MenuItem>
+                <MenuItem value="Practical">Practical</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Score (%)"
+                type="number"
+                value={assessmentForm.score}
+                onChange={(e) => setAssessmentForm({ ...assessmentForm, score: Number(e.target.value) })}
+                inputProps={{ min: 0, max: 100 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                label="Result Category"
+                value={assessmentForm.resultCategory}
+                onChange={(e) => setAssessmentForm({ ...assessmentForm, resultCategory: e.target.value })}
+              >
+                <MenuItem value="DISTINCTION">Distinction</MenuItem>
+                <MenuItem value="MERIT">Merit</MenuItem>
+                <MenuItem value="PASS">Pass</MenuItem>
+                <MenuItem value="FAIL">Fail</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                label="Comments"
+                value={assessmentForm.trainerComments}
+                onChange={(e) => setAssessmentForm({ ...assessmentForm, trainerComments: e.target.value })}
+                placeholder="Add your feedback and comments..."
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssessmentDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleCreateAssessment}
+            disabled={savingAssessment}
+          >
+            {savingAssessment ? 'Saving...' : 'Save Assessment'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -86,7 +86,14 @@ const CertificateList = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await adminService.getCertificates(filters);
+      // Clean up filters - don't send empty values
+      const cleanFilters = {};
+      if (filters.status && filters.status !== 'all') cleanFilters.status = filters.status;
+      if (filters.courseId) cleanFilters.courseId = filters.courseId;
+      if (filters.search) cleanFilters.search = filters.search;
+      
+      const response = await adminService.getCertificates(cleanFilters);
+      console.log('📜 Certificates response:', response);
       setCertificates(response.data?.data || response.data || []);
     } catch (err) {
       console.error('Failed to fetch certificates:', err);
@@ -244,7 +251,10 @@ const CertificateList = () => {
       fetchCertificates();
       fetchStatistics();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reissue certificate');
+      console.error('Reissue error:', err);
+      console.error('Error response:', err.response);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to reissue certificate';
+      setError(errorMessage);
     }
   };
 

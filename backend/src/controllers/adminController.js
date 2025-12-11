@@ -287,7 +287,7 @@ const getUserById = async (req, res) => {
       where: { id: parseInt(id) },
       include: {
         role: true,
-        candidate: true,
+        candidateProfile: true,
       },
     });
 
@@ -298,9 +298,12 @@ const getUserById = async (req, res) => {
       });
     }
 
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user;
+
     res.json({
       success: true,
-      data: user,
+      data: userWithoutPassword,
     });
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -374,27 +377,40 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, firstName, lastName, phone, roleId, status } = req.body;
+    const { email, password, firstName, lastName, phone, roleId, status } = req.body;
+
+    // Prepare update data
+    const updateData = {
+      ...(email && { email }),
+      ...(firstName && { firstName }),
+      ...(lastName && { lastName }),
+      ...(phone && { phone }),
+      ...(roleId && { roleId: parseInt(roleId) }),
+      ...(status && { status }),
+    };
+
+    // Hash password if provided
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.password = hashedPassword;
+    }
 
     const user = await prisma.user.update({
       where: { id: parseInt(id) },
-      data: {
-        ...(email && { email }),
-        ...(firstName && { firstName }),
-        ...(lastName && { lastName }),
-        ...(phone && { phone }),
-        ...(roleId && { roleId: parseInt(roleId) }),
-        ...(status && { status }),
-      },
+      data: updateData,
       include: {
         role: true,
       },
     });
 
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
+
     res.json({
       success: true,
       message: 'User updated successfully',
-      data: user,
+      data: userWithoutPassword,
     });
   } catch (error) {
     console.error('Error updating user:', error);
@@ -1044,9 +1060,25 @@ const getAllCandidates = async (req, res) => {
         include: {
           user: {
             select: {
+              id: true,
               email: true,
               phone: true,
+              firstName: true,
+              lastName: true,
+              status: true,
             },
+          },
+          enrollments: {
+            include: {
+              course: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+            take: 5,
+            orderBy: { createdAt: 'desc' },
           },
           _count: {
             select: {
@@ -1060,7 +1092,10 @@ const getAllCandidates = async (req, res) => {
 
     res.json({
       success: true,
-      data: candidates,
+      data: {
+        candidates,
+        total,
+      },
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -1073,6 +1108,186 @@ const getAllCandidates = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching candidates',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get candidate by ID
+ */
+const getCandidateById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const candidate = await prisma.candidate.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            firstName: true,
+            lastName: true,
+            status: true,
+            lastLogin: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        enrollments: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                code: true,
+              },
+            },
+            attendance: {
+              orderBy: { date: 'desc' },
+              take: 50,
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        documents: {
+          take: 10,
+          orderBy: { uploadedAt: 'desc' },
+        },
+        placements: {
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found',
+      });
+    }
+
+    // Flatten attendance records from all enrollments
+    const attendanceRecords = candidate.enrollments.reduce((acc, enrollment) => {
+      if (enrollment.attendance) {
+        return [...acc, ...enrollment.attendance];
+      }
+      return acc;
+    }, []);
+
+    // Add flattened attendance to response
+    const responseData = {
+      ...candidate,
+      attendanceRecords,
+    };
+
+    res.json({
+      success: true,
+      data: responseData,
+    });
+  } catch (error) {
+    console.error('Error fetching candidate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching candidate details',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Update candidate
+ */
+const updateCandidate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Remove fields that shouldn't be updated directly
+    delete updateData.id;
+    delete updateData.userId;
+    delete updateData.createdAt;
+
+    const candidate = await prisma.candidate.update({
+      where: { id: parseInt(id) },
+      data: {
+        ...updateData,
+        updatedAt: new Date(),
+      },
+      include: {
+        user: {
+          select: {
+            email: true,
+            phone: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Candidate updated successfully',
+      data: candidate,
+    });
+  } catch (error) {
+    console.error('Error updating candidate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating candidate',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Delete candidate
+ */
+const deleteCandidate = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if candidate exists
+    const candidate = await prisma.candidate.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found',
+      });
+    }
+
+    // Delete candidate (this will cascade to related records based on schema)
+    await prisma.candidate.delete({
+      where: { id: parseInt(id) },
+    });
+
+    // Optionally delete the associated user account
+    if (candidate.userId) {
+      await prisma.user.delete({
+        where: { id: candidate.userId },
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Candidate deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting candidate:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting candidate',
       error: error.message,
     });
   }
@@ -1578,8 +1793,8 @@ const getCertificateRequests = async (req, res) => {
           id: cert.id,
           requestedAt: cert.requestedAt,
           approvalStatus: cert.approvalStatus,
-          candidate: cert.enrollment.candidate,
-          course: cert.enrollment.course,
+          candidate: cert.enrollment?.candidate || null,
+          course: cert.enrollment?.course || null,
           trainer: cert.requestedByUser,
           assessment,
         };
@@ -1942,10 +2157,11 @@ const saveAttendance = async (req, res) => {
     await prisma.activityLog.create({
       data: {
         userId: req.user.id,
+        tenantId: user.tenantId,
         action: 'ATTENDANCE_MARKED',
-        entity: 'Attendance',
-        entityId: parsedCourseId,
-        details: `Marked attendance for ${attendanceData.length} students on ${date}`,
+        module: 'Attendance',
+        resource: `Course ${parsedCourseId}`,
+        details: { date, recordsCount: attendanceData.length },
       },
     });
 
@@ -2199,25 +2415,26 @@ const getCertificates = async (req, res) => {
       tenantId,
     };
 
-    if (status && status !== 'all') {
+    if (status && status !== 'all' && status.trim() !== '') {
       where.status = status.toUpperCase();
     }
 
-    if (courseId) {
+    if (courseId && courseId.trim() !== '') {
       where.courseId = parseInt(courseId);
     }
 
-    if (candidateId) {
+    if (candidateId && candidateId.trim() !== '') {
       where.enrollment = {
         candidateId: parseInt(candidateId),
       };
     }
 
-    if (search) {
+    if (search && search.trim() !== '') {
       where.OR = [
         { certificateNumber: { contains: search } },
         {
           enrollment: {
+            isNot: null,
             candidate: {
               user: {
                 OR: [
@@ -2275,10 +2492,10 @@ const getCertificates = async (req, res) => {
     const formattedCertificates = certificates.map(cert => ({
       id: cert.id,
       certificateNumber: cert.certificateNumber,
-      candidateName: `${cert.enrollment.candidate.user.firstName} ${cert.enrollment.candidate.user.lastName}`,
-      candidateEmail: cert.enrollment.candidate.user.email,
-      courseName: cert.enrollment.course.title,
-      courseCode: cert.enrollment.course.code,
+      candidateName: cert.enrollment ? `${cert.enrollment.candidate.user.firstName} ${cert.enrollment.candidate.user.lastName}` : 'N/A',
+      candidateEmail: cert.enrollment ? cert.enrollment.candidate.user.email : 'N/A',
+      courseName: cert.enrollment ? cert.enrollment.course.title : 'N/A',
+      courseCode: cert.enrollment ? cert.enrollment.course.code : 'N/A',
       templateName: cert.template?.name,
       issueDate: cert.issueDate,
       expiryDate: cert.expiryDate,
@@ -2297,10 +2514,11 @@ const getCertificates = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching certificates:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Error fetching certificates',
-      error: error.message,
+      message: error.message || 'Error fetching certificates',
+      error: process.env.NODE_ENV === 'development' ? error.stack : error.message,
     });
   }
 };
@@ -2505,9 +2723,13 @@ const generateCertificate = async (req, res) => {
         tenantId: user.tenantId,
         userId: req.user.id,
         action: 'CERTIFICATE_GENERATED',
-        entityType: 'Certificate',
-        entityId: certificate.id,
-        description: `Generated certificate ${certificateNumber} for ${enrollment.candidate.user.firstName} ${enrollment.candidate.user.lastName}`,
+        module: 'Certificates',
+        resource: `Certificate ${certificate.id}`,
+        details: {
+          certificateNumber,
+          candidateName: `${enrollment.candidate.user.firstName} ${enrollment.candidate.user.lastName}`,
+          courseId: enrollment.courseId,
+        },
       },
     });
 
@@ -2619,9 +2841,12 @@ const updateCertificate = async (req, res) => {
         tenantId: user.tenantId,
         userId: req.user.id,
         action: 'CERTIFICATE_UPDATED',
-        entityType: 'Certificate',
-        entityId: updatedCertificate.id,
-        description: `Updated certificate ${updatedCertificate.certificateNumber}: ${Object.keys(customData).join(', ')} modified`,
+        module: 'Certificates',
+        resource: `Certificate ${updatedCertificate.id}`,
+        details: {
+          certificateNumber: updatedCertificate.certificateNumber,
+          fieldsModified: Object.keys(customData),
+        },
       },
     });
 
@@ -2723,9 +2948,13 @@ const bulkGenerateCertificates = async (req, res) => {
           tenantId: user.tenantId,
           userId: req.user.id,
           action: 'CERTIFICATE_GENERATED',
-          entityType: 'Certificate',
-          entityId: certificate.id,
-          description: `Bulk generated certificate ${certificateNumber} for ${enrollment.candidate.user.firstName} ${enrollment.candidate.user.lastName}`,
+          module: 'Certificates',
+          resource: `Certificate ${certificate.id}`,
+          details: {
+            certificateNumber,
+            candidateName: `${enrollment.candidate.user.firstName} ${enrollment.candidate.user.lastName}`,
+            bulkGeneration: true,
+          },
         },
       });
     }
@@ -2821,9 +3050,11 @@ const downloadCertificate = async (req, res) => {
           tenantId: user.tenantId || certificate.tenantId || null,
           userId: req.user.id,
           action: 'CERTIFICATE_DOWNLOADED',
-          entityType: 'Certificate',
-          entityId: certificate.id,
-          description: `Downloaded certificate ${certificate.certificateNumber}`,
+          module: 'Certificates',
+          resource: `Certificate ${certificate.id}`,
+          details: {
+            certificateNumber: certificate.certificateNumber,
+          },
         },
       });
     } catch (logError) {
@@ -2915,9 +3146,16 @@ const previewCertificate = async (req, res) => {
           tenantId: user.tenantId || certificate.tenantId || null,
           userId: req.user.id,
           action: 'CERTIFICATE_PREVIEWED',
-          entityType: 'Certificate',
-          entityId: certificate.id,
-          description: `Previewed certificate ${certificate.certificateNumber || 'PREVIEW'} with overrides: ${JSON.stringify({ candidateName: overrideCandidateName, courseName: overrideCourseName, courseCode: overrideCourseCode })}`,
+          module: 'Certificates',
+          resource: `Certificate ${certificate.id}`,
+          details: {
+            certificateNumber: certificate.certificateNumber || 'PREVIEW',
+            overrides: {
+              candidateName: overrideCandidateName,
+              courseName: overrideCourseName,
+              courseCode: overrideCourseCode,
+            },
+          },
         },
       });
     } catch (logErr) {
@@ -2988,9 +3226,12 @@ const sendCertificate = async (req, res) => {
         tenantId: user.tenantId,
         userId: req.user.id,
         action: 'CERTIFICATE_SENT',
-        entityType: 'Certificate',
-        entityId: certificate.id,
-        description: `Sent certificate ${certificate.certificateNumber} to ${certificate.enrollment.candidate.user.email}`,
+        module: 'Certificates',
+        resource: `Certificate ${certificate.id}`,
+        details: {
+          certificateNumber: certificate.certificateNumber,
+          recipientEmail: certificate.enrollment.candidate.user.email,
+        },
       },
     });
 
@@ -3143,9 +3384,12 @@ const revokeCertificate = async (req, res) => {
         tenantId: user.tenantId,
         userId: req.user.id,
         action: 'CERTIFICATE_REVOKED',
-        entityType: 'Certificate',
-        entityId: certificate.id,
-        description: `Revoked certificate ${certificate.certificateNumber}. Reason: ${reason || 'Not specified'}`,
+        module: 'Certificates',
+        resource: `Certificate ${certificate.id}`,
+        details: {
+          certificateNumber: certificate.certificateNumber,
+          reason: reason || 'Not specified',
+        },
       },
     });
 
@@ -3192,6 +3436,13 @@ const reissueCertificate = async (req, res) => {
       });
     }
 
+    if (!oldCertificate.enrollment) {
+      return res.status(400).json({
+        success: false,
+        message: 'Certificate has no associated enrollment',
+      });
+    }
+
     const crypto = require('crypto');
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
@@ -3208,12 +3459,16 @@ const reissueCertificate = async (req, res) => {
     const signatureData = `${newCertificateNumber}${oldCertificate.enrollment.candidateId}${oldCertificate.enrollment.courseId}${new Date()}`;
     const digitalSignature = crypto.createHash('sha256').update(signatureData).digest('hex');
 
-    // Mark old certificate as reissued
+    // Store enrollment ID before updating
+    const enrollmentId = oldCertificate.enrollmentId;
+
+    // Mark old certificate as reissued and remove from unique constraint
     await prisma.certificate.update({
       where: { id: oldCertificate.id },
       data: {
         status: 'REISSUED',
         remarks: `Reissued as ${newCertificateNumber}`,
+        enrollmentId: null, // Remove to free the unique constraint
       },
     });
 
@@ -3221,7 +3476,7 @@ const reissueCertificate = async (req, res) => {
     const newCertificate = await prisma.certificate.create({
       data: {
         tenantId: user.tenantId,
-        enrollmentId: oldCertificate.enrollmentId,
+        enrollmentId: enrollmentId,
         templateId: oldCertificate.templateId,
         certificateNumber: newCertificateNumber,
         issueDate: new Date(),
@@ -3241,9 +3496,14 @@ const reissueCertificate = async (req, res) => {
         tenantId: user.tenantId,
         userId: req.user.id,
         action: 'CERTIFICATE_REISSUED',
-        entityType: 'Certificate',
-        entityId: newCertificate.id,
-        description: `Reissued certificate ${oldCertificate.certificateNumber} as ${newCertificateNumber}`,
+        module: 'Certificates',
+        resource: `Certificate ${newCertificate.id}`,
+        details: {
+          oldCertificateNumber: oldCertificate.certificateNumber,
+          newCertificateNumber: newCertificateNumber,
+          oldCertificateId: oldCertificate.id,
+          newCertificateId: newCertificate.id,
+        },
       },
     });
 
@@ -3254,10 +3514,11 @@ const reissueCertificate = async (req, res) => {
     });
   } catch (error) {
     console.error('Error reissuing certificate:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Error reissuing certificate',
-      error: error.message,
+      message: error.message || 'Error reissuing certificate',
+      error: process.env.NODE_ENV === 'development' ? error.stack : error.message,
     });
   }
 };
@@ -3638,7 +3899,7 @@ const generateReport = async (req, res) => {
 
         // Save report to file
         const fileName = `${job.id}.${format}`;
-        await reportService.saveReportToFile(reportData, format, fileName);
+        await reportService.saveReportToFile(reportData, format, fileName, type);
 
         const downloadUrl = `/uploads/reports/${fileName}`;
         const completedAt = new Date();
@@ -4606,6 +4867,9 @@ module.exports = {
   updateCourse,
   deleteCourse,
   getAllCandidates,
+  getCandidateById,
+  updateCandidate,
+  deleteCandidate,
   getEnrollments,
   updateEnrollmentStatus,
   getStatistics,

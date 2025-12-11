@@ -78,23 +78,25 @@ export const setupAxiosInterceptors = (reduxStore) => {
           const refreshUrl = makeUrl(import.meta.env.VITE_AUTH_REFRESH_ENDPOINT || '/auth/refresh');
           const response = await axios.post(refreshUrl, { refreshToken });
 
-          const { accessToken, refreshToken: newRefreshToken } = response.data;
+          // Extract from nested data structure: { success, data: { accessToken, expiresIn } }
+          const newAccessToken = response.data?.data?.accessToken || response.data?.accessToken;
 
-          if (!accessToken) {
+          if (!newAccessToken) {
             throw new Error('No access token in refresh response');
           }
 
           // Update store with new tokens
           store.dispatch({
             type: 'auth/refreshTokenSuccess',
-            payload: { accessToken, refreshToken: newRefreshToken || refreshToken }
+            payload: { accessToken: newAccessToken, refreshToken }
           });
 
           // Update the auth header and retry the original request
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return axiosInstance(originalRequest);
 
         } catch (error) {
+          console.error('Token refresh failed:', error);
           // If refresh fails, clear auth state
           store.dispatch({ type: 'auth/logout' });
           return Promise.reject(error);

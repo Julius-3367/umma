@@ -26,20 +26,31 @@ const CandidatesPage = () => {
       setError('');
       const response = await adminService.getAllCandidates();
       
+      console.log('📊 Candidates API Response:', response);
+      console.log('📊 Response data:', response?.data);
+      
+      // Extract candidates from response structure
+      // API returns: { success, data: { candidates, total }, pagination }
+      const candidatesList = response?.data?.candidates || [];
+      
+      console.log('📊 Candidates list:', candidatesList);
+      console.log('📊 Number of candidates:', candidatesList.length);
+      
       // Transform API data to match table format
-      const transformedData = (response.data.candidates || []).map((candidate) => ({
+      const transformedData = candidatesList.map((candidate) => ({
         id: candidate.id,
-        name: `${candidate.firstName} ${candidate.lastName}`,
-        email: candidate.email,
-        phone: candidate.phone,
+        name: candidate.fullName || `${candidate.user?.firstName || ''} ${candidate.user?.lastName || ''}`.trim() || 'Unknown',
+        email: candidate.user?.email || candidate.email || 'N/A',
+        phone: candidate.user?.phone || candidate.phone || 'N/A',
         course: candidate.enrollments?.[0]?.course?.title || 'Not Enrolled',
-        status: candidate.enrollments?.[0]?.status || 'Enrolled',
+        status: candidate.enrollments?.[0]?.enrollmentStatus || candidate.status || 'APPLIED',
         progress: candidate.enrollments?.[0]?.progress || 0,
         enrollmentDate: candidate.enrollments?.[0]?.enrollmentDate,
         completionDate: candidate.enrollments?.[0]?.completionDate,
-        avatar: candidate.profilePicture,
+        avatar: candidate.profilePhotoUrl || candidate.profilePicture,
       }));
 
+      console.log('📊 Transformed data:', transformedData);
       setCandidates(transformedData);
     } catch (err) {
       console.error('Error fetching candidates:', err);

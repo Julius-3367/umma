@@ -927,6 +927,404 @@ const updateCohortSession = async (req, res) => {
   }
 };
 
+/**
+ * Get candidate professional profile
+ * Allows trainer to view candidate's full professional information
+ */
+const getCandidateProfile = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+    const trainerId = req.user.id;
+
+    // Get candidate with all professional details
+    const candidate = await prisma.candidate.findUnique({
+      where: { id: parseInt(candidateId) },
+      include: {
+        user: {
+          select: {
+            email: true,
+            phone: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        enrollments: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+                code: true,
+                category: true,
+                trainers: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        documents: {
+          orderBy: { uploadedAt: 'desc' },
+        },
+        vetting: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found',
+      });
+    }
+
+    // Verify trainer has access to at least one course this candidate is enrolled in
+    const hasAccess = candidate.enrollments.some(enrollment => 
+      enrollment.course.trainers && enrollment.course.trainers.includes(trainerId)
+    );
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied - candidate not enrolled in your courses',
+      });
+    }
+
+    // Get assessments for this candidate
+    const assessments = await prisma.assessment.findMany({
+      where: {
+        enrollment: {
+          candidateId: candidate.id,
+        },
+      },
+      include: {
+        course: {
+          select: {
+            title: true,
+            code: true,
+          },
+        },
+        enrollment: {
+          select: {
+            enrollmentStatus: true,
+          },
+        },
+      },
+      orderBy: { assessmentDate: 'desc' },
+    });
+
+    // Get attendance records
+    const attendanceRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        enrollment: {
+          candidateId: candidate.id,
+        },
+      },
+      include: {
+        course: {
+          select: {
+            title: true,
+          },
+        },
+      },
+      orderBy: { date: 'desc' },
+      take: 50,
+    });
+
+    // Calculate statistics
+    const totalAssessments = assessments.length;
+    const passedAssessments = assessments.filter(a => 
+      a.resultCategory === 'PASS' || a.resultCategory === 'MERIT' || a.resultCategory === 'DISTINCTION'
+    ).length;
+    const averageScore = totalAssessments > 0 
+      ? (assessments.reduce((sum, a) => sum + (a.score || 0), 0) / totalAssessments).toFixed(1)
+      : 0;
+
+    const totalAttendance = attendanceRecords.length;
+    const presentCount = attendanceRecords.filter(a => a.status === 'PRESENT').length;
+    const attendanceRate = totalAttendance > 0 
+      ? ((presentCount / totalAttendance) * 100).toFixed(1)
+      : 0;
+
+    res.json({
+      success: true,
+      data: {
+        candidate: {
+          id: candidate.id,
+          fullName: candidate.fullName,
+          email: candidate.user?.email,
+          phone: candidate.user?.phone,
+          gender: candidate.gender,
+          dob: candidate.dob,
+          nationalIdPassport: candidate.nationalIdPassport,
+          county: candidate.county,
+          maritalStatus: candidate.maritalStatus,
+          highestEducation: candidate.highestEducation,
+          languages: candidate.languages,
+          relevantSkills: candidate.relevantSkills,
+          profilePhotoUrl: candidate.profilePhotoUrl,
+          previousEmployer: candidate.previousEmployer,
+          previousRole: candidate.previousRole,
+          previousDuration: candidate.previousDuration,
+          referenceContact: candidate.referenceContact,
+          preferredCountry: candidate.preferredCountry,
+          jobTypePreference: candidate.jobTypePreference,
+          willingToRelocate: candidate.willingToRelocate,
+          status: candidate.status,
+          createdAt: candidate.createdAt,
+        },
+        enrollments: candidate.enrollments,
+        assessments,
+        attendance: attendanceRecords,
+        documents: candidate.documents,
+        vettingStatus: candidate.vetting[0] || null,
+        statistics: {
+          totalEnrollments: candidate.enrollments.length,
+          activeEnrollments: candidate.enrollments.filter(e => e.enrollmentStatus === 'ENROLLED').length,
+          completedEnrollments: candidate.enrollments.filter(e => e.enrollmentStatus === 'COMPLETED').length,
+          totalAssessments,
+          passedAssessments,
+          averageScore,
+          attendanceRate,
+          totalAttendanceDays: totalAttendance,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching candidate profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching candidate profile',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get all candidates enrolled in trainer's courses
+ */
+const getAllMyCandidates = async (req, res) => {
+  try {
+    const trainerId = req.user.id;
+    const { status, courseId, search } = req.query;
+
+    // Get all courses where trainer is assigned
+    const courses = await prisma.course.findMany({
+      where: {
+        trainers: { has: trainerId },
+      },
+      select: { id: true },
+    });
+
+    const courseIds = courses.map(c => c.id);
+
+    if (courseIds.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: { total: 0 },
+      });
+    }
+
+    // Build where clause
+    const whereClause = {
+      courseId: courseId ? parseInt(courseId) : { in: courseIds },
+    };
+
+    if (status) {
+      whereClause.enrollmentStatus = status;
+    }
+
+    // Get enrollments with candidate details
+    const enrollments = await prisma.enrollment.findMany({
+      where: whereClause,
+      include: {
+        candidate: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                phone: true,
+              },
+            },
+            _count: {
+              select: {
+                enrollments: true,
+                vetting: true,
+              },
+            },
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Filter by search term if provided
+    let filteredEnrollments = enrollments;
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredEnrollments = enrollments.filter(enrollment => 
+        enrollment.candidate.fullName.toLowerCase().includes(searchLower) ||
+        enrollment.candidate.user?.email?.toLowerCase().includes(searchLower) ||
+        enrollment.course.title.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Get unique candidates
+    const candidatesMap = new Map();
+    filteredEnrollments.forEach(enrollment => {
+      const candidateId = enrollment.candidate.id;
+      if (!candidatesMap.has(candidateId)) {
+        candidatesMap.set(candidateId, {
+          ...enrollment.candidate,
+          enrollments: [],
+        });
+      }
+      candidatesMap.get(candidateId).enrollments.push({
+        id: enrollment.id,
+        course: enrollment.course,
+        enrollmentStatus: enrollment.enrollmentStatus,
+        enrollmentDate: enrollment.createdAt,
+      });
+    });
+
+    const candidates = Array.from(candidatesMap.values());
+
+    res.json({
+      success: true,
+      data: candidates,
+      pagination: {
+        total: candidates.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching candidates:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching candidates',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Create assessment with candidate context
+ */
+const createCandidateAssessment = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+    const { courseId, assessmentTitle, assessmentType, maxScore, score, resultCategory, trainerComments, feedback } = req.body;
+    const trainerId = req.user.id;
+
+    // Verify candidate exists
+    const candidate = await prisma.candidate.findUnique({
+      where: { id: parseInt(candidateId) },
+    });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not found',
+      });
+    }
+
+    // Find enrollment
+    const enrollment = await prisma.enrollment.findFirst({
+      where: {
+        candidateId: parseInt(candidateId),
+        courseId: parseInt(courseId),
+      },
+      include: {
+        course: true,
+      },
+    });
+
+    if (!enrollment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Candidate not enrolled in this course',
+      });
+    }
+
+    // Verify trainer access
+    if (!enrollment.course.trainers || !enrollment.course.trainers.includes(trainerId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied',
+      });
+    }
+
+    // Calculate percentage
+    const maxScoreValue = maxScore ? parseFloat(maxScore) : 100;
+    const scoreValue = score ? parseFloat(score) : null;
+    const percentageValue = scoreValue !== null ? (scoreValue / maxScoreValue) * 100 : null;
+
+    // Determine result category if not provided
+    let finalResultCategory = resultCategory;
+    if (!finalResultCategory && percentageValue !== null) {
+      if (percentageValue >= 80) finalResultCategory = 'DISTINCTION';
+      else if (percentageValue >= 70) finalResultCategory = 'MERIT';
+      else if (percentageValue >= 50) finalResultCategory = 'PASS';
+      else finalResultCategory = 'FAIL';
+    }
+
+    const assessment = await prisma.assessment.create({
+      data: {
+        enrollmentId: enrollment.id,
+        courseId: enrollment.courseId,
+        assessmentTitle: assessmentTitle || assessmentType,
+        assessmentType,
+        maxScore: maxScoreValue,
+        score: scoreValue,
+        percentage: percentageValue,
+        resultCategory: finalResultCategory,
+        trainerComments,
+        feedback,
+        assessmentDate: new Date(),
+        createdBy: trainerId,
+      },
+      include: {
+        enrollment: {
+          include: {
+            candidate: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
+        },
+        course: {
+          select: {
+            title: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Assessment created successfully',
+      data: assessment,
+    });
+  } catch (error) {
+    console.error('Error creating assessment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating assessment',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   getMyCourses,
@@ -939,4 +1337,7 @@ module.exports = {
   getMyCohorts,
   getCohortSessions,
   updateCohortSession,
+  getCandidateProfile,
+  getAllMyCandidates,
+  createCandidateAssessment,
 };

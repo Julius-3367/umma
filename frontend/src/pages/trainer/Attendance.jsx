@@ -22,6 +22,8 @@ import {
   Stack,
   Divider,
   Alert,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   CalendarToday,
@@ -31,9 +33,16 @@ import {
   Refresh,
   Save,
   History as HistoryIcon,
+  Gavel as AppealIcon,
+  Pending as PendingIcon,
+  ThumbUp as ApprovedIcon,
+  ThumbDown as RejectedIcon,
 } from '@mui/icons-material';
+import { format } from 'date-fns';
 import { useSnackbar } from 'notistack';
 import trainerService from '../../api/trainer';
+import attendanceAppealService from '../../api/attendanceAppeal';
+import ReviewAppealDialog from '../../components/attendance/ReviewAppealDialog';
 
 const STATUS_OPTIONS = [
   { value: 'PRESENT', label: 'Present' },
@@ -50,6 +59,7 @@ const dateKey = (value) => {
 
 const TrainerAttendance = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const [tabValue, setTabValue] = useState(0);
   const [courses, setCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
@@ -62,6 +72,12 @@ const TrainerAttendance = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Appeals state
+  const [appeals, setAppeals] = useState([]);
+  const [loadingAppeals, setLoadingAppeals] = useState(false);
+  const [selectedAppeal, setSelectedAppeal] = useState(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -246,6 +262,36 @@ const TrainerAttendance = () => {
     }
   };
 
+  // Appeals functions
+  useEffect(() => {
+    if (tabValue === 1) {
+      fetchAppeals();
+    }
+  }, [tabValue]);
+
+  const fetchAppeals = async () => {
+    try {
+      setLoadingAppeals(true);
+      const response = await attendanceAppealService.getTrainerAppeals();
+      setAppeals(response?.data?.data || response?.data || []);
+    } catch (error) {
+      console.error('Error fetching appeals:', error);
+      enqueueSnackbar('Failed to load appeals', { variant: 'error' });
+    } finally {
+      setLoadingAppeals(false);
+    }
+  };
+
+  const handleReviewAppeal = (appeal) => {
+    setSelectedAppeal(appeal);
+    setReviewDialogOpen(true);
+  };
+
+  const handleReviewComplete = () => {
+    fetchAppeals();
+    setReviewDialogOpen(false);
+  };
+
   if (loadingCourses) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -280,18 +326,31 @@ const TrainerAttendance = () => {
           >
             Refresh
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<Save />}
-            onClick={handleSave}
-            disabled={saving || loadingStudents}
-          >
-            {saving ? 'Saving…' : 'Save Attendance'}
-          </Button>
+          {tabValue === 0 && (
+            <Button
+              variant="contained"
+              startIcon={<Save />}
+              onClick={handleSave}
+              disabled={saving || loadingStudents}
+            >
+              {saving ? 'Saving…' : 'Save Attendance'}
+            </Button>
+          )}
         </Stack>
       </Box>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
+          <Tab label="Mark Attendance" />
+          <Tab label="Appeals" />
+        </Tabs>
+      </Box>
+
+      {/* Tab Panel 0: Mark Attendance */}
+      {tabValue === 0 && (
+        <>
+          <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <TextField
             select
@@ -480,6 +539,99 @@ const TrainerAttendance = () => {
           </Card>
         </Grid>
       </Grid>
+        </>
+      )}
+
+      {/* Tab Panel 1: Appeals */}
+      {tabValue === 1 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>Attendance Appeals</Typography>
+            {loadingAppeals ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : appeals.length === 0 ? (
+              <Alert severity="info">No pending appeals for your courses</Alert>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Submitted</TableCell>
+                      <TableCell>Student</TableCell>
+                      <TableCell>Course</TableCell>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Original</TableCell>
+                      <TableCell>Requested</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {appeals.map((appeal) => (
+                      <TableRow key={appeal.id} hover>
+                        <TableCell>
+                          {format(new Date(appeal.createdAt), 'MMM dd, yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" fontWeight={500}>
+                              {appeal.candidate?.fullName || 'Unknown'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {appeal.candidate?.user?.email}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          {appeal.attendanceRecord?.enrollment?.course?.title || 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {appeal.attendanceRecord?.date 
+                            ? format(new Date(appeal.attendanceRecord.date), 'MMM dd, yyyy')
+                            : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={appeal.status}
+                            color={appeal.status === 'PENDING' ? 'warning' : appeal.status === 'APPROVED' ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={appeal.originalStatus} size="small" color="error" />
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={appeal.requestedStatus || 'EXCUSED'} size="small" color="info" />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleReviewAppeal(appeal)}
+                          >
+                            Review
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Review Appeal Dialog */}
+      <ReviewAppealDialog
+        open={reviewDialogOpen}
+        onClose={() => setReviewDialogOpen(false)}
+        appeal={selectedAppeal}
+        onReviewComplete={handleReviewComplete}
+        isAdmin={false}
+      />
     </Box>
   );
 };

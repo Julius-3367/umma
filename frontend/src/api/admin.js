@@ -29,6 +29,9 @@ export const adminService = {
 
   // Candidate Management
   getAllCandidates: (params) => axios.get(`${API_URL}/candidates`, { params }),
+  getCandidateById: (id) => axios.get(`${API_URL}/candidates/${id}`),
+  updateCandidate: (id, data) => axios.put(`${API_URL}/candidates/${id}`, data),
+  deleteCandidate: (id) => axios.delete(`${API_URL}/candidates/${id}`),
 
   // Enrollment Management
   getEnrollments: (status) => axios.get(`${API_URL}/enrollments`, { params: { status } }),

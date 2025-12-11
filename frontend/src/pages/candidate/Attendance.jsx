@@ -433,12 +433,47 @@ const Attendance = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {record.remarks || '-'}
-                        </Typography>
-                        {appeal && appeal.reviewerComments && (
-                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                            <strong>Review:</strong> {appeal.reviewerComments}
+                        {appeal && appeal.status === 'APPROVED' ? (
+                          <Box>
+                            <Typography variant="body2" color="success.main" sx={{ fontWeight: 500 }}>
+                              ✓ Appeal Approved
+                            </Typography>
+                            {appeal.reviewerComments && (
+                              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                                {appeal.reviewerComments}
+                              </Typography>
+                            )}
+                            {appeal.requestedStatus && (
+                              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                                Changed from {appeal.originalStatus} to {appeal.requestedStatus}
+                              </Typography>
+                            )}
+                          </Box>
+                        ) : appeal && appeal.status === 'REJECTED' ? (
+                          <Box>
+                            <Typography variant="body2" color="error.main" sx={{ fontWeight: 500 }}>
+                              ✗ Appeal Rejected
+                            </Typography>
+                            {appeal.reviewerComments && (
+                              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                                {appeal.reviewerComments}
+                              </Typography>
+                            )}
+                          </Box>
+                        ) : appeal && appeal.status === 'PENDING' ? (
+                          <Box>
+                            <Typography variant="body2" color="warning.main" sx={{ fontWeight: 500 }}>
+                              ⏳ Appeal Under Review
+                            </Typography>
+                            {appeal.reason && (
+                              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                                Your reason: {appeal.reason}
+                              </Typography>
+                            )}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            {record.remarks || '-'}
                           </Typography>
                         )}
                       </TableCell>

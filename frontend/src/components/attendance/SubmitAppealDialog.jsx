@@ -18,6 +18,7 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
+  Chip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -26,6 +27,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { format } from 'date-fns';
 import attendanceAppealService from '../../api/attendanceAppeal';
 
 const SubmitAppealDialog = ({ open, onClose, attendanceRecord, onAppealSubmitted }) => {
