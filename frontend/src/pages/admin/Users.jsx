@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -41,6 +42,7 @@ import {
 import { adminService } from '../../api/admin';
 
 const Users = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,7 @@ const Users = () => {
       setTotalUsers(response.data.data.total || 0);
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError(err.response?.data?.message || 'Failed to load users');
+      setError(err.response?.data?.message || t('users.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -111,7 +113,7 @@ const Users = () => {
       setUserToDelete(null);
       fetchUsers();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete user');
+      setError(err.response?.data?.message || t('users.failedToDelete'));
       setDeleteDialogOpen(false);
     }
   };
@@ -134,14 +136,14 @@ const Users = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" fontWeight="bold">
-          User Management
+          {t('users.userManagement')}
         </Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => navigate('/admin/users/new')}
         >
-          Add New User
+          {t('users.addNewUser')}
         </Button>
       </Box>
 
@@ -155,7 +157,7 @@ const Users = () => {
       <Paper sx={{ p: 2, mb: 3 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
-            placeholder="Search by name or email..."
+            placeholder={t('users.searchPlaceholder')}
             value={searchQuery}
             onChange={handleSearchChange}
             size="small"
@@ -170,42 +172,42 @@ const Users = () => {
           />
           
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Role</InputLabel>
+            <InputLabel>{t('users.role')}</InputLabel>
             <Select
               value={roleFilter}
-              label="Role"
+              label={t('users.role')}
               onChange={(e) => {
                 setRoleFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value="">All Roles</MenuItem>
-              <MenuItem value="Admin">Admin</MenuItem>
-              <MenuItem value="Trainer">Trainer</MenuItem>
-              <MenuItem value="Candidate">Candidate</MenuItem>
-              <MenuItem value="Broker">Broker</MenuItem>
-              <MenuItem value="Recruiter">Recruiter</MenuItem>
+              <MenuItem value="">{t('users.allRoles')}</MenuItem>
+              <MenuItem value="Admin">{t('users.admin')}</MenuItem>
+              <MenuItem value="Trainer">{t('users.trainer')}</MenuItem>
+              <MenuItem value="Candidate">{t('users.candidate')}</MenuItem>
+              <MenuItem value="Broker">{t('users.broker')}</MenuItem>
+              <MenuItem value="Recruiter">{t('users.recruiter')}</MenuItem>
             </Select>
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('common.status')}</InputLabel>
             <Select
               value={statusFilter}
-              label="Status"
+              label={t('common.status')}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value="">All Status</MenuItem>
-              <MenuItem value="ACTIVE">Active</MenuItem>
-              <MenuItem value="INACTIVE">Inactive</MenuItem>
-              <MenuItem value="SUSPENDED">Suspended</MenuItem>
+              <MenuItem value="">{t('users.allStatus')}</MenuItem>
+              <MenuItem value="ACTIVE">{t('users.active')}</MenuItem>
+              <MenuItem value="INACTIVE">{t('users.inactive')}</MenuItem>
+              <MenuItem value="SUSPENDED">{t('users.suspended')}</MenuItem>
             </Select>
           </FormControl>
 
-          <Tooltip title="Refresh">
+          <Tooltip title={t('users.refresh')}>
             <IconButton onClick={fetchUsers}>
               <Refresh />
             </IconButton>
@@ -225,20 +227,20 @@ const Users = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Last Login</TableCell>
-                  <TableCell>Created At</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t('users.name')}</TableCell>
+                  <TableCell>{t('users.email')}</TableCell>
+                  <TableCell>{t('users.role')}</TableCell>
+                  <TableCell>{t('users.status')}</TableCell>
+                  <TableCell>{t('users.lastLogin')}</TableCell>
+                  <TableCell>{t('users.createdAt')}</TableCell>
+                  <TableCell align="right">{t('common.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} align="center">
-                      <Typography color="text.secondary">No users found</Typography>
+                      <Typography color="text.secondary">{t('users.noUsers')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -267,14 +269,14 @@ const Users = () => {
                       <TableCell>
                         {user.lastLogin 
                           ? new Date(user.lastLogin).toLocaleDateString()
-                          : 'Never'}
+                          : t('users.never')}
                       </TableCell>
                       <TableCell>
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Tooltip title="View Details">
+                          <Tooltip title={t('users.viewDetails')}>
                             <IconButton
                               size="small"
                               onClick={() => navigate(`/admin/users/${user.id}`)}
@@ -282,7 +284,7 @@ const Users = () => {
                               <Visibility />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit">
+                          <Tooltip title={t('users.edit')}>
                             <IconButton
                               size="small"
                               onClick={() => navigate(`/admin/users/${user.id}/edit`)}
@@ -290,7 +292,7 @@ const Users = () => {
                               <Edit />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Delete">
+                          <Tooltip title={t('users.delete')}>
                             <IconButton
                               size="small"
                               color="error"
@@ -321,20 +323,20 @@ const Users = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>{t('users.confirmDelete')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete user{' '}
+            {t('users.confirmDeleteMessage')}{' '}
             <strong>
               {userToDelete?.firstName} {userToDelete?.lastName}
             </strong>
-            ? This action cannot be undone.
+            ? {t('users.cannotUndo')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-            Delete
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

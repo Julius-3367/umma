@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -56,6 +57,7 @@ import { format } from 'date-fns';
  * - Visa and deployment progress
  */
 const PlacementPage = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
 

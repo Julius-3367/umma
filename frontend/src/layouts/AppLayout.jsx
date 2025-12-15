@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -58,6 +59,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 const BACKEND_URL = API_BASE_URL.replace('/api', '');
 
 const AppLayout = ({ children }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -80,14 +82,13 @@ const AppLayout = ({ children }) => {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path.includes('/admin')) return 'Admin Dashboard';
-    if (path.includes('/candidate')) return 'Candidate Portal';
-    if (path.includes('/trainer')) return 'Trainer Dashboard';
-    if (path.includes('/recruiter')) return 'Recruiter Dashboard';
-    if (path.includes('/broker')) return 'Broker Dashboard';
-    if (path.includes('/broker')) return 'Broker Dashboard';
-    if (path.includes('/employer')) return 'Employer Dashboard';
-    return 'Dashboard';
+    if (path.includes('/admin')) return t('navigation.adminDashboard');
+    if (path.includes('/candidate')) return t('navigation.candidatePortal');
+    if (path.includes('/trainer')) return t('navigation.trainerDashboard');
+    if (path.includes('/recruiter')) return t('navigation.recruiterDashboard');
+    if (path.includes('/broker')) return t('navigation.brokerDashboard');
+    if (path.includes('/employer')) return t('navigation.employerDashboard');
+    return t('navigation.dashboard');
   };
 
   const getUserInitials = () => {
@@ -137,7 +138,7 @@ const AppLayout = ({ children }) => {
     const role = rawRole === 'agent' ? 'recruiter' : rawRole;
     const baseItems = [
       {
-        label: 'Dashboard',
+        label: t('navigation.dashboard'),
         path: role === 'candidate' ? '/candidate/dashboard' :
           role === 'admin' ? '/admin/dashboard' :
             role === 'trainer' ? '/trainer/dashboard' :
@@ -151,51 +152,51 @@ const AppLayout = ({ children }) => {
 
     const roleSpecificItems = {
       admin: [
-        { label: 'Users', path: '/admin/users', icon: UserGroupIcon },
-        { label: 'Candidates', path: '/admin/candidates', icon: UserGroupIcon },
-        { label: 'Courses', path: '/admin/courses', icon: AcademicCapIcon },
-        { label: 'Cohorts', path: '/admin/cohorts', icon: UserGroupIcon },
-        { label: 'Enrollments', path: '/admin/enrollments', icon: ClipboardDocumentListIcon },
-        { label: 'Vetting', path: '/admin/vetting', icon: ShieldCheckIcon },
-        { label: 'Documents', path: '/admin/certificates', icon: DocumentTextIcon },
-        { label: 'Companies', path: '/admin/companies', icon: BuildingOfficeIcon },
-        { label: 'Reports', path: '/admin/reports', icon: ChartBarIcon },
-        { label: 'Settings', path: '/admin/settings', icon: Cog6ToothIcon },
+        { label: t('navigation.users'), path: '/admin/users', icon: UserGroupIcon },
+        { label: t('navigation.candidates'), path: '/admin/candidates', icon: UserGroupIcon },
+        { label: t('navigation.courses'), path: '/admin/courses', icon: AcademicCapIcon },
+        { label: t('navigation.cohorts'), path: '/admin/cohorts', icon: UserGroupIcon },
+        { label: t('navigation.enrollments'), path: '/admin/enrollments', icon: ClipboardDocumentListIcon },
+        { label: t('navigation.vetting'), path: '/admin/vetting', icon: ShieldCheckIcon },
+        { label: t('navigation.documents'), path: '/admin/certificates', icon: DocumentTextIcon },
+        { label: t('navigation.companies'), path: '/admin/companies', icon: BuildingOfficeIcon },
+        { label: t('navigation.reports'), path: '/admin/reports', icon: ChartBarIcon },
+        { label: t('navigation.settings'), path: '/admin/settings', icon: Cog6ToothIcon },
       ],
       candidate: [
-        { label: 'Browse Cohorts', path: '/candidate/browse-cohorts', icon: UserGroupIcon },
-        { label: 'My Applications', path: '/candidate/my-applications', icon: ClipboardDocumentListIcon },
-        { label: 'My Courses', path: '/candidate/courses', icon: AcademicCapIcon },
-        { label: 'Attendance', path: '/candidate/attendance', icon: CalendarIcon },
-        { label: 'Assessments', path: '/candidate/assessments', icon: ChartBarIcon },
-        { label: 'Documents', path: '/candidate/certificates', icon: DocumentTextIcon },
-        { label: 'Profile', path: '/candidate/profile', icon: UserIcon },
+        { label: t('navigation.browseCohorts'), path: '/candidate/browse-cohorts', icon: UserGroupIcon },
+        { label: t('navigation.myApplications'), path: '/candidate/my-applications', icon: ClipboardDocumentListIcon },
+        { label: t('navigation.myCourses'), path: '/candidate/courses', icon: AcademicCapIcon },
+        { label: t('navigation.attendance'), path: '/candidate/attendance', icon: CalendarIcon },
+        { label: t('navigation.assessments'), path: '/candidate/assessments', icon: ChartBarIcon },
+        { label: t('navigation.documents'), path: '/candidate/certificates', icon: DocumentTextIcon },
+        { label: t('navigation.profile'), path: '/candidate/profile', icon: UserIcon },
       ],
       trainer: [
-        { label: 'Attendance', path: '/trainer/attendance', icon: CalendarIcon },
-        { label: 'My Courses', path: '/trainer/my-courses', icon: AcademicCapIcon },
-        { label: 'My Cohorts', path: '/trainer/cohorts', icon: UserGroupIcon },
-        { label: 'Students', path: '/trainer/students', icon: UserGroupIcon },
-        { label: 'Assessments', path: '/trainer/assessments', icon: DocumentTextIcon },
-        { label: 'Schedule', path: '/trainer/schedule', icon: CalendarIcon },
+        { label: t('navigation.attendance'), path: '/trainer/attendance', icon: CalendarIcon },
+        { label: t('navigation.myCourses'), path: '/trainer/my-courses', icon: AcademicCapIcon },
+        { label: t('navigation.myCohorts'), path: '/trainer/cohorts', icon: UserGroupIcon },
+        { label: t('navigation.students'), path: '/trainer/students', icon: UserGroupIcon },
+        { label: t('navigation.assessments'), path: '/trainer/assessments', icon: DocumentTextIcon },
+        { label: t('navigation.schedule'), path: '/trainer/schedule', icon: CalendarIcon },
       ],
       recruiter: [
-        { label: 'Candidates', path: '/recruiter/candidates', icon: UserGroupIcon },
-        { label: 'Placements', path: '/recruiter/placements', icon: BriefcaseIcon },
-        { label: 'Companies', path: '/recruiter/companies', icon: BuildingOfficeIcon },
-        { label: 'Reports', path: '/recruiter/reports', icon: ChartBarIcon },
+        { label: t('navigation.candidates'), path: '/recruiter/candidates', icon: UserGroupIcon },
+        { label: t('navigation.placements'), path: '/recruiter/placements', icon: BriefcaseIcon },
+        { label: t('navigation.companies'), path: '/recruiter/companies', icon: BuildingOfficeIcon },
+        { label: t('navigation.reports'), path: '/recruiter/reports', icon: ChartBarIcon },
       ],
       broker: [
-        { label: 'Referrals', path: '/broker/referrals', icon: UserGroupIcon },
-        { label: 'Placements', path: '/broker/placements', icon: BriefcaseIcon },
-        { label: 'Commissions', path: '/broker/commissions', icon: CurrencyDollarIcon },
-        { label: 'Payments', path: '/broker/payments', icon: ChartBarIcon },
+        { label: t('navigation.referrals'), path: '/broker/referrals', icon: UserGroupIcon },
+        { label: t('navigation.placements'), path: '/broker/placements', icon: BriefcaseIcon },
+        { label: t('navigation.commissions'), path: '/broker/commissions', icon: CurrencyDollarIcon },
+        { label: t('navigation.payments'), path: '/broker/payments', icon: ChartBarIcon },
       ],
       employer: [
-        { label: 'Job Postings', path: '/employer/jobs', icon: BriefcaseIcon },
-        { label: 'Applications', path: '/employer/applications', icon: DocumentTextIcon },
-        { label: 'Candidates', path: '/employer/candidates', icon: UserGroupIcon },
-        { label: 'Reports', path: '/employer/reports', icon: ChartBarIcon },
+        { label: t('navigation.jobPostings'), path: '/employer/jobs', icon: BriefcaseIcon },
+        { label: t('navigation.applications'), path: '/employer/applications', icon: DocumentTextIcon },
+        { label: t('navigation.candidates'), path: '/employer/candidates', icon: UserGroupIcon },
+        { label: t('navigation.reports'), path: '/employer/reports', icon: ChartBarIcon },
       ],
     };
 
@@ -243,7 +244,7 @@ const AppLayout = ({ children }) => {
             textAlign: 'center',
           }}
         >
-          UMSL Labor Mobility
+          {t('navigation.systemName')}
         </Typography>
         <Typography
           variant="caption"
@@ -254,7 +255,7 @@ const AppLayout = ({ children }) => {
             mt: 0.5,
           }}
         >
-          UAE Platform
+          {t('navigation.systemTagline')}
         </Typography>
       </Box>
 
@@ -485,16 +486,16 @@ const AppLayout = ({ children }) => {
       >
         <MenuItem onClick={() => navigate('/profile')}>
           <UserCircleIcon style={{ width: 20, height: 20, marginRight: 12 }} />
-          View Profile
+          {t('navigation.viewProfile')}
         </MenuItem>
         <MenuItem onClick={() => navigate('/settings')}>
           <Cog6ToothIcon style={{ width: 20, height: 20, marginRight: 12 }} />
-          Settings
+          {t('navigation.settings')}
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout} sx={{ color: theme.palette.error.main }}>
           <ArrowRightOnRectangleIcon style={{ width: 20, height: 20, marginRight: 12 }} />
-          Sign Out
+          {t('navigation.logout')}
         </MenuItem>
       </Menu>
 
@@ -515,7 +516,7 @@ const AppLayout = ({ children }) => {
       >
         <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Notifications
+            {t('navigation.notifications')}
           </Typography>
         </Box>
         {notifications.map((notification) => (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -39,6 +40,7 @@ import {
 } from '@mui/icons-material';
 
 const Settings = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -117,10 +119,10 @@ const Settings = () => {
       {/* Header */}
       <Box mb={3}>
         <Typography variant="h4" gutterBottom>
-          System Settings
+          {t('settings.title')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Configure system-wide settings and preferences
+          {t('settings.systemSettings')}
         </Typography>
       </Box>
 
@@ -144,11 +146,11 @@ const Settings = () => {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab icon={<SettingsIcon />} label="General" iconPosition="start" />
-          <Tab icon={<NotificationsIcon />} label="Notifications" iconPosition="start" />
-          <Tab icon={<SecurityIcon />} label="Security" iconPosition="start" />
-          <Tab icon={<EmailIcon />} label="Email" iconPosition="start" />
-          <Tab icon={<PaletteIcon />} label="Appearance" iconPosition="start" />
+          <Tab icon={<SettingsIcon />} label={t('settings.general')} iconPosition="start" />
+          <Tab icon={<NotificationsIcon />} label={t('settings.notifications')} iconPosition="start" />
+          <Tab icon={<SecurityIcon />} label={t('settings.security')} iconPosition="start" />
+          <Tab icon={<EmailIcon />} label={t('settings.email')} iconPosition="start" />
+          <Tab icon={<PaletteIcon />} label={t('settings.appearance')} iconPosition="start" />
         </Tabs>
 
         {/* General Settings */}
@@ -158,7 +160,7 @@ const Settings = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="System Name"
+                  label={t('settings.systemName')}
                   value={generalSettings.systemName}
                   onChange={(e) =>
                     setGeneralSettings({ ...generalSettings, systemName: e.target.value })
@@ -168,7 +170,7 @@ const Settings = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="System Email"
+                  label={t('settings.systemEmail')}
                   type="email"
                   value={generalSettings.systemEmail}
                   onChange={(e) =>
@@ -178,10 +180,10 @@ const Settings = () => {
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Timezone</InputLabel>
+                  <InputLabel>{t('settings.timezone')}</InputLabel>
                   <Select
                     value={generalSettings.timezone}
-                    label="Timezone"
+                    label={t('settings.timezone')}
                     onChange={(e) =>
                       setGeneralSettings({ ...generalSettings, timezone: e.target.value })
                     }
@@ -195,10 +197,10 @@ const Settings = () => {
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Language</InputLabel>
+                  <InputLabel>{t('settings.language')}</InputLabel>
                   <Select
                     value={generalSettings.language}
-                    label="Language"
+                    label={t('settings.language')}
                     onChange={(e) =>
                       setGeneralSettings({ ...generalSettings, language: e.target.value })
                     }

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Avatar,
@@ -45,18 +46,18 @@ import { useSnackbar } from 'notistack';
 import adminService from '../../api/admin';
 
 const STATUS_FILTERS = [
-  { value: 'all', label: 'All statuses' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'IN_PROGRESS', label: 'In Progress' },
-  { value: 'CLEARED', label: 'Cleared' },
-  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'all', label: 'vetting.allStatuses' },
+  { value: 'PENDING', label: 'vetting.pending' },
+  { value: 'IN_PROGRESS', label: 'vetting.inProgress' },
+  { value: 'CLEARED', label: 'vetting.cleared' },
+  { value: 'REJECTED', label: 'vetting.rejected' },
 ];
 
 const MEDICAL_OPTIONS = [
-  { value: '', label: 'Not Set' },
-  { value: 'pending', label: 'Pending Review' },
-  { value: 'cleared', label: 'Cleared' },
-  { value: 'flagged', label: 'Flagged' },
+  { value: '', label: 'vetting.notSet' },
+  { value: 'pending', label: 'vetting.pendingReview' },
+  { value: 'cleared', label: 'vetting.cleared' },
+  { value: 'flagged', label: 'vetting.flagged' },
 ];
 
 const documentChipColor = (status) => {
@@ -77,6 +78,7 @@ const documentChipColor = (status) => {
 
 const VettingDashboard = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const [filters, setFilters] = useState({ status: 'all', search: '' });
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [dashboard, setDashboard] = useState(null);
@@ -100,7 +102,7 @@ const VettingDashboard = () => {
       setDashboard(response?.data?.data || null);
     } catch (error) {
       console.error('Failed to load vetting dashboard', error);
-      enqueueSnackbar(error?.response?.data?.message || 'Unable to load vetting dashboard', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || t('vetting.failedToLoad'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -118,33 +120,33 @@ const VettingDashboard = () => {
     const stats = dashboard?.stats || {};
     return [
       {
-        label: 'Total Candidates',
+        label: t('vetting.totalCandidates'),
         value: stats.total || 0,
-        helper: 'tracked in vetting',
+        helper: t('vetting.trackedInVetting'),
         icon: <ShieldOutlined fontSize="small" />,
       },
       {
-        label: 'Pending Reviews',
+        label: t('vetting.pendingReviews'),
         value: stats.pending || 0,
-        helper: 'awaiting action',
+        helper: t('vetting.awaitingAction'),
         icon: <PendingActionsIcon fontSize="small" />,
       },
       {
-        label: 'Cleared',
+        label: t('vetting.cleared'),
         value: stats.cleared || 0,
-        helper: 'ready for placement',
+        helper: t('vetting.readyForPlacement'),
         icon: <CheckCircleIcon fontSize="small" color="success" />,
       },
       {
-        label: 'Documents Uploaded',
+        label: t('vetting.documentsUploaded'),
         value: stats.documentsUploaded || 0,
-        helper: 'files shared by candidates',
+        helper: t('vetting.filesShared'),
         icon: <VisibilityIcon fontSize="small" />,
       },
       {
-        label: 'Avg. Review Time',
+        label: t('vetting.avgReviewTime'),
         value: stats.avgReviewHours ? `${stats.avgReviewHours}h` : '—',
-        helper: 'from submission to decision',
+        helper: t('vetting.fromSubmissionToDecision'),
         icon: <ErrorOutlineIcon fontSize="small" />,
       },
     ];
@@ -179,13 +181,13 @@ const VettingDashboard = () => {
         languageTestPassed: languagePassed,
         medicalStatus: medicalStatus || null,
       });
-      enqueueSnackbar(`Vetting updated to ${nextStatus}`, { variant: 'success' });
+      enqueueSnackbar(`${t('vetting.vettingUpdated')} ${nextStatus}`, { variant: 'success' });
       await loadDashboard();
       setSelectedRecord((prev) => (prev ? { ...prev, status: nextStatus, comments: note, languageTestPassed: languagePassed, medicalStatus } : prev));
       setDrawerOpen(false);
     } catch (error) {
       console.error('Failed to update vetting status', error);
-      enqueueSnackbar(error?.response?.data?.message || 'Unable to update vetting record', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || t('vetting.failedToUpdate'), { variant: 'error' });
     } finally {
       setUpdating(false);
     }
@@ -203,15 +205,15 @@ const VettingDashboard = () => {
     <Box sx={{ p: 3 }}>
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 600 }}>Vetting Dashboard</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 600 }}>{t('vetting.vettingDashboard')}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Monitor candidate vetting, review shared documents, and clear candidates for placement
+            {t('vetting.monitorCandidates')}
           </Typography>
         </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <TextField
             size="small"
-            placeholder="Search candidate or document"
+            placeholder={t('vetting.searchPlaceholder')}
             value={filters.search}
             onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
             InputProps={{
@@ -230,12 +232,12 @@ const VettingDashboard = () => {
           >
             {STATUS_FILTERS.map((option) => (
               <MenuItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.label)}
               </MenuItem>
             ))}
           </TextField>
           <Button variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
-            Refresh
+            {t('common.refresh')}
           </Button>
         </Stack>
       </Stack>
@@ -265,19 +267,19 @@ const VettingDashboard = () => {
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Candidates in vetting</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>{t('vetting.candidatesInVetting')}</Typography>
               {!dashboard?.candidates?.length ? (
-                <Alert severity="info">No candidates found for the selected filters.</Alert>
+                <Alert severity="info">{t('vetting.noCandidatesFound')}</Alert>
               ) : (
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Candidate</TableCell>
-                        <TableCell>Documents</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Missing</TableCell>
-                        <TableCell align="right">Actions</TableCell>
+                        <TableCell>{t('vetting.candidate')}</TableCell>
+                        <TableCell>{t('vetting.documents')}</TableCell>
+                        <TableCell>{t('vetting.status')}</TableCell>
+                        <TableCell>{t('vetting.missing')}</TableCell>
+                        <TableCell align="right">{t('vetting.actions')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -286,7 +288,7 @@ const VettingDashboard = () => {
                           <TableCell>
                             <Box>
                               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{candidate.name}</Typography>
-                              <Typography variant="caption" color="text.secondary">{candidate.email || 'No email'} • {candidate.identifier || 'No ID'}</Typography>
+                              <Typography variant="caption" color="text.secondary">{candidate.email || t('vetting.noEmail')} • {candidate.identifier || t('vetting.noId')}</Typography>
                             </Box>
                           </TableCell>
                           <TableCell>
@@ -315,12 +317,12 @@ const VettingDashboard = () => {
                                 {candidate.missingDocuments.join(', ')}
                               </Typography>
                             ) : (
-                              <Typography variant="caption" color="success.main">All received</Typography>
+                              <Typography variant="caption" color="success.main">{t('vetting.allReceived')}</Typography>
                             )}
                           </TableCell>
                           <TableCell align="right">
                             <Button size="small" variant="outlined" onClick={() => openDrawer(candidate)}>
-                              Review
+                              {t('vetting.review')}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -347,11 +349,11 @@ const VettingDashboard = () => {
             <Card>
               <CardContent>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                  <Typography variant="h6">Latest documents</Typography>
+                  <Typography variant="h6">{t('vetting.latestDocuments')}</Typography>
                   <Chip label={dashboard?.documentsFeed?.length || 0} size="small" />
                 </Stack>
                 {!dashboard?.documentsFeed?.length ? (
-                  <Alert severity="info">No documents uploaded recently.</Alert>
+                  <Alert severity="info">{t('vetting.noDocumentsRecent')}</Alert>
                 ) : (
                   <List dense>
                     {dashboard.documentsFeed.map((doc) => (
@@ -380,9 +382,9 @@ const VettingDashboard = () => {
 
             <Card>
               <CardContent>
-                <Typography variant="h6" sx={{ mb: 1 }}>Recent activity</Typography>
+                <Typography variant="h6" sx={{ mb: 1 }}>{t('vetting.recentActivity')}</Typography>
                 {!dashboard?.recentActivity?.length ? (
-                  <Alert severity="info">No recent vetting actions recorded.</Alert>
+                  <Alert severity="info">{t('vetting.noRecentActions')}</Alert>
                 ) : (
                   <Stack spacing={2}>
                     {dashboard.recentActivity.map((item) => (
@@ -418,7 +420,7 @@ const VettingDashboard = () => {
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Box>
                 <Typography variant="h6">{selectedRecord.name}</Typography>
-                <Typography variant="body2" color="text.secondary">{selectedRecord.email || 'No email'}</Typography>
+                <Typography variant="body2" color="text.secondary">{selectedRecord.email || t('vetting.noEmail')}</Typography>
               </Box>
               <IconButton onClick={closeDrawer}>
                 <CloseIcon />
@@ -431,14 +433,14 @@ const VettingDashboard = () => {
               sx={{ alignSelf: 'flex-start' }}
             />
             <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Documents</Typography>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>{t('vetting.documents')}</Typography>
               <Stack spacing={1}>
                 {selectedRecord.documents.map((doc) => (
                   <Stack key={doc.type} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{doc.type}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {doc.reference || 'No reference'}
+                        {doc.reference || t('vetting.noReference')}
                       </Typography>
                     </Box>
                     <Stack direction="row" spacing={1} alignItems="center">
@@ -456,7 +458,7 @@ const VettingDashboard = () => {
             <Divider />
             <Stack spacing={2}>
               <TextField
-                label="Reviewer notes"
+                label={t('vetting.reviewerNotes')}
                 multiline
                 minRows={3}
                 value={note}
@@ -469,24 +471,24 @@ const VettingDashboard = () => {
                     onChange={(event) => setLanguagePassed(event.target.checked)}
                   />
                 }
-                label="Language test passed"
+                label={t('vetting.languageTestPassed')}
               />
               <TextField
                 select
-                label="Medical status"
+                label={t('vetting.medicalStatus')}
                 value={medicalStatus}
                 onChange={(event) => setMedicalStatus(event.target.value)}
               >
                 {MEDICAL_OPTIONS.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </MenuItem>
                 ))}
               </TextField>
             </Stack>
             <Divider />
             <Stack spacing={1}>
-              <Typography variant="subtitle2">Update status</Typography>
+              <Typography variant="subtitle2">{t('vetting.updateStatus')}</Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap">
                 {['PENDING', 'IN_PROGRESS', 'CLEARED', 'REJECTED'].map((statusValue) => (
                   <Button

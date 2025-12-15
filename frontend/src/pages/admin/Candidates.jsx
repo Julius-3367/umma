@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -69,6 +70,7 @@ import attendanceAppealService from '../../api/attendanceAppeal';
 import ReviewAppealDialog from '../../components/attendance/ReviewAppealDialog';
 
 const Candidates = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [tabValue, setTabValue] = useState(0);
@@ -135,7 +137,7 @@ const Candidates = () => {
     } catch (error) {
       console.error('❌ Error fetching candidates:', error);
       console.error('Error response:', error.response);
-      enqueueSnackbar(error.response?.data?.message || 'Failed to load candidates', { variant: 'error' });
+      enqueueSnackbar(error.response?.data?.message || t('candidates.failedToLoad'), { variant: 'error' });
       setCandidates([]);
     } finally {
       setLoading(false);
@@ -537,10 +539,10 @@ const Candidates = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <div>
           <Typography variant="h4" gutterBottom>
-            Candidate Management
+            {t('candidates.candidateManagement')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage all candidates and their attendance
+            {t('candidates.manageCandidates')}
           </Typography>
         </div>
         <Box display="flex" gap={2}>
@@ -549,7 +551,7 @@ const Candidates = () => {
             startIcon={<DownloadIcon />}
             onClick={tabValue === 0 ? exportToCSV : exportAttendanceToCSV}
           >
-            Export
+            {t('candidates.export')}
           </Button>
           {tabValue === 0 && (
             <Button
@@ -557,7 +559,7 @@ const Candidates = () => {
               startIcon={<AddIcon />}
               onClick={() => navigate('/admin/users/new', { state: { defaultRole: 'CANDIDATE' } })}
             >
-              Add Candidate
+              {t('candidates.addCandidate')}
             </Button>
           )}
           {tabValue === 1 && (
@@ -567,7 +569,7 @@ const Candidates = () => {
               onClick={() => setSaveDialogOpen(true)}
               disabled={!selectedCourse || Object.keys(attendance).filter(k => attendance[k]).length === 0}
             >
-              Save Attendance
+              {t('candidates.saveAttendance')}
             </Button>
           )}
         </Box>
@@ -576,9 +578,9 @@ const Candidates = () => {
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
         <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-          <Tab label="All Candidates" icon={<PersonIcon />} iconPosition="start" />
-          <Tab label="Attendance" icon={<CalendarIcon />} iconPosition="start" />
-          <Tab label="Appeals" icon={<AppealIcon />} iconPosition="start" />
+          <Tab label={t('candidates.allCandidates')} icon={<PersonIcon />} iconPosition="start" />
+          <Tab label={t('attendance.title')} icon={<CalendarIcon />} iconPosition="start" />
+          <Tab label={t('appeals.title')} icon={<AppealIcon />} iconPosition="start" />
         </Tabs>
       </Paper>
 
@@ -592,7 +594,7 @@ const Candidates = () => {
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    placeholder="Search by name, email, or phone..."
+                    placeholder={t('candidates.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     InputProps={{
@@ -606,16 +608,16 @@ const Candidates = () => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <FormControl fullWidth>
-                    <InputLabel>Status Filter</InputLabel>
+                    <InputLabel>{t('candidates.filterByStatus')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Status Filter"
+                      label={t('candidates.filterByStatus')}
                     >
-                      <MenuItem value="ALL">All Status</MenuItem>
-                      <MenuItem value="ACTIVE">Active</MenuItem>
-                      <MenuItem value="INACTIVE">Inactive</MenuItem>
-                      <MenuItem value="SUSPENDED">Suspended</MenuItem>
+                      <MenuItem value="ALL">{t('candidates.allStatuses')}</MenuItem>
+                      <MenuItem value="ACTIVE">{t('users.active')}</MenuItem>
+                      <MenuItem value="INACTIVE">{t('users.inactive')}</MenuItem>
+                      <MenuItem value="SUSPENDED">{t('users.suspended')}</MenuItem>
                       <MenuItem value="PENDING">Pending</MenuItem>
                     </Select>
                   </FormControl>
@@ -635,13 +637,13 @@ const Candidates = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Candidate</TableCell>
-                    <TableCell>Contact</TableCell>
-                    <TableCell>Date of Birth</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Education</TableCell>
-                    <TableCell>Registered</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>{t('candidates.title').slice(0, -1)}</TableCell>
+                    <TableCell>{t('common.email')}</TableCell>
+                    <TableCell>{t('profile.dateOfBirth')}</TableCell>
+                    <TableCell>{t('common.status')}</TableCell>
+                    <TableCell>{t('profile.education')}</TableCell>
+                    <TableCell>{t('users.createdAt')}</TableCell>
+                    <TableCell align="right">{t('common.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -657,12 +659,12 @@ const Candidates = () => {
                         <Box py={4}>
                           <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                           <Typography variant="h6" color="text.secondary">
-                            No candidates found
+                            {t('candidates.noCandidates')}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             {searchTerm || statusFilter !== 'ALL'
-                              ? 'Try adjusting your filters'
-                              : 'Add your first candidate to get started'}
+                              ? t('common.filter') + ' ' + t('common.actions').toLowerCase()
+                              : t('candidates.addCandidate') + ' to get started'}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -758,14 +760,14 @@ const Candidates = () => {
               <Grid container spacing={3}>
                 <Grid item xs={12} md={4}>
                   <FormControl fullWidth>
-                    <InputLabel>Course</InputLabel>
+                    <InputLabel>{t('attendance.course')}</InputLabel>
                     <Select
                       value={selectedCourse}
                       onChange={(e) => setSelectedCourse(e.target.value)}
-                      label="Course"
+                      label={t('attendance.course')}
                     >
                       <MenuItem value="">
-                        <em>Select a course</em>
+                        <em>{t('candidates.selectCourse')}</em>
                       </MenuItem>
                       {courses.map((course) => (
                         <MenuItem key={course.id} value={course.id}>
@@ -779,7 +781,7 @@ const Candidates = () => {
                   <TextField
                     fullWidth
                     type="date"
-                    label="Session Date"
+                    label={t('candidates.sessionDate')}
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                     InputLabelProps={{ shrink: true }}
@@ -789,7 +791,7 @@ const Candidates = () => {
                   <TextField
                     fullWidth
                     type="number"
-                    label="Session #"
+                    label={t('candidates.sessionNumber')}
                     value={sessionNumber}
                     onChange={(e) => setSessionNumber(parseInt(e.target.value) || 1)}
                     inputProps={{ min: 1 }}
@@ -803,7 +805,7 @@ const Candidates = () => {
                     disabled={!selectedCourse || attendanceCandidates.length === 0}
                     sx={{ height: '56px' }}
                   >
-                    Mark All Present
+                    {t('candidates.markAllPresent')}
                   </Button>
                 </Grid>
               </Grid>
@@ -821,7 +823,7 @@ const Candidates = () => {
                       <div>
                         <Typography variant="h4">{statistics.total}</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Total Candidates
+                          {t('candidates.totalCandidates')}
                         </Typography>
                       </div>
                     </Box>
@@ -838,7 +840,7 @@ const Candidates = () => {
                           {statistics.present}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Present ({attendancePercentage}%)
+                          {t('attendance.present')} ({attendancePercentage}%)
                         </Typography>
                       </div>
                     </Box>
@@ -855,7 +857,7 @@ const Candidates = () => {
                           {statistics.late}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Late
+                          {t('attendance.late')}
                         </Typography>
                       </div>
                     </Box>
@@ -872,7 +874,7 @@ const Candidates = () => {
                           {statistics.absent}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Absent
+                          {t('attendance.absent')}
                         </Typography>
                       </div>
                     </Box>
@@ -889,10 +891,10 @@ const Candidates = () => {
                 <Box py={8} textAlign="center">
                   <CalendarIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                   <Typography variant="h6" color="text.secondary" gutterBottom>
-                    Select a Course
+                    {t('candidates.selectCourse')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Choose a course and session date to mark attendance
+                    {t('candidates.chooseCourseDate')}
                   </Typography>
                 </Box>
               ) : loading ? (
@@ -903,10 +905,10 @@ const Candidates = () => {
                 <Box py={8} textAlign="center">
                   <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                   <Typography variant="h6" color="text.secondary" gutterBottom>
-                    No Candidates Enrolled
+                    {t('candidates.noCandidatesEnrolled')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    There are no candidates enrolled in this course yet
+                    {t('candidates.noCandidatesInCourse')}
                   </Typography>
                 </Box>
               ) : (
@@ -915,10 +917,10 @@ const Candidates = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell width="50">#</TableCell>
-                        <TableCell>Candidate</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell align="center">Mark Attendance</TableCell>
-                        <TableCell>Remarks</TableCell>
+                        <TableCell>{t('candidates.title').slice(0, -1)}</TableCell>
+                        <TableCell>{t('common.email')}</TableCell>
+                        <TableCell align="center">{t('candidates.markAttendance')}</TableCell>
+                        <TableCell>{t('attendance.remarks')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -946,17 +948,17 @@ const Candidates = () => {
                               size="small"
                             >
                               <ToggleButton value="PRESENT" color="success">
-                                <Tooltip title="Present">
+                                <Tooltip title={t('attendance.present')}>
                                   <PresentIcon />
                                 </Tooltip>
                               </ToggleButton>
                               <ToggleButton value="LATE" color="warning">
-                                <Tooltip title="Late">
+                                <Tooltip title={t('attendance.late')}>
                                   <LateIcon />
                                 </Tooltip>
                               </ToggleButton>
                               <ToggleButton value="ABSENT" color="error">
-                                <Tooltip title="Absent">
+                                <Tooltip title={t('attendance.absent')}>
                                   <AbsentIcon />
                                 </Tooltip>
                               </ToggleButton>
@@ -973,7 +975,7 @@ const Candidates = () => {
                           <TableCell>
                             <TextField
                               size="small"
-                              placeholder="Add remarks..."
+                              placeholder={t('candidates.addRemarks')}
                               value={remarks[candidate.id] || ''}
                               onChange={(e) => handleRemarksChange(candidate.id, e.target.value)}
                               fullWidth
@@ -992,41 +994,41 @@ const Candidates = () => {
 
       {/* Save Confirmation Dialog */}
       <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
-        <DialogTitle>Save Attendance</DialogTitle>
+        <DialogTitle>{t('candidates.saveAttendance')}</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Saving attendance for <strong>{Object.keys(attendance).filter(k => attendance[k]).length}</strong> candidates
+            {t('candidates.savingAttendanceFor')} <strong>{Object.keys(attendance).filter(k => attendance[k]).length}</strong> {t('candidates.title').toLowerCase()}
           </Alert>
           <Typography variant="body2">
-            Course: <strong>{courses.find(c => c.id === parseInt(selectedCourse))?.title}</strong>
+            {t('attendance.course')}: <strong>{courses.find(c => c.id === parseInt(selectedCourse))?.title}</strong>
           </Typography>
           <Typography variant="body2">
-            Date: <strong>{format(new Date(selectedDate), 'MMMM dd, yyyy')}</strong>
+            {t('common.date')}: <strong>{format(new Date(selectedDate), 'MMMM dd, yyyy')}</strong>
           </Typography>
           <Typography variant="body2">
-            Session: <strong>#{sessionNumber}</strong>
+            {t('candidates.session')}: <strong>#{sessionNumber}</strong>
           </Typography>
           <Box mt={2}>
             <Typography variant="body2" color="text.secondary">
-              • Present: {statistics.present}
+              • {t('attendance.present')}: {statistics.present}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              • Late: {statistics.late}
+              • {t('attendance.late')}: {statistics.late}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              • Absent: {statistics.absent}
+              • {t('attendance.absent')}: {statistics.absent}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setSaveDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button
             onClick={handleSaveAttendance}
             variant="contained"
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
           >
-            Confirm & Save
+            {t('candidates.confirmSave')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1043,7 +1045,7 @@ const Candidates = () => {
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <AppealIcon color="primary" />
                       <Typography color="text.secondary" variant="body2">
-                        Total Appeals
+                        {t('candidates.totalAppeals')}
                       </Typography>
                     </Box>
                     <Typography variant="h4">{appealStatistics.total || 0}</Typography>
@@ -1056,7 +1058,7 @@ const Candidates = () => {
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <PendingIcon color="warning" />
                       <Typography color="text.secondary" variant="body2">
-                        Pending
+                        {t('appeals.pending')}
                       </Typography>
                     </Box>
                     <Typography variant="h4" color="warning.main">
@@ -1071,7 +1073,7 @@ const Candidates = () => {
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <ApprovedIcon color="success" />
                       <Typography color="text.secondary" variant="body2">
-                        Approved
+                        {t('appeals.approved')}
                       </Typography>
                     </Box>
                     <Typography variant="h4" color="success.main">
@@ -1086,7 +1088,7 @@ const Candidates = () => {
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <RejectedIcon color="error" />
                       <Typography color="text.secondary" variant="body2">
-                        Rejected
+                        {t('appeals.rejected')}
                       </Typography>
                     </Box>
                     <Typography variant="h4" color="error.main">
@@ -1104,17 +1106,17 @@ const Candidates = () => {
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={4}>
                   <FormControl fullWidth>
-                    <InputLabel>Filter by Status</InputLabel>
+                    <InputLabel>{t('candidates.filterByStatus')}</InputLabel>
                     <Select
                       value={appealStatusFilter}
                       onChange={(e) => setAppealStatusFilter(e.target.value)}
-                      label="Filter by Status"
+                      label={t('candidates.filterByStatus')}
                     >
-                      <MenuItem value="">All Statuses</MenuItem>
-                      <MenuItem value="PENDING">Pending</MenuItem>
-                      <MenuItem value="APPROVED">Approved</MenuItem>
-                      <MenuItem value="REJECTED">Rejected</MenuItem>
-                      <MenuItem value="CANCELLED">Cancelled</MenuItem>
+                      <MenuItem value="">{t('candidates.allStatuses')}</MenuItem>
+                      <MenuItem value="PENDING">{t('appeals.pending')}</MenuItem>
+                      <MenuItem value="APPROVED">{t('appeals.approved')}</MenuItem>
+                      <MenuItem value="REJECTED">{t('appeals.rejected')}</MenuItem>
+                      <MenuItem value="CANCELLED">{t('appeals.cancelled')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -1125,7 +1127,7 @@ const Candidates = () => {
                     onClick={fetchAppeals}
                     disabled={loading}
                   >
-                    Refresh
+                    {t('common.refresh')}
                   </Button>
                 </Grid>
               </Grid>
@@ -1140,21 +1142,21 @@ const Candidates = () => {
                   <CircularProgress />
                 </Box>
               ) : appeals.length === 0 ? (
-                <Alert severity="info">No appeals found</Alert>
+                <Alert severity="info">{t('appeals.noAppeals')}</Alert>
               ) : (
                 <TableContainer>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Candidate</TableCell>
-                        <TableCell>Course</TableCell>
-                        <TableCell>Session Date</TableCell>
-                        <TableCell>Original Status</TableCell>
-                        <TableCell>Requested Status</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Reviewed By</TableCell>
-                        <TableCell align="center">Actions</TableCell>
+                        <TableCell>{t('common.date')}</TableCell>
+                        <TableCell>{t('candidates.title').slice(0, -1)}</TableCell>
+                        <TableCell>{t('attendance.course')}</TableCell>
+                        <TableCell>{t('candidates.sessionDate')}</TableCell>
+                        <TableCell>{t('appeals.originalStatus')}</TableCell>
+                        <TableCell>{t('appeals.requestedStatus')}</TableCell>
+                        <TableCell>{t('common.status')}</TableCell>
+                        <TableCell>{t('appeals.reviewedBy')}</TableCell>
+                        <TableCell align="center">{t('common.actions')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1219,7 +1221,7 @@ const Candidates = () => {
                               </Box>
                             ) : (
                               <Typography variant="body2" color="text.secondary">
-                                Not reviewed
+                                {t('appeals.notReviewed')}
                               </Typography>
                             )}
                           </TableCell>
@@ -1229,7 +1231,7 @@ const Candidates = () => {
                               variant="outlined"
                               onClick={() => handleOverride(appeal)}
                             >
-                              {appeal.status === 'PENDING' ? 'Review' : 'Override'}
+                              {appeal.status === 'PENDING' ? t('appeals.review') : t('appeals.override')}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -1251,15 +1253,15 @@ const Candidates = () => {
       >
         <MenuItem onClick={() => handleView(selectedCandidate)}>
           <ViewIcon fontSize="small" sx={{ mr: 1 }} />
-          View Details
+          {t('candidates.viewDetails')}
         </MenuItem>
         <MenuItem onClick={() => handleEdit(selectedCandidate)}>
           <EditIcon fontSize="small" sx={{ mr: 1 }} />
-          Edit
+          {t('common.edit')}
         </MenuItem>
         <MenuItem onClick={() => handleEmail(selectedCandidate)}>
           <EmailIcon fontSize="small" sx={{ mr: 1 }} />
-          Send Email
+          {t('candidates.sendEmail')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -1269,23 +1271,23 @@ const Candidates = () => {
           sx={{ color: 'error.main' }}
         >
           <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-          Delete
+          {t('common.delete')}
         </MenuItem>
       </Menu>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Candidate</DialogTitle>
+        <DialogTitle>{t('candidates.deleteCandidate')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete <strong>{selectedCandidate?.fullName}</strong>?
-            This action cannot be undone.
+            {t('candidates.confirmDeleteCandidate')} <strong>{selectedCandidate?.fullName}</strong>?
+            {t('common.actionCannotBeUndone')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleDelete} color="error" variant="contained">
-            Delete
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

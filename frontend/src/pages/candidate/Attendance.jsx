@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -42,6 +43,7 @@ import attendanceAppealService from '../../api/attendanceAppeal';
 import SubmitAppealDialog from '../../components/attendance/SubmitAppealDialog';
 
 const Attendance = () => {
+  const { t } = useTranslation();
   const [attendance, setAttendance] = useState([]);
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -256,20 +258,20 @@ const Attendance = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h4" gutterBottom>
-            My Attendance
+            {t('attendance.myAttendance')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            View your attendance records across all enrolled courses
+            {t('attendance.viewRecords')}
           </Typography>
         </Box>
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Course</InputLabel>
+          <InputLabel>{t('attendance.filterByCourse')}</InputLabel>
           <Select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            label="Filter by Course"
+            label={t('attendance.filterByCourse')}
           >
-            <MenuItem value="all">All Courses</MenuItem>
+            <MenuItem value="all">{t('common.all')} {t('courses.title')}</MenuItem>
             {courses.map((enrollment) => {
               const courseId = enrollment.courseId || enrollment.course?.id || enrollment.id;
               const courseTitle = enrollment.title || enrollment.course?.title || 'Unknown Course';
@@ -287,8 +289,7 @@ const Attendance = () => {
       <Box mb={3}>
         <Paper sx={{ p: 2, bgcolor: 'info.lighter', borderLeft: 4, borderColor: 'info.main' }}>
           <Typography variant="body2" color="info.dark">
-            <strong>📌 About Attendance:</strong> Your attendance is recorded by instructors during each training session.
-            Maintaining good attendance (80%+) is essential for course completion and certification eligibility.
+            <strong>📌 {t('attendance.title')}:</strong> {t('attendance.aboutAttendance')}
           </Typography>
         </Paper>
       </Box>
@@ -302,7 +303,7 @@ const Attendance = () => {
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <CalendarIcon color="action" />
                   <Typography color="text.secondary" variant="body2">
-                    Total Sessions
+                    {t('attendance.totalSessions')}
                   </Typography>
                 </Box>
                 <Typography variant="h4">{statistics.total || 0}</Typography>
@@ -315,7 +316,7 @@ const Attendance = () => {
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <PresentIcon color="success" />
                   <Typography color="text.secondary" variant="body2">
-                    Present
+                    {t('attendance.present')}
                   </Typography>
                 </Box>
                 <Typography variant="h4" color="success.main">
@@ -330,7 +331,7 @@ const Attendance = () => {
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <AbsentIcon color="error" />
                   <Typography color="text.secondary" variant="body2">
-                    Absent
+                    {t('attendance.absent')}
                   </Typography>
                 </Box>
                 <Typography variant="h4" color="error.main">
@@ -345,7 +346,7 @@ const Attendance = () => {
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <TrendingUpIcon color="primary" />
                   <Typography color="text.secondary" variant="body2">
-                    Attendance Rate
+                    {t('attendance.attendanceRate')}
                   </Typography>
                 </Box>
                 <Typography variant="h4" color="primary.main">
@@ -371,19 +372,19 @@ const Attendance = () => {
       <Paper>
         <Box p={2}>
           <Typography variant="h6" gutterBottom>
-            Attendance History
+            {t('attendance.attendanceHistory')}
           </Typography>
         </Box>
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Course</TableCell>
-                <TableCell>Session</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Remarks</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('common.date')}</TableCell>
+                <TableCell>{t('courses.title').slice(0, -1)}</TableCell>
+                <TableCell>{t('attendance.session')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('common.remarks')}</TableCell>
+                <TableCell align="right">{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

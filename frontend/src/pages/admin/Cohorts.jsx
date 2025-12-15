@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -49,6 +50,7 @@ import { format } from 'date-fns';
 const Cohorts = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [cohorts, setCohorts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -94,7 +96,7 @@ const Cohorts = () => {
       setTotalCohorts(cohortsData.total || 0);
     } catch (err) {
       console.error('Error fetching cohorts:', err);
-      setError(err.response?.data?.message || 'Failed to fetch cohorts');
+      setError(err.response?.data?.message || t('cohorts.failedToFetch'));
     } finally {
       setLoading(false);
     }
@@ -123,10 +125,10 @@ const Cohorts = () => {
     try {
       setActionLoading(true);
       await cohortService.publishCohort(cohort.id);
-      setSuccess(`Cohort "${cohort.cohortName || cohort.name}" published successfully`);
+      setSuccess(`${t('cohorts.title').slice(0, -1)} "${cohort.cohortName || cohort.name}" ${t('cohorts.publishedSuccess')}`);
       fetchCohorts();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to publish cohort');
+      setError(err.response?.data?.message || t('cohorts.failedToPublish'));
     } finally {
       setActionLoading(false);
     }
@@ -136,10 +138,10 @@ const Cohorts = () => {
     try {
       setActionLoading(true);
       await cohortService.openEnrollment(cohort.id);
-      setSuccess(`Enrollment opened for "${cohort.cohortName || cohort.name}"`);
+      setSuccess(`${t('cohorts.enrollmentOpenedSuccess')} "${cohort.cohortName || cohort.name}"`);
       fetchCohorts();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to open enrollment');
+      setError(err.response?.data?.message || t('cohorts.failedToOpenEnrollment'));
     } finally {
       setActionLoading(false);
     }
@@ -149,10 +151,10 @@ const Cohorts = () => {
     try {
       setActionLoading(true);
       await cohortService.closeEnrollment(cohort.id);
-      setSuccess(`Enrollment closed for "${cohort.cohortName || cohort.name}"`);
+      setSuccess(`${t('cohorts.enrollmentClosedSuccess')} "${cohort.cohortName || cohort.name}"`);
       fetchCohorts();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to close enrollment');
+      setError(err.response?.data?.message || t('cohorts.failedToCloseEnrollment'));
     } finally {
       setActionLoading(false);
     }
@@ -162,10 +164,10 @@ const Cohorts = () => {
     try {
       setActionLoading(true);
       await cohortService.archiveCohort(cohort.id);
-      setSuccess(`Cohort "${cohort.cohortName || cohort.name}" archived successfully`);
+      setSuccess(`${t('cohorts.title').slice(0, -1)} "${cohort.cohortName || cohort.name}" ${t('cohorts.archivedSuccess')}`);
       fetchCohorts();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to archive cohort');
+      setError(err.response?.data?.message || t('cohorts.failedToArchive'));
     } finally {
       setActionLoading(false);
     }
@@ -175,11 +177,11 @@ const Cohorts = () => {
     try {
       setActionLoading(true);
       await cohortService.deleteCohort(deleteDialog.cohort.id);
-      setSuccess(`Cohort "${deleteDialog.cohort.cohortName || deleteDialog.cohort.name}" deleted successfully`);
+      setSuccess(`${t('cohorts.title').slice(0, -1)} "${deleteDialog.cohort.cohortName || deleteDialog.cohort.name}" ${t('cohorts.deletedSuccess')}`);
       setDeleteDialog({ open: false, cohort: null });
       fetchCohorts();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete cohort');
+      setError(err.response?.data?.message || t('cohorts.failedToDelete'));
     } finally {
       setActionLoading(false);
     }
@@ -213,7 +215,7 @@ const Cohorts = () => {
     
     if (cohort.status === 'DRAFT') {
       buttons.push(
-        <Tooltip key="publish" title="Publish">
+        <Tooltip key="publish" title={t('cohorts.publish')}>
           <IconButton
             size="small"
             onClick={() => handlePublish(cohort)}
@@ -227,7 +229,7 @@ const Cohorts = () => {
     
     if (cohort.status === 'PUBLISHED') {
       buttons.push(
-        <Tooltip key="open-enrollment" title="Open Enrollment">
+        <Tooltip key="open-enrollment" title={t('cohorts.openEnrollment')}>
           <IconButton
             size="small"
             onClick={() => handleOpenEnrollment(cohort)}
@@ -241,7 +243,7 @@ const Cohorts = () => {
     
     if (cohort.status === 'ENROLLMENT_OPEN') {
       buttons.push(
-        <Tooltip key="close-enrollment" title="Close Enrollment">
+        <Tooltip key="close-enrollment" title={t('cohorts.closeEnrollment')}>
           <IconButton
             size="small"
             onClick={() => handleCloseEnrollment(cohort)}
@@ -255,7 +257,7 @@ const Cohorts = () => {
     
     if (cohort.status === 'COMPLETED') {
       buttons.push(
-        <Tooltip key="archive" title="Archive">
+        <Tooltip key="archive" title={t('cohorts.archive')}>
           <IconButton
             size="small"
             onClick={() => handleArchive(cohort)}
@@ -277,7 +279,7 @@ const Cohorts = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Groups sx={{ fontSize: 40, color: 'primary.main' }} />
           <Typography variant="h4" fontWeight="bold">
-            Cohort Management
+            {t('cohorts.cohortManagement')}
           </Typography>
         </Box>
         <Button
@@ -285,7 +287,7 @@ const Cohorts = () => {
           startIcon={<Add />}
           onClick={() => navigate('/admin/cohorts/create')}
         >
-          Create Cohort
+          {t('cohorts.createCohort')}
         </Button>
       </Stack>
 
@@ -305,7 +307,7 @@ const Cohorts = () => {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
           <TextField
-            placeholder="Search cohorts..."
+            placeholder={t('cohorts.searchPlaceholder')}
             value={searchQuery}
             onChange={handleSearch}
             InputProps={{
@@ -318,22 +320,22 @@ const Cohorts = () => {
             sx={{ flex: 1 }}
           />
           <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('common.status')}</InputLabel>
             <Select
               value={statusFilter}
               onChange={handleStatusFilterChange}
-              label="Status"
+              label={t('common.status')}
             >
-              <MenuItem value="">All Statuses</MenuItem>
-              <MenuItem value="DRAFT">Draft</MenuItem>
-              <MenuItem value="PUBLISHED">Published</MenuItem>
-              <MenuItem value="ENROLLMENT_OPEN">Enrollment Open</MenuItem>
-              <MenuItem value="ENROLLMENT_CLOSED">Enrollment Closed</MenuItem>
-              <MenuItem value="IN_TRAINING">In Training</MenuItem>
-              <MenuItem value="ASSESSMENT_IN_PROGRESS">Assessment In Progress</MenuItem>
-              <MenuItem value="VETTING_IN_PROGRESS">Vetting In Progress</MenuItem>
-              <MenuItem value="COMPLETED">Completed</MenuItem>
-              <MenuItem value="ARCHIVED">Archived</MenuItem>
+              <MenuItem value="">{t('cohorts.allStatuses')}</MenuItem>
+              <MenuItem value="DRAFT">{t('cohorts.draft')}</MenuItem>
+              <MenuItem value="PUBLISHED">{t('cohorts.published')}</MenuItem>
+              <MenuItem value="ENROLLMENT_OPEN">{t('cohorts.enrollmentOpen')}</MenuItem>
+              <MenuItem value="ENROLLMENT_CLOSED">{t('cohorts.enrollmentClosed')}</MenuItem>
+              <MenuItem value="IN_TRAINING">{t('cohorts.inTraining')}</MenuItem>
+              <MenuItem value="ASSESSMENT_IN_PROGRESS">{t('cohorts.assessmentInProgress')}</MenuItem>
+              <MenuItem value="VETTING_IN_PROGRESS">{t('cohorts.vettingInProgress')}</MenuItem>
+              <MenuItem value="COMPLETED">{t('cohorts.completed')}</MenuItem>
+              <MenuItem value="ARCHIVED">{t('cohorts.archived')}</MenuItem>
             </Select>
           </FormControl>
           <IconButton onClick={fetchCohorts} disabled={loading}>
@@ -347,16 +349,16 @@ const Cohorts = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Course</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Start Date</TableCell>
-              <TableCell>End Date</TableCell>
-              <TableCell align="center">Enrolled</TableCell>
-              <TableCell align="center">Capacity</TableCell>
-              <TableCell>Lead Trainer</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('cohorts.cohortCode')}</TableCell>
+              <TableCell>{t('cohorts.name')}</TableCell>
+              <TableCell>{t('cohorts.course')}</TableCell>
+              <TableCell>{t('common.status')}</TableCell>
+              <TableCell>{t('cohorts.startDate')}</TableCell>
+              <TableCell>{t('cohorts.endDate')}</TableCell>
+              <TableCell align="center">{t('cohorts.enrolled')}</TableCell>
+              <TableCell align="center">{t('cohorts.capacity')}</TableCell>
+              <TableCell>{t('cohorts.leadTrainer')}</TableCell>
+              <TableCell align="center">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -370,7 +372,7 @@ const Cohorts = () => {
               <TableRow>
                 <TableCell colSpan={10} align="center" sx={{ py: 5 }}>
                   <Typography color="text.secondary">
-                    No cohorts found
+                    {t('cohorts.noCohorts')}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -420,7 +422,7 @@ const Cohorts = () => {
                   </TableCell>
                   <TableCell align="center">
                     <Stack direction="row" spacing={0.5} justifyContent="center">
-                      <Tooltip title="View Details">
+                      <Tooltip title={t('cohorts.viewDetails')}>
                         <IconButton
                           size="small"
                           onClick={() => navigate(`/admin/cohorts/${cohort.id}`)}
@@ -429,7 +431,7 @@ const Cohorts = () => {
                         </IconButton>
                       </Tooltip>
                       {cohort.status === 'DRAFT' && (
-                        <Tooltip title="Edit">
+                        <Tooltip title={t('common.edit')}>
                           <IconButton
                             size="small"
                             onClick={() => navigate(`/admin/cohorts/${cohort.id}/edit`)}
@@ -440,7 +442,7 @@ const Cohorts = () => {
                       )}
                       {getActionButtons(cohort)}
                       {cohort.status === 'DRAFT' && (
-                        <Tooltip title="Delete">
+                        <Tooltip title={t('common.delete')}>
                           <IconButton
                             size="small"
                             onClick={() => setDeleteDialog({ open: true, cohort })}
@@ -473,10 +475,10 @@ const Cohorts = () => {
         open={deleteDialog.open}
         onClose={() => setDeleteDialog({ open: false, cohort: null })}
       >
-        <DialogTitle>Delete Cohort</DialogTitle>
+        <DialogTitle>{t('cohorts.confirmDelete')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete cohort "{deleteDialog.cohort?.name}"? This action cannot be undone.
+            {t('cohorts.confirmDeleteMessage')} "{deleteDialog.cohort?.name}"? {t('common.actionCannotBeUndone')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -484,7 +486,7 @@ const Cohorts = () => {
             onClick={() => setDeleteDialog({ open: false, cohort: null })}
             disabled={actionLoading}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleDelete}
@@ -492,7 +494,7 @@ const Cohorts = () => {
             variant="contained"
             disabled={actionLoading}
           >
-            {actionLoading ? 'Deleting...' : 'Delete'}
+            {actionLoading ? t('cohorts.deleting') : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

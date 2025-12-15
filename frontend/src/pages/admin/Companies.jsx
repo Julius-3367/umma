@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -40,6 +41,7 @@ import { useNavigate } from 'react-router-dom';
 import adminService from '../../api/admin';
 
 const Companies = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,8 +59,19 @@ const Companies = () => {
   const [industryFilter, setIndustryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const industries = ['Technology', 'Healthcare', 'Manufacturing', 'Retail', 'Finance', 'Other'];
-  const statuses = ['ACTIVE', 'INACTIVE', 'PENDING'];
+  const industries = [
+    { value: 'Technology', label: 'companies.technology' },
+    { value: 'Healthcare', label: 'companies.healthcare' },
+    { value: 'Manufacturing', label: 'companies.manufacturing' },
+    { value: 'Retail', label: 'companies.retail' },
+    { value: 'Finance', label: 'companies.finance' },
+    { value: 'Other', label: 'companies.otherIndustry' },
+  ];
+  const statuses = [
+    { value: 'ACTIVE', label: 'companies.active' },
+    { value: 'INACTIVE', label: 'companies.inactive' },
+    { value: 'PENDING', label: 'companies.pending' },
+  ];
 
   useEffect(() => {
     fetchCompanies();
@@ -80,7 +93,7 @@ const Companies = () => {
       setTotalCount(response.data.totalCount || 0);
     } catch (err) {
       console.error('Error fetching companies:', err);
-      setError(err.response?.data?.message || 'Failed to load companies');
+      setError(err.response?.data?.message || t('companies.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -106,7 +119,7 @@ const Companies = () => {
       fetchCompanies();
     } catch (err) {
       console.error('Delete error', err);
-      setError(err.response?.data?.message || 'Failed to delete company');
+      setError(err.response?.data?.message || t('companies.deleteFailed'));
     } finally {
       setLoading(false);
     }
@@ -141,10 +154,10 @@ const Companies = () => {
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h4" gutterBottom>
-            Companies
+            {t('companies.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage company profiles and partnerships
+            {t('companies.manageCompanies')}
           </Typography>
         </Box>
         <Button
@@ -152,7 +165,7 @@ const Companies = () => {
           startIcon={<AddIcon />}
           onClick={() => navigate('/admin/companies/new')}
         >
-          Add Company
+          {t('companies.addCompany')}
         </Button>
       </Stack>
 
@@ -160,7 +173,7 @@ const Companies = () => {
       <Paper sx={{ p: 2, mb: 3 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
           <TextField
-            placeholder="Search companies..."
+            placeholder={t('companies.searchPlaceholder')}
             value={searchQuery}
             onChange={handleSearch}
             size="small"
@@ -175,38 +188,38 @@ const Companies = () => {
           />
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Industry</InputLabel>
+            <InputLabel>{t('companies.industry')}</InputLabel>
             <Select
               value={industryFilter}
-              label="Industry"
+              label={t('companies.industry')}
               onChange={(e) => {
                 setIndustryFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value="">All Industries</MenuItem>
+              <MenuItem value="">{t('companies.allIndustries')}</MenuItem>
               {industries.map((industry) => (
-                <MenuItem key={industry} value={industry}>
-                  {industry}
+                <MenuItem key={industry.value} value={industry.value}>
+                  {t(industry.label)}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('companies.status')}</InputLabel>
             <Select
               value={statusFilter}
-              label="Status"
+              label={t('companies.status')}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value="">All Status</MenuItem>
+              <MenuItem value="">{t('companies.allStatus')}</MenuItem>
               {statuses.map((status) => (
-                <MenuItem key={status} value={status}>
-                  {status}
+                <MenuItem key={status.value} value={status.value}>
+                  {t(status.label)}
                 </MenuItem>
               ))}
             </Select>
@@ -231,12 +244,12 @@ const Companies = () => {
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <BusinessIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              No companies found
+              {t('companies.noCompaniesFound')}
             </Typography>
             <Typography variant="body2" color="text.secondary" mt={1}>
               {searchQuery || industryFilter || statusFilter
-                ? 'Try adjusting your filters'
-                : 'Add your first company to get started'}
+                ? t('companies.tryAdjustingFilters')
+                : t('companies.addFirstCompany')}
             </Typography>
           </Box>
         ) : (
@@ -244,14 +257,14 @@ const Companies = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Company Name</TableCell>
-                  <TableCell>Industry</TableCell>
-                  <TableCell>Contact Person</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Location</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t('companies.companyName')}</TableCell>
+                  <TableCell>{t('companies.industry')}</TableCell>
+                  <TableCell>{t('companies.contactPerson')}</TableCell>
+                  <TableCell>{t('companies.email')}</TableCell>
+                  <TableCell>{t('companies.phone')}</TableCell>
+                  <TableCell>{t('companies.location')}</TableCell>
+                  <TableCell>{t('companies.status')}</TableCell>
+                  <TableCell align="right">{t('companies.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -281,21 +294,21 @@ const Companies = () => {
                       <IconButton
                         size="small"
                         onClick={() => navigate(`/admin/companies/${company.id}`)}
-                        title="View"
+                        title={t('companies.viewCompany')}
                       >
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                       <IconButton
                         size="small"
                         onClick={() => navigate(`/admin/companies/${company.id}/edit`)}
-                        title="Edit"
+                        title={t('companies.editCompany')}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
                       <IconButton
                         size="small"
                         color="error"
-                        title="Delete"
+                        title={t('companies.deleteCompany')}
                         onClick={() => handleOpenDelete(company)}
                       >
                         <DeleteIcon fontSize="small" />
@@ -319,15 +332,15 @@ const Companies = () => {
       </TableContainer>
       {/* Delete confirmation dialog */}
       <Dialog open={confirmOpen} onClose={handleCloseDelete}>
-        <DialogTitle>Delete Company</DialogTitle>
+        <DialogTitle>{t('companies.deleteCompany')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the company "{companyToDelete?.name}"? This action cannot be undone.
+            {t('companies.confirmDelete')} "{companyToDelete?.name}"? {t('companies.actionCannotBeUndone')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDelete}>Cancel</Button>
-          <Button color="error" onClick={handleDelete}>Delete</Button>
+          <Button onClick={handleCloseDelete}>{t('common.cancel')}</Button>
+          <Button color="error" onClick={handleDelete}>{t('common.delete')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -42,6 +43,7 @@ const defaultAssessmentForm = {
 };
 
 const TrainerAssessments = () => {
+  const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   const [courses, setCourses] = useState([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
@@ -210,7 +212,7 @@ const TrainerAssessments = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" gutterBottom>Assessments</Typography>
+          <Typography variant="h4" gutterBottom>{t('assessments.title')}</Typography>
           <Typography variant="body2" color="text.secondary">
             Track and record candidate assessments across all courses
           </Typography>
@@ -221,7 +223,7 @@ const TrainerAssessments = () => {
           onClick={handleOpenCreateDialog}
           disabled={!enrollments.length}
         >
-          New Assessment
+          {t('assessments.newAssessment')}
         </Button>
       </Box>
 
@@ -388,14 +390,14 @@ const TrainerAssessments = () => {
       )}
 
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Record Assessment</DialogTitle>
+        <DialogTitle>{t('assessments.recordAssessment')}</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
                 select
                 fullWidth
-                label="Student"
+                label={t('assessments.student')}
                 value={formData.enrollmentId}
                 onChange={(e) => setFormData({ ...formData, enrollmentId: e.target.value })}
               >
@@ -410,21 +412,21 @@ const TrainerAssessments = () => {
               <TextField
                 select
                 fullWidth
-                label="Assessment Type"
+                label={t('assessments.assessmentType')}
                 value={formData.assessmentType}
                 onChange={(e) => setFormData({ ...formData, assessmentType: e.target.value })}
               >
-                <MenuItem value="Quiz">Quiz</MenuItem>
-                <MenuItem value="Assignment">Assignment</MenuItem>
-                <MenuItem value="Assessment">Assessment</MenuItem>
-                <MenuItem value="Project">Project</MenuItem>
-                <MenuItem value="Final">Final</MenuItem>
+                <MenuItem value="Quiz">{t('assessments.quiz')}</MenuItem>
+                <MenuItem value="Assignment">{t('assessments.assignment')}</MenuItem>
+                <MenuItem value="Assessment">{t('assessments.title').slice(0, -1)}</MenuItem>
+                <MenuItem value="Project">{t('assessments.project')}</MenuItem>
+                <MenuItem value="Final">{t('assessments.final')}</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Score (%)"
+                label={t('assessments.score') + ' (%)'}
                 type="number"
                 value={formData.score}
                 onChange={(e) => setFormData({ ...formData, score: Number(e.target.value) })}
@@ -434,14 +436,14 @@ const TrainerAssessments = () => {
               <TextField
                 select
                 fullWidth
-                label="Result"
+                label={t('assessments.result')}
                 value={formData.resultCategory}
                 onChange={(e) => setFormData({ ...formData, resultCategory: e.target.value })}
               >
-                <MenuItem value="PASS">Pass</MenuItem>
-                <MenuItem value="MERIT">Merit</MenuItem>
-                <MenuItem value="DISTINCTION">Distinction</MenuItem>
-                <MenuItem value="FAIL">Fail</MenuItem>
+                <MenuItem value="PASS">{t('assessments.pass')}</MenuItem>
+                <MenuItem value="MERIT">{t('assessments.merit')}</MenuItem>
+                <MenuItem value="DISTINCTION">{t('assessments.distinction')}</MenuItem>
+                <MenuItem value="FAIL">{t('assessments.fail')}</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={12}>
@@ -449,7 +451,7 @@ const TrainerAssessments = () => {
                 fullWidth
                 multiline
                 minRows={3}
-                label="Trainer Notes"
+                label={t('assessments.trainerNotes')}
                 value={formData.trainerComments}
                 onChange={(e) => setFormData({ ...formData, trainerComments: e.target.value })}
               />
@@ -457,9 +459,9 @@ const TrainerAssessments = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)} disabled={saving}>Cancel</Button>
+          <Button onClick={() => setCreateDialogOpen(false)} disabled={saving}>{t('common.cancel')}</Button>
           <Button onClick={handleCreateAssessment} variant="contained" disabled={saving}>
-            {saving ? 'Saving…' : 'Save Assessment'}
+            {saving ? t('common.loading') : t('common.save') + ' ' + t('assessments.title').slice(0, -1)}
           </Button>
         </DialogActions>
       </Dialog>

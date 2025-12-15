@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -49,6 +50,7 @@ import { format as formatDate } from 'date-fns';
 import adminService from '../../api/admin';
 
 const Reports = () => {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState({
     startDate: null,
     endDate: null,
@@ -112,66 +114,66 @@ const Reports = () => {
   const reportTypes = [
     {
       id: 'enrollments',
-      title: 'Enrollment Statistics Report',
-      description: 'Detailed enrollment data including status, dates, and candidate information',
+      title: 'reports.enrollmentStats',
+      description: 'reports.enrollmentStatsDesc',
       icon: <PeopleIcon fontSize="large" color="primary" />,
-      category: 'Enrollments',
+      category: 'reports.categoryEnrollments',
     },
     {
       id: 'courses',
-      title: 'Course Performance Report',
-      description: 'Course statistics, cohorts, enrollments, and completion rates',
+      title: 'reports.coursePerformance',
+      description: 'reports.coursePerformanceDesc',
       icon: <SchoolIcon fontSize="large" color="primary" />,
-      category: 'Courses',
+      category: 'reports.categoryCourses',
     },
     {
       id: 'candidates',
-      title: 'Candidate Progress Report',
-      description: 'Candidate profiles, enrollments, completion status, and vetting records',
+      title: 'reports.candidateProgress',
+      description: 'reports.candidateProgressDesc',
       icon: <PeopleIcon fontSize="large" color="secondary" />,
-      category: 'Candidates',
+      category: 'reports.categoryCandidates',
     },
     {
       id: 'cohorts',
-      title: 'Cohort Summary Report',
-      description: 'Cohort details, capacity, enrollment numbers, and session counts',
+      title: 'reports.cohortSummary',
+      description: 'reports.cohortSummaryDesc',
       icon: <SchoolIcon fontSize="large" color="secondary" />,
-      category: 'Cohorts',
+      category: 'reports.categoryCohorts',
     },
     {
       id: 'attendance',
-      title: 'Attendance Records Report',
-      description: 'Detailed attendance data with check-in/out times and status',
+      title: 'reports.attendanceRecords',
+      description: 'reports.attendanceRecordsDesc',
       icon: <TrendingUpIcon fontSize="large" color="primary" />,
-      category: 'Attendance',
+      category: 'reports.categoryAttendance',
     },
     {
       id: 'vetting',
-      title: 'Vetting Process Report',
-      description: 'Vetting applications, document status, and verification progress',
+      title: 'reports.vettingProcess',
+      description: 'reports.vettingProcessDesc',
       icon: <BusinessIcon fontSize="large" color="primary" />,
-      category: 'Vetting',
+      category: 'reports.categoryVetting',
     },
     {
       id: 'trainers',
-      title: 'Trainer Performance Report',
-      description: 'Trainer workload, cohorts led, student counts, and session statistics',
+      title: 'reports.trainerPerformance',
+      description: 'reports.trainerPerformanceDesc',
       icon: <AssessmentIcon fontSize="large" color="primary" />,
-      category: 'Trainers',
+      category: 'reports.categoryTrainers',
     },
     {
       id: 'certificates',
-      title: 'Certificate Issuance Report',
-      description: 'Certificates issued, candidate details, and revocation status',
+      title: 'reports.certificateIssuance',
+      description: 'reports.certificateIssuanceDesc',
       icon: <AssessmentIcon fontSize="large" color="secondary" />,
-      category: 'Certificates',
+      category: 'reports.categoryCertificates',
     },
     {
       id: 'financial',
-      title: 'Financial Overview Report',
-      description: 'Payment records, revenue tracking, and financial transactions',
+      title: 'reports.financialOverview',
+      description: 'reports.financialOverviewDesc',
       icon: <TrendingUpIcon fontSize="large" color="secondary" />,
-      category: 'Finance',
+      category: 'reports.categoryFinance',
     },
   ];
 
@@ -227,10 +229,10 @@ const Reports = () => {
         {/* Header */}
         <Box mb={3}>
           <Typography variant="h4" gutterBottom>
-            Reports & Analytics
+            {t('reports.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Generate comprehensive reports for analysis and compliance
+            {t('reports.generateReports')}
           </Typography>
         </Box>
 
@@ -244,7 +246,7 @@ const Reports = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
               <DatePicker
-                label="Start Date"
+                label={t('reports.startDate')}
                 value={dateRange.startDate}
                 onChange={(newValue) =>
                   setDateRange({ ...dateRange, startDate: newValue })
@@ -254,7 +256,7 @@ const Reports = () => {
             </Grid>
             <Grid item xs={12} md={4}>
               <DatePicker
-                label="End Date"
+                label={t('reports.endDate')}
                 value={dateRange.endDate}
                 onChange={(newValue) =>
                   setDateRange({ ...dateRange, endDate: newValue })
@@ -264,10 +266,10 @@ const Reports = () => {
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth size="small">
-                <InputLabel>Export Format</InputLabel>
+                <InputLabel>{t('reports.format')}</InputLabel>
                 <Select
                   value={format}
-                  label="Export Format"
+                  label={t('reports.format')}
                   onChange={(e) => setFormat(e.target.value)}
                 >
                   <MenuItem value="pdf">
@@ -325,13 +327,13 @@ const Reports = () => {
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     {report.icon}
-                    <Chip label={report.category} size="small" color="primary" variant="outlined" />
+                    <Chip label={t(report.category)} size="small" color="primary" variant="outlined" />
                   </Box>
                   <Typography variant="h6" gutterBottom>
-                    {report.title}
+                    {t(report.title)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {report.description}
+                    {t(report.description)}
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ p: 2, pt: 0 }}>
@@ -342,7 +344,7 @@ const Reports = () => {
                     onClick={() => handleGenerateReport(report.id)}
                     disabled={generating}
                   >
-                    {generating ? 'Generating...' : 'Generate Report'}
+                    {generating ? t('reports.generating') : t('reports.generateReport')}
                   </Button>
                 </CardActions>
               </Card>
@@ -354,14 +356,14 @@ const Reports = () => {
         <Paper sx={{ p: 3, mt: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6">
-              Recent Reports
+              {t('reports.recentReports')}
             </Typography>
             <Button
               startIcon={<RefreshIcon />}
               onClick={fetchRecentReports}
               disabled={loadingReports}
             >
-              Refresh
+              {t('reports.refresh')}
             </Button>
           </Box>
           <Divider sx={{ mb: 2 }} />
@@ -372,19 +374,19 @@ const Reports = () => {
             </Box>
           ) : recentReports.length === 0 ? (
             <Typography variant="body2" color="text.secondary" align="center" py={4}>
-              No recent reports. Generated reports will appear here.
+              {t('reports.noReports')}
             </Typography>
           ) : (
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Format</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Records</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>{t('reports.reportType')}</TableCell>
+                    <TableCell>{t('reports.format')}</TableCell>
+                    <TableCell>{t('common.status')}</TableCell>
+                    <TableCell>{t('reports.records')}</TableCell>
+                    <TableCell>{t('reports.generatedOn')}</TableCell>
+                    <TableCell align="right">{t('common.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -418,7 +420,7 @@ const Reports = () => {
                             startIcon={<DownloadIcon />}
                             onClick={() => handleDownloadReport(report.id, report.downloadUrl)}
                           >
-                            Download
+                            {t('reports.download')}
                           </Button>
                         )}
                         {report.status === 'failed' && (

@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Grid,
   Alert,
@@ -36,6 +37,7 @@ import candidateService from '../../api/candidate';
 import { format } from 'date-fns';
 
 const CandidateDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Memoize the fetch function to prevent infinite loops

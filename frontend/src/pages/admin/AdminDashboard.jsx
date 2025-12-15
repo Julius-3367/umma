@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -100,6 +101,7 @@ const TabPanel = ({ children, value, index, ...other }) => (
 );
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const { user } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState(0);
@@ -191,7 +193,7 @@ const AdminDashboard = () => {
   // Stats cards data - using real values from API
   const statsCards = stats ? [
     {
-      title: 'Total Users',
+      title: t('dashboard.totalUsers'),
       value: stats.stats?.totalUsers || 0,
       change: '+12.5%',
       trend: 'up',
@@ -199,7 +201,7 @@ const AdminDashboard = () => {
       color: theme.palette.primary.main,
     },
     {
-      title: 'Total Courses',
+      title: t('dashboard.totalCourses'),
       value: stats.stats?.totalCourses || 0,
       change: '+8.2%',
       trend: 'up',
@@ -207,17 +209,17 @@ const AdminDashboard = () => {
       color: theme.palette.success.main,
     },
     {
-      title: 'Total Cohorts',
+      title: t('dashboard.totalCohorts'),
       value: stats.stats?.totalCohorts || 0,
-      change: `${stats.stats?.activeCohorts || 0} active`,
+      change: `${stats.stats?.activeCohorts || 0} ${t('dashboard.active')}`,
       trend: 'up',
       icon: BuildingOfficeIcon,
       color: theme.palette.warning.main,
     },
     {
-      title: 'Pending Enrollments',
+      title: t('dashboard.pendingEnrollments'),
       value: stats.stats?.pendingCohortEnrollments || 0,
-      change: 'Awaiting approval',
+      change: t('dashboard.awaitingApproval'),
       trend: 'up',
       icon: ClockIcon,
       color: theme.palette.secondary.main,
@@ -263,10 +265,10 @@ const AdminDashboard = () => {
         }}
       >
         <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-          Welcome back, {user?.firstName || 'Admin'}!
+          {t('dashboard.welcomeBack')}, {user?.firstName || 'Admin'}!
         </Typography>
         <Typography variant="body1" sx={{ opacity: 0.9 }}>
-          Complete system management - users, courses, payments, certificates, and placements
+          {t('dashboard.systemManagement')}
         </Typography>
       </Paper>
 
@@ -336,9 +338,9 @@ const AdminDashboard = () => {
           sx={{ mb: 3, borderRadius: 2 }}
           icon={<ShieldCheckIcon style={{ width: 20, height: 20 }} />}
         >
-          <AlertTitle>System Status: Healthy</AlertTitle>
-          Uptime: {systemHealth.uptime} • Response Time: {systemHealth.responseTime} •
-          Active Users: {systemHealth.activeUsers.toLocaleString()}
+          <AlertTitle>{t('dashboard.systemStatus')}: {t('dashboard.healthy')}</AlertTitle>
+          {t('dashboard.uptime')}: {systemHealth.uptime} • {t('dashboard.responseTime')}: {systemHealth.responseTime} •
+          {t('dashboard.activeUsers')}: {systemHealth.activeUsers.toLocaleString()}
         </Alert>
       )}
 
@@ -358,10 +360,10 @@ const AdminDashboard = () => {
             },
           }}
         >
-          <Tab label="Overview" />
-          <Tab label="Users" />
-          <Tab label="Analytics" />
-          <Tab label="System" />
+          <Tab label={t('dashboard.overview')} />
+          <Tab label={t('dashboard.users')} />
+          <Tab label={t('dashboard.analytics')} />
+          <Tab label={t('dashboard.system')} />
         </Tabs>
 
         {/* Overview Tab */}
@@ -374,7 +376,7 @@ const AdminDashboard = () => {
                 <Card sx={{ height: 400 }}>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                      Revenue & Profit Trends
+                      {t('dashboard.revenueProfit')}
                     </Typography>
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart data={stats.financialMetrics}>
@@ -407,7 +409,7 @@ const AdminDashboard = () => {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                      Users by Role
+                      {t('dashboard.usersByRole')}
                     </Typography>
                     <Grid container spacing={2}>
                       {stats.usersByRole.map((role, index) => (
@@ -445,7 +447,7 @@ const AdminDashboard = () => {
                   <Card>
                     <CardContent>
                       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                        Recent Cohorts
+                        {t('dashboard.recentCohorts')}
                       </Typography>
                       <List>
                         {stats.recentCohorts.map((cohort, index) => (
@@ -473,9 +475,9 @@ const AdminDashboard = () => {
                                       {cohort.course?.name}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
-                                      Trainer: {cohort.trainer?.user?.firstName} {cohort.trainer?.user?.lastName} • 
-                                      Enrollments: {cohort._count?.enrollments || 0} • 
-                                      Status: {cohort.status}
+                                      {t('dashboard.trainer')}: {cohort.trainer?.user?.firstName} {cohort.trainer?.user?.lastName} • 
+                                      {t('dashboard.enrollments')}: {cohort._count?.enrollments || 0} • 
+                                      {t('dashboard.status')}: {cohort.status}
                                     </Typography>
                                   </>
                                 }
@@ -494,7 +496,7 @@ const AdminDashboard = () => {
                   <Card>
                     <CardContent>
                       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                        Pending Enrollment Approvals
+                        {t('dashboard.pendingEnrollmentApprovals')}
                       </Typography>
                       <List>
                         {stats.pendingEnrollments.map((enrollment, index) => (
@@ -509,7 +511,7 @@ const AdminDashboard = () => {
                                     color="success"
                                     onClick={() => handleEnrollmentAction(enrollment.id, 'APPROVED')}
                                   >
-                                    Approve
+                                    {t('dashboard.approve')}
                                   </Button>
                                   <Button
                                     size="small"
@@ -517,7 +519,7 @@ const AdminDashboard = () => {
                                     color="error"
                                     onClick={() => handleEnrollmentAction(enrollment.id, 'REJECTED')}
                                   >
-                                    Reject
+                                    {t('dashboard.reject')}
                                   </Button>
                                 </Box>
                               }
@@ -541,11 +543,11 @@ const AdminDashboard = () => {
                                 secondary={
                                   <>
                                     <Typography variant="body2" color="text.secondary">
-                                      Cohort: {enrollment.cohort?.name}
+                                      {t('dashboard.cohort')}: {enrollment.cohort?.name}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
-                                      Applied: {new Date(enrollment.enrolledAt).toLocaleDateString()} • 
-                                      Status: {enrollment.status}
+                                      {t('dashboard.applied')}: {new Date(enrollment.enrolledAt).toLocaleDateString()} • 
+                                      {t('dashboard.status')}: {enrollment.status}
                                     </Typography>
                                   </>
                                 }
@@ -568,7 +570,7 @@ const AdminDashboard = () => {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                      Quick Actions
+                      {t('dashboard.quickActions')}
                     </Typography>
                     <Stack spacing={2}>
                       <Button
@@ -577,7 +579,7 @@ const AdminDashboard = () => {
                         startIcon={<PlusIcon style={{ width: 20, height: 20 }} />}
                         sx={{ justifyContent: 'flex-start' }}
                       >
-                        Add New User
+                        {t('dashboard.addNewUser')}
                       </Button>
                       <Button
                         variant="outlined"
@@ -585,7 +587,7 @@ const AdminDashboard = () => {
                         startIcon={<AcademicCapIcon style={{ width: 20, height: 20 }} />}
                         sx={{ justifyContent: 'flex-start' }}
                       >
-                        Create Course
+                        {t('dashboard.createCourse')}
                       </Button>
                       <Button
                         variant="outlined"
@@ -593,7 +595,7 @@ const AdminDashboard = () => {
                         startIcon={<ChartBarIcon style={{ width: 20, height: 20 }} />}
                         sx={{ justifyContent: 'flex-start' }}
                       >
-                        Generate Report
+                        {t('dashboard.generateReport')}
                       </Button>
                       <Button
                         variant="outlined"
@@ -601,7 +603,7 @@ const AdminDashboard = () => {
                         startIcon={<Cog6ToothIcon style={{ width: 20, height: 20 }} />}
                         sx={{ justifyContent: 'flex-start' }}
                       >
-                        System Settings
+                        {t('dashboard.systemSettings')}
                       </Button>
                     </Stack>
                   </CardContent>
@@ -611,7 +613,7 @@ const AdminDashboard = () => {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                      Recent Activities
+                      {t('dashboard.recentActivities')}
                     </Typography>
                     <List>
                       {demoRecentActivity.slice(0, 5).map((activity, index) => (
@@ -653,12 +655,12 @@ const AdminDashboard = () => {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                      System Health
+                      {t('dashboard.systemHealth')}
                     </Typography>
                     <Stack spacing={2}>
                       <Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2">Server Load</Typography>
+                          <Typography variant="body2">{t('dashboard.serverLoad')}</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {systemHealth.serverLoad}%
                           </Typography>
@@ -684,7 +686,7 @@ const AdminDashboard = () => {
 
                       <Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2">Memory Usage</Typography>
+                          <Typography variant="body2">{t('dashboard.memoryUsage')}</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {systemHealth.memoryUsage}%
                           </Typography>
@@ -705,7 +707,7 @@ const AdminDashboard = () => {
 
                       <Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2">Disk Usage</Typography>
+                          <Typography variant="body2">{t('dashboard.diskUsage')}</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {systemHealth.diskUsage}%
                           </Typography>
@@ -738,7 +740,7 @@ const AdminDashboard = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  placeholder="Search users..."
+                  placeholder={t('dashboard.searchUsers')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{

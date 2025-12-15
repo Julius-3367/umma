@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -43,19 +44,20 @@ import candidateService from '../../api/candidate';
 
 // Document types for candidates
 const DOCUMENT_TYPES = [
-  { value: 'PASSPORT', label: 'Passport' },
-  { value: 'NATIONAL_ID', label: 'National ID' },
-  { value: 'POLICE_CLEARANCE', label: 'Police Clearance' },
-  { value: 'MEDICAL_CERTIFICATE', label: 'Medical Certificate' },
-  { value: 'EDUCATION_CERTIFICATE', label: 'Education Certificate' },
-  { value: 'VISA', label: 'Visa Document' },
-  { value: 'WORK_PERMIT', label: 'Work Permit' },
-  { value: 'REFERENCE_LETTER', label: 'Reference Letter' },
-  { value: 'RESUME_CV', label: 'Resume/CV' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'PASSPORT', label: 'documents.passport' },
+  { value: 'NATIONAL_ID', label: 'documents.nationalId' },
+  { value: 'POLICE_CLEARANCE', label: 'documents.policeClearance' },
+  { value: 'MEDICAL_CERTIFICATE', label: 'documents.medicalCertificate' },
+  { value: 'EDUCATION_CERTIFICATE', label: 'documents.educationCertificate' },
+  { value: 'VISA', label: 'documents.visa' },
+  { value: 'WORK_PERMIT', label: 'documents.workPermit' },
+  { value: 'REFERENCE_LETTER', label: 'documents.referenceLetter' },
+  { value: 'RESUME_CV', label: 'documents.resumeCv' },
+  { value: 'OTHER', label: 'documents.other' },
 ];
 
 const Documents = () => {
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -86,7 +88,7 @@ const Documents = () => {
       setDocuments(response || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
-      enqueueSnackbar('Failed to load documents', { variant: 'error' });
+      enqueueSnackbar(t('documents.loadFailed'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -97,14 +99,14 @@ const Documents = () => {
     if (file) {
       // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        enqueueSnackbar('File size must be less than 10MB', { variant: 'error' });
+        enqueueSnackbar(t('documents.fileSizeLimit'), { variant: 'error' });
         return;
       }
 
       // Validate file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
-        enqueueSnackbar('Only PDF, JPEG, and PNG files are allowed', { variant: 'error' });
+        enqueueSnackbar(t('documents.fileTypeError'), { variant: 'error' });
         return;
       }
 
@@ -125,7 +127,7 @@ const Documents = () => {
 
   const handleUpload = async () => {
     if (!documentType || !selectedFile) {
-      enqueueSnackbar('Please select document type and file', { variant: 'warning' });
+      enqueueSnackbar(t('documents.selectDocumentType'), { variant: 'warning' });
       return;
     }
 
@@ -160,13 +162,13 @@ const Documents = () => {
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      enqueueSnackbar('Document uploaded successfully', { variant: 'success' });
+      enqueueSnackbar(t('documents.uploadSuccess'), { variant: 'success' });
       setUploadDialogOpen(false);
       resetForm();
       fetchDocuments();
     } catch (error) {
       console.error('Error uploading document:', error);
-      enqueueSnackbar(error.message || 'Failed to upload document', { variant: 'error' });
+      enqueueSnackbar(error.message || t('documents.uploadFailed'), { variant: 'error' });
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -178,13 +180,13 @@ const Documents = () => {
 
     try {
       await candidateService.deleteDocument(selectedDocument.id);
-      enqueueSnackbar('Document deleted successfully', { variant: 'success' });
+      enqueueSnackbar(t('documents.deleteSuccess'), { variant: 'success' });
       setDeleteDialogOpen(false);
       setSelectedDocument(null);
       fetchDocuments();
     } catch (error) {
       console.error('Error deleting document:', error);
-      enqueueSnackbar('Failed to delete document', { variant: 'error' });
+      enqueueSnackbar(t('documents.deleteFailed'), { variant: 'error' });
     }
   };
 
@@ -198,9 +200,9 @@ const Documents = () => {
     // Check if document is a required type
     const requiredDocs = ['PASSPORT', 'POLICE_CLEARANCE', 'MEDICAL_CERTIFICATE'];
     if (requiredDocs.includes(doc.documentType)) {
-      return { label: 'Required', color: 'success', icon: <CheckIcon /> };
+      return { label: t('documents.required'), color: 'success', icon: <CheckIcon /> };
     }
-    return { label: 'Optional', color: 'default', icon: null };
+    return { label: t('documents.optional'), color: 'default', icon: null };
   };
 
   const getMissingDocuments = () => {
@@ -217,10 +219,10 @@ const Documents = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h4" gutterBottom>
-            My Documents
+            {t('documents.myDocuments')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Upload and manage your documents required for training and placement
+            {t('documents.manageDocuments')}
           </Typography>
         </Box>
         <Button
@@ -228,18 +230,18 @@ const Documents = () => {
           startIcon={<UploadIcon />}
           onClick={() => setUploadDialogOpen(true)}
         >
-          Upload Document
+          {t('documents.uploadDocument')}
         </Button>
       </Box>
 
       {/* Missing Documents Alert */}
       {missingDocs.length > 0 && (
         <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 3 }}>
-          <Typography variant="subtitle2">Missing Required Documents</Typography>
+          <Typography variant="subtitle2">{t('documents.missingRequired')}</Typography>
           <Typography variant="body2">
-            Please upload the following required documents: {' '}
+            {t('documents.pleaseUpload')} {' '}
             {missingDocs.map(type =>
-              DOCUMENT_TYPES.find(dt => dt.value === type)?.label
+              t(DOCUMENT_TYPES.find(dt => dt.value === type)?.label || '')
             ).join(', ')}
           </Typography>
         </Alert>
@@ -251,7 +253,7 @@ const Documents = () => {
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom variant="body2">
-                Total Documents
+                {t('documents.totalDocuments')}
               </Typography>
               <Typography variant="h4">{documents.length}</Typography>
             </CardContent>
@@ -261,7 +263,7 @@ const Documents = () => {
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom variant="body2">
-                Required Uploaded
+                {t('documents.requiredUploaded')}
               </Typography>
               <Typography variant="h4" color="success.main">
                 {3 - missingDocs.length} / 3
@@ -273,7 +275,7 @@ const Documents = () => {
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom variant="body2">
-                Completion Rate
+                {t('documents.completionRate')}
               </Typography>
               <Typography variant="h4">
                 {Math.round(((3 - missingDocs.length) / 3) * 100)}%
@@ -285,7 +287,7 @@ const Documents = () => {
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom variant="body2">
-                Last Upload
+                {t('documents.lastUpload')}
               </Typography>
               <Typography variant="h6">
                 {documents.length > 0
@@ -302,11 +304,11 @@ const Documents = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Document Type</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Uploaded On</TableCell>
-              <TableCell>Uploaded By</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('documents.documentType')}</TableCell>
+              <TableCell>{t('documents.status')}</TableCell>
+              <TableCell>{t('documents.uploadedOn')}</TableCell>
+              <TableCell>{t('documents.uploadedBy')}</TableCell>
+              <TableCell align="right">{t('documents.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -322,10 +324,10 @@ const Documents = () => {
                   <Box py={4}>
                     <FileIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                     <Typography variant="h6" color="text.secondary">
-                      No documents uploaded yet
+                      {t('documents.noDocumentsMessage')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Click the "Upload Document" button to get started
+                      {t('documents.uploadToGetStarted')}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -340,7 +342,7 @@ const Documents = () => {
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={1}>
                         <FileIcon color="action" />
-                        <Typography>{docType?.label || doc.documentType}</Typography>
+                        <Typography>{t(docType?.label || 'documents.other')}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -357,10 +359,10 @@ const Documents = () => {
                     <TableCell>
                       {doc.uploadedByUser
                         ? `${doc.uploadedByUser.firstName} ${doc.uploadedByUser.lastName}`
-                        : 'Self'}
+                        : t('documents.self')}
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title="View Document">
+                      <Tooltip title={t('documents.viewDocument')}>
                         <IconButton
                           size="small"
                           onClick={() => {
@@ -373,7 +375,7 @@ const Documents = () => {
                           <ViewIcon />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete">
+                      <Tooltip title={t('common.delete')}>
                         <IconButton
                           size="small"
                           onClick={() => {
@@ -400,20 +402,20 @@ const Documents = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Upload Document</DialogTitle>
+        <DialogTitle>{t('documents.uploadDocument')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Document Type *</InputLabel>
+              <InputLabel>{t('documents.documentType')} *</InputLabel>
               <Select
                 value={documentType}
                 onChange={(e) => setDocumentType(e.target.value)}
-                label="Document Type *"
+                label={`${t('documents.documentType')} *`}
                 disabled={uploading}
               >
                 {DOCUMENT_TYPES.map((type) => (
                   <MenuItem key={type.value} value={type.value}>
-                    {type.label}
+                    {t(type.label)}
                   </MenuItem>
                 ))}
               </Select>
@@ -464,10 +466,10 @@ const Documents = () => {
                 <Box>
                   <UploadIcon sx={{ fontSize: 48, color: 'action.active', mb: 1 }} />
                   <Typography variant="subtitle1">
-                    Click to upload or drag and drop
+                    {t('documents.dragDrop')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    PDF, JPEG, or PNG (max 10MB)
+                    {t('documents.supportedFormats')}
                   </Typography>
                 </Box>
               )}
@@ -477,7 +479,7 @@ const Documents = () => {
               <Box sx={{ mt: 2 }}>
                 <LinearProgress variant="determinate" value={uploadProgress} />
                 <Typography variant="body2" color="text.secondary" align="center" mt={1}>
-                  Uploading... {uploadProgress}%
+                  {t('documents.uploading')} {uploadProgress}%
                 </Typography>
               </Box>
             )}
@@ -485,30 +487,30 @@ const Documents = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setUploadDialogOpen(false)} disabled={uploading}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleUpload}
             variant="contained"
             disabled={uploading || !documentType || !selectedFile}
           >
-            {uploading ? 'Uploading...' : 'Upload'}
+            {uploading ? t('documents.uploading') : t('documents.upload')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Document</DialogTitle>
+        <DialogTitle>{t('documents.deleteDocument')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this document? This action cannot be undone.
+            {t('documents.confirmDelete')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleDelete} color="error" variant="contained">
-            Delete
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

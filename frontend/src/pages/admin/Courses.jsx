@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -38,6 +39,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material
 
 const Courses = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [courses, setcourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,7 +72,7 @@ const Courses = () => {
       setTotalCourses(response.data.data.total || 0);
     } catch (err) {
       console.error('Error fetching courses:', err);
-      setError(err.response?.data?.message || 'Failed to load courses');
+      setError(err.response?.data?.message || t('courses.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -97,10 +99,10 @@ const Courses = () => {
       await adminService.deleteCourse(confirmActionCourse.id);
       // Optimistic update
       setcourses((prev) => prev.filter((c) => c.id !== confirmActionCourse.id));
-      setSuccess('Course deleted successfully');
+      setSuccess(t('courses.courseDeletedSuccess'));
     } catch (err) {
       console.error('Delete error:', err);
-      setError(err.response?.data?.message || 'Failed to delete course');
+      setError(err.response?.data?.message || t('courses.failedToDelete'));
     } finally {
       setActionLoading(false);
       handleCloseDelete();
@@ -114,11 +116,11 @@ const Courses = () => {
       const response = await adminService.updateCourse(course.id, payload);
       if (response.data.success) {
         setcourses((prev) => prev.map((c) => (c.id === course.id ? { ...c, status: 'ACTIVE' } : c)));
-        setSuccess('Course published successfully');
+        setSuccess(t('courses.coursePublishedSuccess'));
       }
     } catch (err) {
       console.error('Publish error:', err);
-      setError(err.response?.data?.message || 'Failed to publish course');
+      setError(err.response?.data?.message || t('courses.failedToPublish'));
     } finally {
       setActionLoading(false);
     }
@@ -160,7 +162,7 @@ const Courses = () => {
         <Box display="flex" alignItems="center" gap={2}>
           <School fontSize="large" color="primary" />
           <Typography variant="h4" fontWeight="bold">
-            Course Management
+            {t('courses.courseManagement')}
           </Typography>
         </Box>
         <Button
@@ -168,7 +170,7 @@ const Courses = () => {
           startIcon={<Add />}
           onClick={() => navigate('/admin/courses/new')}
         >
-          Add New Course
+          {t('courses.addNewCourse')}
         </Button>
       </Box>
 
@@ -182,7 +184,7 @@ const Courses = () => {
       <Paper sx={{ p: 2, mb: 3 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
-            placeholder="Search by course title or code..."
+            placeholder={t('courses.searchPlaceholder')}
             value={searchQuery}
             onChange={handleSearchChange}
             size="small"
@@ -197,24 +199,24 @@ const Courses = () => {
           />
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('common.status')}</InputLabel>
             <Select
               value={statusFilter}
-              label="Status"
+              label={t('common.status')}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(0);
               }}
             >
-              <MenuItem value="">All Status</MenuItem>
-              <MenuItem value="ACTIVE">Active</MenuItem>
-              <MenuItem value="DRAFT">Draft</MenuItem>
-              <MenuItem value="COMPLETED">Completed</MenuItem>
-              <MenuItem value="CANCELLED">Cancelled</MenuItem>
+              <MenuItem value="">{t('courses.allStatus')}</MenuItem>
+              <MenuItem value="ACTIVE">{t('courses.active')}</MenuItem>
+              <MenuItem value="DRAFT">{t('courses.draft')}</MenuItem>
+              <MenuItem value="COMPLETED">{t('courses.completed')}</MenuItem>
+              <MenuItem value="CANCELLED">{t('courses.cancelled')}</MenuItem>
             </Select>
           </FormControl>
 
-          <Tooltip title="Refresh">
+          <Tooltip title={t('common.refresh')}>
             <IconButton onClick={fetchCourses}>
               <Refresh />
             </IconButton>
@@ -233,22 +235,22 @@ const Courses = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Code</TableCell>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Start Date</TableCell>
-                  <TableCell>End Date</TableCell>
-                  <TableCell>Capacity</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t('courses.code')}</TableCell>
+                  <TableCell>{t('courses.courseTitle')}</TableCell>
+                  <TableCell>{t('courses.category')}</TableCell>
+                  <TableCell>{t('courses.duration')}</TableCell>
+                  <TableCell>{t('courses.startDate')}</TableCell>
+                  <TableCell>{t('courses.endDate')}</TableCell>
+                  <TableCell>{t('courses.capacity')}</TableCell>
+                  <TableCell>{t('common.status')}</TableCell>
+                  <TableCell align="right">{t('common.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {courses.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} align="center">
-                      <Typography color="text.secondary">No courses found</Typography>
+                      <Typography color="text.secondary">{t('courses.noCourses')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -265,7 +267,7 @@ const Courses = () => {
                           '-'
                         )}
                       </TableCell>
-                      <TableCell>{course.durationDays} days</TableCell>
+                      <TableCell>{course.durationDays} {t('courses.days')}</TableCell>
                       <TableCell>
                         {course.startDate
                           ? new Date(course.startDate).toLocaleDateString()
@@ -276,7 +278,7 @@ const Courses = () => {
                           ? new Date(course.endDate).toLocaleDateString()
                           : '-'}
                       </TableCell>
-                      <TableCell>{course.capacity || 'Unlimited'}</TableCell>
+                      <TableCell>{course.capacity || t('courses.unlimited')}</TableCell>
                       <TableCell>
                         <Chip
                           label={course.status}
@@ -286,7 +288,7 @@ const Courses = () => {
                       </TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Tooltip title="View Details">
+                          <Tooltip title={t('courses.viewDetails')}>
                             <IconButton
                               size="small"
                               onClick={() => navigate(`/admin/courses/${course.id}`)}
@@ -294,7 +296,7 @@ const Courses = () => {
                               <Visibility />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit">
+                          <Tooltip title={t('common.edit')}>
                             <IconButton
                               size="small"
                               onClick={() => navigate(`/admin/courses/${course.id}/edit`)}
@@ -303,18 +305,18 @@ const Courses = () => {
                             </IconButton>
                           </Tooltip>
                           {course.status === 'DRAFT' && (
-                            <Tooltip title="Publish">
+                            <Tooltip title={t('courses.publish')}>
                               <Button
                                 size="small"
                                 variant="contained"
                                 color="primary"
                                 onClick={() => handlePublishCourse(course)}
                               >
-                                Publish
+                                {t('courses.publish')}
                               </Button>
                             </Tooltip>
                           )}
-                          <Tooltip title="Delete">
+                          <Tooltip title={t('common.delete')}>
                             <IconButton size="small" color="error" onClick={() => handleOpenDelete(course)}>
                               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
                             </IconButton>
@@ -341,16 +343,16 @@ const Courses = () => {
 
       {/* Delete confirmation dialog */}
       <Dialog open={confirmDeleteOpen} onClose={handleCloseDelete} maxWidth="xs" fullWidth>
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>{t('courses.confirmDelete')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete the course "{confirmActionCourse?.title}"? This action cannot be undone.
+            {t('courses.confirmDeleteMessage')} "{confirmActionCourse?.title}"? {t('common.actionCannotBeUndone')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDelete} disabled={actionLoading}>Cancel</Button>
+          <Button onClick={handleCloseDelete} disabled={actionLoading}>{t('common.cancel')}</Button>
           <Button color="error" variant="contained" onClick={handleDeleteCourse} disabled={actionLoading}>
-            {actionLoading ? 'Deleting...' : 'Delete'}
+            {actionLoading ? t('courses.deleting') : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
