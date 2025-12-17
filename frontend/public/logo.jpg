@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message><BucketName>cascade-private-user-assets-us-west-2</BucketName><RequestId>8H2DZPWWE9810NZ8</RequestId><HostId>7mZV8W8diHhEnsnpmjfNhRCIPt+k2qqygtNsikEMYO9oUNm5LHVGK6oCWYY7RSBxLygzWFcEdJM=</HostId></Error>

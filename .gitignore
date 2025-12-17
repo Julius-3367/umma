@@ -110,3 +110,7 @@ next-env.d.ts
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+agent_push.sh
+git_push_log.txt
+git_push_log_2.txt
+agent_fix_push.sh

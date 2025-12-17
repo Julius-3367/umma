@@ -1,0 +1,28 @@
+🌱 Starting database seed...
+📝 Creating roles...
+⏭️  Role already exists: Admin
+⏭️  Role already exists: Trainer
+⏭️  Role already exists: Candidate
+⏭️  Role already exists: Agent
+⏭️  Role already exists: Broker
+⏭️  Role already exists: Recruiter
+⏭️  Admin user already exists
+⏭️  Trainer user already exists
+❌ Seed failed: PrismaClientKnownRequestError: 
+Invalid `prisma.candidate.create()` invocation in
+/home/nick/WTI/backend/prisma/seed.js:214:44
+
+  211 
+  212 // If candidate profile doesn't exist, create it
+  213 if (!candidate) {
+→ 214   candidate = await prisma.candidate.create(
+Foreign key constraint violated: `foreign key`
+    at $n.handleRequestError (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:121:7315)
+    at $n.handleAndLogRequestError (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async main (/home/nick/WTI/backend/prisma/seed.js:214:21) {
+  code: 'P2003',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'Candidate', field_name: 'foreign key' }
+}

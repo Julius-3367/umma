@@ -1,0 +1,47 @@
+🌱 Starting database seed...
+⏭️  Default tenant already exists
+📝 Creating roles...
+⏭️  Role already exists: Admin
+⏭️  Role already exists: Trainer
+⏭️  Role already exists: Candidate
+⏭️  Role already exists: Agent
+⏭️  Role already exists: Broker
+⏭️  Role already exists: Recruiter
+⏭️  Admin user already exists
+⏭️  Trainer user already exists
+⏭️  Candidate user already exists
+⏭️  Recruiter user already exists
+⏭️  Broker user already exists
+📚 Creating sample courses...
+⏭️  Course already exists: Customer Service Excellence
+⏭️  Course already exists: Digital Marketing Fundamentals
+⏭️  Course already exists: Data Analysis with Excel
+⏭️  Course already exists: Professional Communication Skills
+⏭️  Course already exists: Introduction to Programming
+📝 Creating course enrollments...
+⏭️  Enrollment already exists for course ID: 1
+⏭️  Enrollment already exists for course ID: 2
+⏭️  Enrollment already exists for course ID: 3
+⏭️  Enrollment already exists for course ID: 4
+📊 Creating assessments...
+⏭️  Assessment already exists for enrollment ID: 1
+⏭️  Assessment already exists for enrollment ID: 1
+⏭️  Assessment already exists for enrollment ID: 3
+📚 Creating cohorts...
+⏭️  Cohort already exists: January 2024 Batch
+⏭️  Cohort already exists: March 2024 Batch
+⏭️  Cohort already exists: January 2025 Batch
+🎉 Database seed completed successfully!
+
+📋 Default Users Created:
+   Admin: admin@labourmobility.com / admin123
+   Trainer: trainer@labourmobility.com / trainer123
+  Candidate: candidate@labourmobility.com / candidate123
+  Recruiter: recruiter@labourmobility.com / recruiter123
+
+📊 Sample Data Created:
+   5 Courses
+   4 Enrollments
+   3 Assessments
+   3 Cohorts with Sessions and Enrollments
+  

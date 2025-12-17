@@ -6,66 +6,94 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
+  // Create default tenant
+  const tenantData = {
+    id: 1,
+    name: 'Labour Mobility Default',
+    code: 'LMS-DEFAULT',
+    branding: JSON.stringify({
+      logo: 'default-logo.png',
+      colors: { primary: '#000000', secondary: '#ffffff' }
+    }),
+    contactInfo: JSON.stringify({
+      email: 'admin@labourmobility.com',
+      phone: '+254700000000'
+    })
+  };
+
+  const existingTenant = await prisma.tenant.findUnique({
+    where: { id: 1 }
+  });
+
+  if (!existingTenant) {
+    await prisma.tenant.create({
+      data: tenantData
+    });
+    console.log('✅ Created default tenant');
+  } else {
+    console.log('⏭️  Default tenant already exists');
+  }
+
   // Create roles
   const roles = [
     {
       name: 'Admin',
       description: 'System administrator with full access',
-      permissions: {
+      permissions: JSON.stringify({
         users: ['create', 'read', 'update', 'delete'],
         candidates: ['create', 'read', 'update', 'delete'],
         courses: ['create', 'read', 'update', 'delete'],
         placements: ['create', 'read', 'update', 'delete'],
         reports: ['read'],
         settings: ['read', 'update']
-      }
+      })
     },
     {
       name: 'Trainer',
       description: 'Training instructor with course management access',
-      permissions: {
+      permissions: JSON.stringify({
         candidates: ['read', 'update'],
         courses: ['create', 'read', 'update'],
         enrollments: ['create', 'read', 'update'],
         attendance: ['create', 'read', 'update'],
         assessments: ['create', 'read', 'update']
-      }
+      })
     },
     {
       name: 'Candidate',
       description: 'Training candidate with limited access',
-      permissions: {
+      permissions: JSON.stringify({
         profile: ['read', 'update'],
         documents: ['create', 'read', 'update'],
         progress: ['read']
-      }
+      })
     },
     {
       name: 'Agent',
       description: 'Recruitment agent with candidate management access',
-      permissions: {
+      permissions: JSON.stringify({
         candidates: ['create', 'read', 'update'],
         documents: ['read'],
         placements: ['read']
-      }
+      })
     },
     {
       name: 'Broker',
       description: 'Recruitment broker with referral access',
-      permissions: {
+      permissions: JSON.stringify({
         candidates: ['create', 'read'],
         referrals: ['create', 'read'],
         commissions: ['read']
-      }
+      })
     },
     {
       name: 'Recruiter',
       description: 'Employer/Recruiter with placement access',
-      permissions: {
+      permissions: JSON.stringify({
         candidates: ['read'],
         placements: ['create', 'read', 'update'],
         jobs: ['create', 'read', 'update']
-      }
+      })
     }
   ];
 
@@ -98,7 +126,7 @@ async function main() {
 
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('admin123', 12);
-      
+
       admin = await prisma.user.create({
         data: {
           email: 'admin@labourmobility.com',
@@ -130,7 +158,7 @@ async function main() {
 
     if (!existingTrainer) {
       const hashedPassword = await bcrypt.hash('trainer123', 12);
-      
+
       const trainer = await prisma.user.create({
         data: {
           email: 'trainer@labourmobility.com',
@@ -164,7 +192,7 @@ async function main() {
 
     if (!existingCandidate) {
       const hashedPassword = await bcrypt.hash('candidate123', 12);
-      
+
       const candidateUser = await prisma.user.create({
         data: {
           email: 'candidate@labourmobility.com',
@@ -190,7 +218,7 @@ async function main() {
           county: 'Nairobi',
           maritalStatus: 'Single',
           highestEducation: 'Bachelor of Business Administration',
-          languages: ['English', 'Swahili'],
+          languages: JSON.stringify(['English', 'Swahili']),
           relevantSkills: 'Communication, Problem Solving, Computer Skills',
           previousEmployer: 'ABC Company',
           previousRole: 'Customer Service Representative',
@@ -208,7 +236,7 @@ async function main() {
       let candidate = await prisma.candidate.findUnique({
         where: { userId: candidateUserId }
       });
-      
+
       // If candidate profile doesn't exist, create it
       if (!candidate) {
         candidate = await prisma.candidate.create({
@@ -222,7 +250,7 @@ async function main() {
             county: 'Nairobi',
             maritalStatus: 'Single',
             highestEducation: 'Bachelor of Business Administration',
-            languages: ['English', 'Swahili'],
+            languages: JSON.stringify(['English', 'Swahili']),
             relevantSkills: 'Communication, Problem Solving, Computer Skills',
             previousEmployer: 'ABC Company',
             previousRole: 'Customer Service Representative',
@@ -235,7 +263,7 @@ async function main() {
         });
         console.log('✅ Created candidate profile for existing user');
       }
-      
+
       candidateId = candidate.id;
       console.log('⏭️  Candidate user already exists');
     }
@@ -316,7 +344,7 @@ async function main() {
 
     if (!existingBrokerUser) {
       const hashedPassword = await bcrypt.hash('broker123', 12);
-      
+
       const brokerUser = await prisma.user.create({
         data: {
           email: 'broker@labourmobility.com',
@@ -346,11 +374,11 @@ async function main() {
           tenantId: 1,
           name: 'Maria Broker & Associates',
           brokerCode: 'BRK001',
-          contactDetails: {
+          contactDetails: JSON.stringify({
             email: 'broker@labourmobility.com',
             phone: '+254700000004',
             address: 'Nairobi, Kenya'
-          },
+          }),
           referrerType: 'Individual',
           dateJoined: new Date(),
           commissionType: 'Percentage',
@@ -360,12 +388,12 @@ async function main() {
         }
       });
       brokerProfileId = brokerProfile.id;
-      
+
       console.log('✅ Created broker user: broker@labourmobility.com');
       console.log('✅ Created broker profile: Maria Broker & Associates');
     } else {
       brokerUserId = existingBrokerUser.id;
-      
+
       // Check if broker profile exists
       const existingBrokerProfile = await prisma.broker.findFirst({
         where: { createdBy: brokerUserId }
@@ -377,11 +405,11 @@ async function main() {
             tenantId: 1,
             name: 'Maria Broker & Associates',
             brokerCode: 'BRK001',
-            contactDetails: {
+            contactDetails: JSON.stringify({
               email: 'broker@labourmobility.com',
               phone: '+254700000004',
               address: 'Nairobi, Kenya'
-            },
+            }),
             referrerType: 'Individual',
             dateJoined: new Date(),
             commissionType: 'Percentage',
@@ -395,7 +423,7 @@ async function main() {
       } else {
         brokerProfileId = existingBrokerProfile.id;
       }
-      
+
       console.log('⏭️  Broker user already exists');
     }
   } else {
@@ -405,7 +433,7 @@ async function main() {
   // Create sample courses
   if (trainerId) {
     console.log('📚 Creating sample courses...');
-    
+
     const coursesData = [
       {
         tenantId: 1,
@@ -417,7 +445,7 @@ async function main() {
         endDate: new Date('2024-03-15'),
         capacity: 30,
         status: 'ACTIVE',
-        trainers: [trainerId]
+        trainers: JSON.stringify([trainerId])
       },
       {
         tenantId: 1,
@@ -429,7 +457,7 @@ async function main() {
         endDate: new Date('2024-03-31'),
         capacity: 25,
         status: 'ACTIVE',
-        trainers: [trainerId]
+        trainers: JSON.stringify([trainerId])
       },
       {
         tenantId: 1,
@@ -441,7 +469,7 @@ async function main() {
         endDate: new Date('2024-02-20'),
         capacity: 20,
         status: 'COMPLETED',
-        trainers: [trainerId]
+        trainers: JSON.stringify([trainerId])
       },
       {
         tenantId: 1,
@@ -453,7 +481,7 @@ async function main() {
         endDate: new Date('2024-03-31'),
         capacity: 35,
         status: 'ACTIVE',
-        trainers: [trainerId]
+        trainers: JSON.stringify([trainerId])
       },
       {
         tenantId: 1,
@@ -465,14 +493,14 @@ async function main() {
         endDate: new Date('2024-05-15'),
         capacity: 20,
         status: 'ACTIVE',
-        trainers: [trainerId]
+        trainers: JSON.stringify([trainerId])
       }
     ];
 
     const createdCourses = [];
     for (const courseData of coursesData) {
       const existing = await prisma.course.findUnique({
-        where: { 
+        where: {
           tenantId_code: {
             tenantId: 1,
             code: courseData.code
@@ -493,7 +521,7 @@ async function main() {
     // Create enrollments for the candidate
     if (candidateId && createdCourses.length > 0) {
       console.log('📝 Creating course enrollments...');
-      
+
       const enrollmentsData = [
         {
           tenantId: 1,
@@ -547,7 +575,7 @@ async function main() {
       // Create assessments for enrolled courses
       if (createdEnrollments.length > 0) {
         console.log('📊 Creating assessments...');
-        
+
         const assessmentsData = [
           {
             tenantId: 1,
@@ -680,11 +708,11 @@ async function main() {
         if (cohortData.status !== 'DRAFT') {
           const sessionsData = [];
           const daysOfTraining = Math.ceil((cohortData.endDate - cohortData.startDate) / (1000 * 60 * 60 * 24));
-          
+
           for (let day = 1; day <= Math.min(daysOfTraining, 10); day++) {
             const sessionDate = new Date(cohortData.startDate);
             sessionDate.setDate(sessionDate.getDate() + (day - 1));
-            
+
             sessionsData.push({
               cohortId: cohort.id,
               sessionNumber: day,

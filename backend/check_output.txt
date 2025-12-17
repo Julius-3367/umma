@@ -1,0 +1,5 @@
+Checking user: candidate@labourmobility.com
+✅ User found: candidate@labourmobility.com
+User Role: Candidate
+User Status: ACTIVE
+✅ Password IS valid

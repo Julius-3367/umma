@@ -1,0 +1,59 @@
+🌱 Starting database seed...
+📝 Creating roles...
+❌ Seed failed: PrismaClientValidationError: 
+Invalid `prisma.role.create()` invocation in
+/home/nick/WTI/backend/prisma/seed.js:79:25
+
+  76 });
+  77 
+  78 if (!existingRole) {
+→ 79   await prisma.role.create({
+         data: {
+           name: "Admin",
+           description: "System administrator with full access",
+           permissions: {
+             users: [
+               "create",
+               "read",
+               "update",
+               "delete"
+             ],
+             candidates: [
+               "create",
+               "read",
+               "update",
+               "delete"
+             ],
+             courses: [
+               "create",
+               "read",
+               "update",
+               "delete"
+             ],
+             placements: [
+               "create",
+               "read",
+               "update",
+               "delete"
+             ],
+             reports: [
+               "read"
+             ],
+             settings: [
+               "read",
+               "update"
+             ]
+           }
+           ~~~~~~~~~~~~~~~~~~~~~~~~
+         }
+       })
+
+Argument `permissions`: Invalid value provided. Expected String or Null, provided Object.
+    at wn (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:29:1363)
+    at $n.handleRequestError (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:121:6958)
+    at $n.handleAndLogRequestError (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/home/nick/WTI/backend/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async main (/home/nick/WTI/backend/prisma/seed.js:79:7) {
+  clientVersion: '5.22.0'
+}

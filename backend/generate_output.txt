@@ -1,0 +1,167 @@
+
+> labour-mobility-backend@1.0.0 db:generate
+> prisma generate
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Error: Prisma schema validation - (get-dmmf wasm)
+Error code: P1012
+[1;91merror[0m: [1mError validating field `branding` in model `Tenant`: Field `branding` in model `Tenant` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:59[0m
+[1;94m   | [0m
+[1;94m58 | [0m  code        String   @unique
+[1;94m59 | [0m  [1;91mbranding    Json?[0m
+[1;94m60 | [0m  contactInfo Json?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `contactInfo` in model `Tenant`: Field `contactInfo` in model `Tenant` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:60[0m
+[1;94m   | [0m
+[1;94m59 | [0m  branding    Json?
+[1;94m60 | [0m  [1;91mcontactInfo Json?[0m
+[1;94m61 | [0m  createdAt   DateTime @default(now())
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `permissions` in model `Role`: Field `permissions` in model `Role` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:101[0m
+[1;94m   | [0m
+[1;94m100 | [0m  description String?
+[1;94m101 | [0m  [1;91mpermissions Json?[0m
+[1;94m102 | [0m  systemRole  Boolean  @default(false)
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `details` in model `ActivityLog`: Field `details` in model `ActivityLog` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:224[0m
+[1;94m   | [0m
+[1;94m223 | [0m  resource  String?
+[1;94m224 | [0m  [1;91mdetails   Json?[0m
+[1;94m225 | [0m  ipAddress String?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `metadata` in model `Agent`: Field `metadata` in model `Agent` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:269[0m
+[1;94m   | [0m
+[1;94m268 | [0m  paymentMethod       String?
+[1;94m269 | [0m  [1;91mmetadata            Json?[0m
+[1;94m270 | [0m  createdBy           Int?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `contactDetails` in model `Broker`: Field `contactDetails` in model `Broker` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:293[0m
+[1;94m   | [0m
+[1;94m292 | [0m  brokerCode       String
+[1;94m293 | [0m  [1;91mcontactDetails   Json?[0m
+[1;94m294 | [0m  referrerType     String?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `metadata` in model `Broker`: Field `metadata` in model `Broker` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:299[0m
+[1;94m   | [0m
+[1;94m298 | [0m  paymentTerms     String?
+[1;94m299 | [0m  [1;91mmetadata         Json?[0m
+[1;94m300 | [0m  createdBy        Int?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `languages` in model `Candidate`: Field `languages` in model `Candidate` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:328[0m
+[1;94m   | [0m
+[1;94m327 | [0m  highestEducation       String?
+[1;94m328 | [0m  [1;91mlanguages              Json?[0m
+[1;94m329 | [0m  relevantSkills         String?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `supportingCertificates` in model `Candidate`: Field `supportingCertificates` in model `Candidate` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:333[0m
+[1;94m   | [0m
+[1;94m332 | [0m  idCopyUrl              String?
+[1;94m333 | [0m  [1;91msupportingCertificates Json?[0m
+[1;94m334 | [0m  previousEmployer       String?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `referenceContact` in model `Candidate`: Field `referenceContact` in model `Candidate` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:337[0m
+[1;94m   | [0m
+[1;94m336 | [0m  previousDuration       String?
+[1;94m337 | [0m  [1;91mreferenceContact       Json?[0m
+[1;94m338 | [0m  applyingViaAgent       Boolean         @default(false)
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `trainers` in model `Course`: Field `trainers` in model `Course` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:424[0m
+[1;94m   | [0m
+[1;94m423 | [0m  endDate      DateTime?
+[1;94m424 | [0m  [1;91mtrainers     Json?[0m
+[1;94m425 | [0m  capacity     Int?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `metadata` in model `Company`: Field `metadata` in model `Company` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:460[0m
+[1;94m   | [0m
+[1;94m459 | [0m  status        String?  @default("ACTIVE")
+[1;94m460 | [0m  [1;91mmetadata      Json?[0m
+[1;94m461 | [0m  createdBy     Int?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `metadata` in model `JobOpening`: Field `metadata` in model `JobOpening` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:574[0m
+[1;94m   | [0m
+[1;94m573 | [0m  requirements  String?   
+[1;94m574 | [0m  [1;91mmetadata      Json?[0m
+[1;94m575 | [0m  createdAt     DateTime  @default(now())
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `meta` in model `ReportJob`: Field `meta` in model `ReportJob` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:595[0m
+[1;94m   | [0m
+[1;94m594 | [0m  error       String?
+[1;94m595 | [0m  [1;91mmeta        Json?[0m
+[1;94m596 | [0m  createdAt   DateTime  @default(now())
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `design` in model `CertificateTemplate`: Field `design` in model `CertificateTemplate` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:672[0m
+[1;94m   | [0m
+[1;94m671 | [0m  description String?  
+[1;94m672 | [0m  [1;91mdesign      Json?[0m
+[1;94m673 | [0m  content     Json?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `content` in model `CertificateTemplate`: Field `content` in model `CertificateTemplate` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:673[0m
+[1;94m   | [0m
+[1;94m672 | [0m  design      Json?
+[1;94m673 | [0m  [1;91mcontent     Json?[0m
+[1;94m674 | [0m  isActive    Boolean  @default(true)
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `interviewReadinessChecklist` in model `VettingRecord`: Field `interviewReadinessChecklist` in model `VettingRecord` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:698[0m
+[1;94m   | [0m
+[1;94m697 | [0m  languageTestPassed          Boolean?
+[1;94m698 | [0m  [1;91minterviewReadinessChecklist Json?[0m
+[1;94m699 | [0m  verificationOfficerId       Int?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `flightDetails` in model `Placement`: Field `flightDetails` in model `Placement` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:736[0m
+[1;94m   | [0m
+[1;94m735 | [0m  travelDate             DateTime?
+[1;94m736 | [0m  [1;91mflightDetails          Json?[0m
+[1;94m737 | [0m  recruitmentOfficerId   Int?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `metadata` in model `Payment`: Field `metadata` in model `Payment` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:777[0m
+[1;94m   | [0m
+[1;94m776 | [0m  status        String  @default("PENDING")
+[1;94m777 | [0m  [1;91mmetadata      Json?[0m
+[1;94m778 | [0m  invoicePdfUrl String?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `payload` in model `Notification`: Field `payload` in model `Notification` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:832[0m
+[1;94m   | [0m
+[1;94m831 | [0m  templateKey String
+[1;94m832 | [0m  [1;91mpayload     Json?[0m
+[1;94m833 | [0m  status      String  @default("QUEUED")
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `value` in model `Setting`: Field `value` in model `Setting` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:853[0m
+[1;94m   | [0m
+[1;94m852 | [0m  key       String
+[1;94m853 | [0m  [1;91mvalue     Json[0m
+[1;94m854 | [0m  createdBy Int?
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `attachments` in model `Message`: Field `attachments` in model `Message` can't be of type Json. The current connector does not support the Json type.[0m
+  [1;94m-->[0m  [4mprisma/schema.prisma:877[0m
+[1;94m   | [0m
+[1;94m876 | [0m  parentId    Int? // For replies/threading
+[1;94m877 | [0m  [1;91mattachments Json? // Array of attachment URLs[0m
+[1;94m878 | [0m  createdAt   DateTime  @default(now())
+[1;94m   | [0m
+
+Validation Error Count: 22
+[Context: getDmmf]
+
+Prisma CLI Version : 5.22.0

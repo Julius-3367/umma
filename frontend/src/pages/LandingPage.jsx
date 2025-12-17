@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  FaBriefcase, 
-  FaGraduationCap, 
-  FaChartLine, 
-  FaUserTie, 
-  FaGlobe, 
-  FaArrowRight, 
-  FaCheck, 
+import {
+  FaBriefcase,
+  FaGraduationCap,
+  FaChartLine,
+  FaUserTie,
+  FaGlobe,
+  FaArrowRight,
+  FaCheck,
   FaUsers,
   FaHandshake,
   FaGlobeAmericas,
@@ -24,10 +24,10 @@ import { Box, Button, Container, Typography, Grid, Paper, useTheme, Stack, IconB
 import { styled } from '@mui/material/styles';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../features/auth/authThunks';
-import { 
-  Facebook, 
-  Twitter, 
-  LinkedIn, 
+import {
+  Facebook,
+  Twitter,
+  LinkedIn,
   Instagram,
   LocationOn,
   Phone,
@@ -178,8 +178,8 @@ const Footer = styled('footer')(({ theme }) => ({
 // Animation variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: { duration: 0.6 }
   }
@@ -216,7 +216,7 @@ const LandingPage = () => {
       {/* Hero Section */}
       <HeroSection>
         <Container maxWidth="lg">
-          <Box sx={{ 
+          <Box sx={{
             position: 'relative',
             zIndex: 1,
             textAlign: 'center',
@@ -229,7 +229,7 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <Box sx={{ 
+              <Box sx={{
                 mb: 4,
                 display: 'flex',
                 flexDirection: 'column',
@@ -237,9 +237,9 @@ const LandingPage = () => {
                 justifyContent: 'center',
                 textAlign: 'center'
               }}>
-                <Box 
+                <Box
                   component="img"
-                  src="https://cascade-private-user-assets-us-west-2.s3.us-west-2.amazonaws.com/174f0f8b-3b0f-4f55-8d1c-9f0c8e5f9e1e/logo.jpg"
+                  src="/logo.jpg"
                   alt="UMSL Logo"
                   onError={(e) => {
                     console.error('Failed to load logo');
@@ -256,9 +256,9 @@ const LandingPage = () => {
                     }
                   }}
                 />
-                <Typography 
-                  variant="h4" 
-                  component="div" 
+                <Typography
+                  variant="h4"
+                  component="div"
                   sx={{
                     fontWeight: 700,
                     color: 'common.white',
@@ -270,9 +270,9 @@ const LandingPage = () => {
                 >
                   UMSL
                 </Typography>
-                <Typography 
-                  variant="h6" 
-                  component="div" 
+                <Typography
+                  variant="h6"
+                  component="div"
                   sx={{
                     fontWeight: 400,
                     color: 'rgba(255, 255, 255, 0.9)',
@@ -282,9 +282,9 @@ const LandingPage = () => {
                 >
                   United Manpower Service Limited
                 </Typography>
-                <Typography 
-                  variant="h1" 
-                  component="h1" 
+                <Typography
+                  variant="h1"
+                  component="h1"
                   sx={{
                     fontSize: { xs: '2rem', sm: '2.8rem', md: '3.5rem' },
                     fontWeight: 800,
@@ -301,11 +301,11 @@ const LandingPage = () => {
                   Empowering Global Talent Mobility
                 </Typography>
               </Box>
-              <Typography 
-                variant="h5" 
-                component="p" 
-                sx={{ 
-                  mb: 5, 
+              <Typography
+                variant="h5"
+                component="p"
+                sx={{
+                  mb: 5,
                   color: 'rgba(255, 255, 255, 0.9)',
                   maxWidth: '700px',
                   mx: 'auto',
@@ -314,10 +314,10 @@ const LandingPage = () => {
               >
                 Connect with international opportunities and take your career to new heights with our comprehensive labor mobility platform.
               </Typography>
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', sm: 'row' }, 
-                gap: 3, 
+              <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 3,
                 justifyContent: 'center',
                 mt: 4,
                 '& .MuiButton-root': {
@@ -335,7 +335,7 @@ const LandingPage = () => {
                   }
                 }
               }}>
-                <Button 
+                <Button
                   component={Link}
                   to="/register"
                   variant="contained"
@@ -353,7 +353,7 @@ const LandingPage = () => {
                 >
                   Create Account
                 </Button>
-                <Button 
+                <Button
                   component={Link}
                   to="/login"
                   variant="contained"
@@ -381,9 +381,9 @@ const LandingPage = () => {
       <Box component="section" sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.paper' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography 
-              variant="h2" 
-              component="h2" 
+            <Typography
+              variant="h2"
+              component="h2"
               sx={{
                 fontSize: { xs: '2rem', md: '2.5rem' },
                 fontWeight: 700,
@@ -393,18 +393,18 @@ const LandingPage = () => {
             >
               Why Choose Our Platform?
             </Typography>
-            <Box 
-              sx={{ 
-                width: '80px', 
-                height: '4px', 
+            <Box
+              sx={{
+                width: '80px',
+                height: '4px',
                 bgcolor: 'primary.main',
                 mx: 'auto',
                 mb: 6
-              }} 
+              }}
             />
           </Box>
-          
-          <Box sx={{ 
+
+          <Box sx={{
             display: 'flex',
             overflowX: 'auto',
             py: 3,
@@ -474,7 +474,7 @@ const LandingPage = () => {
                 description: "Get personalized assistance from our expert support team throughout your journey."
               },
             ].map((feature, index) => (
-              <Box key={index} sx={{ 
+              <Box key={index} sx={{
                 minWidth: { xs: 280, sm: 320 },
                 maxWidth: { xs: 300, sm: 340 },
                 flex: '0 0 auto',
@@ -491,9 +491,9 @@ const LandingPage = () => {
                   ref={ref}
                 >
                   <FeatureCard elevation={3}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
+                    <Box sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       textAlign: 'center',
                       height: '100%',
@@ -502,7 +502,7 @@ const LandingPage = () => {
                       }
                     }}>
                       {feature.icon}
-                      <Typography variant="h5" component="h3" sx={{ 
+                      <Typography variant="h5" component="h3" sx={{
                         mb: 2,
                         fontWeight: 600,
                         color: 'text.primary'
@@ -524,7 +524,7 @@ const LandingPage = () => {
       {/* How It Works (Tailwind section removed; using themed section below) */}
 
       {/* Stats Section */}
-      <Box component="section" sx={{ 
+      <Box component="section" sx={{
         py: { xs: 8, md: 10 },
         bgcolor: 'primary.light',
         color: 'primary.contrastText',
@@ -569,9 +569,9 @@ const LandingPage = () => {
       <Box component="section" sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.default' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography 
-              variant="h2" 
-              component="h2" 
+            <Typography
+              variant="h2"
+              component="h2"
               sx={{
                 fontSize: { xs: '2rem', md: '2.5rem' },
                 fontWeight: 700,
@@ -581,18 +581,18 @@ const LandingPage = () => {
             >
               How It Works
             </Typography>
-            <Box 
-              sx={{ 
-                width: '80px', 
-                height: '4px', 
+            <Box
+              sx={{
+                width: '80px',
+                height: '4px',
                 bgcolor: 'primary.main',
                 mx: 'auto',
                 mb: 6
-              }} 
+              }}
             />
           </Box>
 
-          <Box sx={{ 
+          <Box sx={{
             display: 'flex',
             overflowX: 'auto',
             py: 3,
@@ -642,7 +642,7 @@ const LandingPage = () => {
                 description: 'Begin your new career journey with our support every step of the way.'
               },
             ].map((item, index) => (
-              <Box key={index} sx={{ 
+              <Box key={index} sx={{
                 minWidth: { xs: 280, sm: 320 },
                 maxWidth: { xs: 300, sm: 340 },
                 flex: '0 0 auto',
@@ -658,7 +658,7 @@ const LandingPage = () => {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Box sx={{ 
+                  <Box sx={{
                     bgcolor: 'background.paper',
                     p: 4,
                     borderRadius: 2,
@@ -681,7 +681,7 @@ const LandingPage = () => {
                       bgcolor: 'primary.main',
                     }
                   }}>
-                    <Box sx={{ 
+                    <Box sx={{
                       width: '60px',
                       height: '60px',
                       borderRadius: '50%',
@@ -697,7 +697,7 @@ const LandingPage = () => {
                     }}>
                       {item.step}
                     </Box>
-                    <Typography variant="h5" component="h3" sx={{ 
+                    <Typography variant="h5" component="h3" sx={{
                       mb: 2,
                       fontWeight: 600,
                       color: 'text.primary'
@@ -714,7 +714,7 @@ const LandingPage = () => {
           </Box>
 
           {/* Final CTA */}
-          <Box sx={{ 
+          <Box sx={{
             textAlign: 'center',
             maxWidth: '800px',
             mx: 'auto',
@@ -752,9 +752,9 @@ const LandingPage = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <Typography 
-                variant="h3" 
-                component="h2" 
+              <Typography
+                variant="h3"
+                component="h2"
                 sx={{
                   fontSize: { xs: '1.8rem', md: '2.5rem' },
                   fontWeight: 700,
@@ -765,11 +765,11 @@ const LandingPage = () => {
               >
                 Ready to Transform Your Career?
               </Typography>
-              <Typography 
-                variant="h6" 
-                component="p" 
-                sx={{ 
-                  mb: 4, 
+              <Typography
+                variant="h6"
+                component="p"
+                sx={{
+                  mb: 4,
                   opacity: 0.9,
                   position: 'relative',
                   zIndex: 1
@@ -816,7 +816,7 @@ const LandingPage = () => {
             <Grid item xs={12} md={4} className="footer-section">
               <Typography variant="h3" className="footer-logo">UMSL</Typography>
               <Typography variant="body2" className="footer-about">
-                United Manpower Service Limited is a leading global workforce solutions provider, 
+                United Manpower Service Limited is a leading global workforce solutions provider,
                 connecting talent with opportunity across borders.
               </Typography>
               <Box className="social-links">
@@ -879,22 +879,22 @@ const LandingPage = () => {
           </Grid>
 
           {/* Copyright */}
-          <Box className="copyright" sx={{ 
-            mt: 4, 
-            pt: 2, 
+          <Box className="copyright" sx={{
+            mt: 4,
+            pt: 2,
             borderTop: '1px solid rgba(255, 255, 255, 0.1)',
             textAlign: 'center',
             width: '100%'
           }}>
             <Container maxWidth="lg">
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', sm: 'row' }, 
+              <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 gap: 2
               }}>
-                <Typography variant="body2" sx={{ 
+                <Typography variant="body2" sx={{
                   color: 'primary.light',
                   fontWeight: 500,
                   textShadow: '0 1px 2px rgba(0,0,0,0.2)'
