@@ -378,7 +378,11 @@ const LandingPage = () => {
       </HeroSection>
 
       {/* Features Section */}
-      <Box component="section" sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.paper' }}>
+      <Box component="section" sx={{ 
+        py: { xs: 8, md: 12 }, 
+        bgcolor: 'grey.50',
+        background: `linear-gradient(180deg, ${theme.palette.grey[50]} 0%, ${theme.palette.grey[100]} 100%)`
+      }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography
@@ -399,39 +403,23 @@ const LandingPage = () => {
                 height: '4px',
                 bgcolor: 'primary.main',
                 mx: 'auto',
-                mb: 6
+                mb: 2
               }}
             />
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'text.secondary',
+                maxWidth: '600px',
+                mx: 'auto',
+                mt: 2
+              }}
+            >
+              Comprehensive solutions designed to accelerate your global career journey
+            </Typography>
           </Box>
 
-          <Box sx={{
-            display: 'flex',
-            overflowX: 'auto',
-            py: 3,
-            px: { xs: 2, sm: 3 },
-            mx: { xs: -2, sm: -3 },
-            '&::-webkit-scrollbar': {
-              height: '6px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: theme.palette.grey[100],
-              borderRadius: '3px',
-              margin: '0 16px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: theme.palette.primary.main,
-              borderRadius: '3px',
-              '&:hover': {
-                background: theme.palette.primary.dark,
-              },
-            },
-            gap: { xs: 2, sm: 2.5 },
-            scrollbarWidth: 'thin',
-            scrollbarColor: `${theme.palette.primary.main} ${theme.palette.grey[100]}`,
-            '& > *': {
-              scrollSnapAlign: 'start',
-            },
-          }}>
+          <Grid container spacing={3}>
             {[
               {
                 icon: <FaBriefcase style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
@@ -455,109 +443,65 @@ const LandingPage = () => {
               },
               {
                 icon: <FaGlobeAmericas style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Global Opportunities",
-                description: "Explore diverse career opportunities with leading organizations worldwide."
+                title: "Global Reach",
+                description: "Explore diverse career opportunities with leading organizations in over 50 countries worldwide."
               },
               {
                 icon: <FaSearchDollar style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Competitive Salaries",
-                description: "Access positions with competitive compensation packages and benefits."
+                title: "Competitive Packages",
+                description: "Access positions with competitive compensation packages and comprehensive benefits."
               },
               {
                 icon: <FaShieldAlt style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
                 title: "Secure Platform",
-                description: "Your data and privacy are protected with our advanced security measures."
+                description: "Your data and privacy are protected with our advanced security measures and encryption."
               },
               {
                 icon: <FaComments style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Dedicated Support",
+                title: "24/7 Support",
                 description: "Get personalized assistance from our expert support team throughout your journey."
               },
             ].map((feature, index) => (
-              <Box key={index} sx={{
-                minWidth: { xs: 280, sm: 320 },
-                maxWidth: { xs: 300, sm: 340 },
-                flex: '0 0 auto',
-                height: '100%',
-                transition: 'transform 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                },
-              }}>
+              <Grid item xs={12} sm={6} md={3} key={index}>
                 <motion.div
                   initial="hidden"
-                  animate={controls}
+                  whileInView="visible"
+                  viewport={{ once: true }}
                   variants={fadeIn}
-                  ref={ref}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <FeatureCard elevation={3}>
+                  <FeatureCard elevation={2} sx={{ 
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    border: `1px solid ${theme.palette.grey[200]}`,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}>
                     <Box sx={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       textAlign: 'center',
-                      height: '100%',
+                      flex: 1,
                       '& svg': {
-                        mb: 3,
+                        mb: 2,
                       }
                     }}>
                       {feature.icon}
-                      <Typography variant="h5" component="h3" sx={{
-                        mb: 2,
+                      <Typography variant="h6" component="h3" sx={{
+                        mb: 1.5,
                         fontWeight: 600,
-                        color: 'text.primary'
+                        color: 'text.primary',
+                        fontSize: '1.1rem'
                       }}>
                         {feature.title}
                       </Typography>
-                      <Typography variant="body1" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                         {feature.description}
                       </Typography>
                     </Box>
                   </FeatureCard>
-                </motion.div>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
-
-      {/* How It Works (Tailwind section removed; using themed section below) */}
-
-      {/* Stats Section */}
-      <Box component="section" sx={{
-        py: { xs: 8, md: 10 },
-        bgcolor: 'primary.light',
-        color: 'primary.contrastText',
-        position: 'relative',
-        '&:before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '100px',
-          background: `linear-gradient(to bottom right, ${theme.palette.background.default} 49%, transparent 50%)`,
-        }
-      }}>
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={4} justifyContent="center">
-            {[
-              { number: '50,000+', label: 'Active Users' },
-              { number: '10,000+', label: 'Job Openings' },
-              { number: '500+', label: 'Partner Companies' },
-              { number: '95%', label: 'Success Rate' },
-            ].map((stat, index) => (
-              <Grid item xs={6} sm={3} key={index}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <StatCard>
-                    <div className="stat-number">{stat.number}</div>
-                    <div className="stat-label">{stat.label}</div>
-                  </StatCard>
                 </motion.div>
               </Grid>
             ))}
@@ -565,186 +509,60 @@ const LandingPage = () => {
         </Container>
       </Box>
 
-      {/* How It Works Section */}
-      <Box component="section" sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.default' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography
-              variant="h2"
-              component="h2"
-              sx={{
-                fontSize: { xs: '2rem', md: '2.5rem' },
-                fontWeight: 700,
-                mb: 2,
-                color: 'text.primary'
-              }}
-            >
-              How It Works
-            </Typography>
-            <Box
-              sx={{
-                width: '80px',
-                height: '4px',
-                bgcolor: 'primary.main',
-                mx: 'auto',
-                mb: 6
-              }}
-            />
-          </Box>
+      {/* How It Works (Tailwind section removed; using themed section below) */}
 
-          <Box sx={{
-            display: 'flex',
-            overflowX: 'auto',
-            py: 3,
-            px: { xs: 2, sm: 3 },
-            mx: { xs: -2, sm: -3 },
-            '&::-webkit-scrollbar': {
-              height: '6px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: theme.palette.grey[100],
-              borderRadius: '3px',
-              margin: '0 16px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: theme.palette.primary.main,
-              borderRadius: '3px',
-              '&:hover': {
-                background: theme.palette.primary.dark,
-              },
-            },
-            gap: { xs: 2, sm: 2.5 },
-            scrollbarWidth: 'thin',
-            scrollbarColor: `${theme.palette.primary.main} ${theme.palette.grey[100]}`,
-            '& > *': {
-              scrollSnapAlign: 'start',
-            },
-          }}>
+      {/* Stats Section */}
+      <Box component="section" sx={{
+        py: { xs: 6, md: 8 },
+        bgcolor: 'primary.main',
+        color: 'white'
+      }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={4} justifyContent="center">
             {[
-              {
-                step: '1',
-                title: 'Create Your Profile',
-                description: 'Sign up and complete your professional profile with your skills, experience, and career goals.'
-              },
-              {
-                step: '2',
-                title: 'Explore Opportunities',
-                description: 'Browse through thousands of job listings and find the perfect match for your skills.'
-              },
-              {
-                step: '3',
-                title: 'Apply & Connect',
-                description: 'Submit your application and connect directly with potential employers.'
-              },
-              {
-                step: '4',
-                title: 'Start Your Journey',
-                description: 'Begin your new career journey with our support every step of the way.'
-              },
-            ].map((item, index) => (
-              <Box key={index} sx={{
-                minWidth: { xs: 280, sm: 320 },
-                maxWidth: { xs: 300, sm: 340 },
-                flex: '0 0 auto',
-                height: '100%',
-                transition: 'transform 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                },
-              }}>
+              { number: '50,000+', label: 'Active Users', icon: <FaUsers /> },
+              { number: '10,000+', label: 'Job Openings', icon: <FaBriefcase /> },
+              { number: '500+', label: 'Partner Companies', icon: <FaBuilding /> },
+              { number: '95%', label: 'Success Rate', icon: <FaChartLine /> },
+            ].map((stat, index) => (
+              <Grid item xs={6} sm={3} key={index}>
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Box sx={{
-                    bgcolor: 'background.paper',
-                    p: 4,
-                    borderRadius: 2,
-                    height: '100%',
-                    boxShadow: theme.shadows[2],
-                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: theme.shadows[6],
-                    },
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&:before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '4px',
-                      height: '100%',
-                      bgcolor: 'primary.main',
-                    }
-                  }}>
-                    <Box sx={{
-                      width: '60px',
-                      height: '60px',
-                      borderRadius: '50%',
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                      fontSize: '1.8rem',
-                      mb: 3,
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                    }}>
-                      {item.step}
+                  <Box sx={{ textAlign: 'center', py: 2 }}>
+                    <Box sx={{ fontSize: '2.5rem', mb: 1, opacity: 0.9 }}>
+                      {stat.icon}
                     </Box>
-                    <Typography variant="h5" component="h3" sx={{
-                      mb: 2,
-                      fontWeight: 600,
-                      color: 'text.primary'
-                    }}>
-                      {item.title}
+                    <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, fontSize: { xs: '2rem', md: '2.8rem' } }}>
+                      {stat.number}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      {item.description}
+                    <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                      {stat.label}
                     </Typography>
                   </Box>
                 </motion.div>
-              </Box>
+              </Grid>
             ))}
-          </Box>
+          </Grid>
+        </Container>
+      </Box>
 
-          {/* Final CTA */}
+      {/* Call to Action Section */}
+      <Box component="section" sx={{ 
+        py: { xs: 8, md: 10 }, 
+        bgcolor: 'grey.50'
+      }}>
+        <Container maxWidth="md">
           <Box sx={{
             textAlign: 'center',
-            maxWidth: '800px',
-            mx: 'auto',
             p: { xs: 4, md: 6 },
             borderRadius: 4,
             bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            position: 'relative',
-            overflow: 'hidden',
-            '&:before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: '200px',
-              height: '200px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '50%',
-              transform: 'translate(30%, -30%)',
-            },
-            '&:after': {
-              content: '""',
-              position: 'absolute',
-              bottom: '-50px',
-              left: '-50px',
-              width: '200px',
-              height: '200px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '50%',
-            }
+            color: 'white',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
           }}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -758,9 +576,7 @@ const LandingPage = () => {
                 sx={{
                   fontSize: { xs: '1.8rem', md: '2.5rem' },
                   fontWeight: 700,
-                  mb: 3,
-                  position: 'relative',
-                  zIndex: 1
+                  mb: 3
                 }}
               >
                 Ready to Transform Your Career?
@@ -770,39 +586,61 @@ const LandingPage = () => {
                 component="p"
                 sx={{
                   mb: 4,
-                  opacity: 0.9,
-                  position: 'relative',
-                  zIndex: 1
+                  opacity: 0.95,
+                  maxWidth: '600px',
+                  mx: 'auto'
                 }}
               >
-                Join thousands of professionals who have found their dream jobs through our platform.
+                Join thousands of professionals who have found their dream jobs through our platform
               </Typography>
-              <Button
-                component={Link}
-                to="/register"
-                variant="contained"
-                color="secondary"
-                size="large"
-                endIcon={<FaArrowRight />}
-                sx={{
-                  bgcolor: 'common.white',
-                  color: 'primary.main',
-                  px: 4,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  fontWeight: 600,
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  position: 'relative',
-                  zIndex: 1,
-                  '&:hover': {
-                    bgcolor: 'grey.100',
-                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.2)',
-                  }
-                }}
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                justifyContent="center"
               >
-                Get Started Now
-              </Button>
+                <Button
+                  component={Link}
+                  to="/register"
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    bgcolor: 'white',
+                    color: 'primary.main',
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: 'grey.100',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.15)'
+                    }
+                  }}
+                  endIcon={<FaArrowRight />}
+                >
+                  Get Started Free
+                </Button>
+                <Button
+                  component={Link}
+                  to="/login"
+                  variant="outlined"
+                  size="large"
+                  sx={{
+                    borderColor: 'white',
+                    color: 'white',
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    '&:hover': {
+                      borderColor: 'white',
+                      bgcolor: 'rgba(255,255,255,0.1)'
+                    }
+                  }}
+                >
+                  Sign In
+                </Button>
+              </Stack>
             </motion.div>
           </Box>
         </Container>

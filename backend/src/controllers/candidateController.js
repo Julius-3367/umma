@@ -883,7 +883,8 @@ const getProfile = async (req, res) => {
       candidate = await prisma.candidate.create({
         data: {
           userId: userId,
-          tenantId: user.tenantId,
+          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
+          tenantId: user.tenantId || 1,
           status: 'APPLIED',
           createdBy: userId,
           updatedBy: userId,
