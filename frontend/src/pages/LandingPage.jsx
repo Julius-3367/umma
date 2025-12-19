@@ -379,17 +379,16 @@ const LandingPage = () => {
 
       {/* Features Section */}
       <Box component="section" sx={{ 
-        py: { xs: 8, md: 12 }, 
-        bgcolor: 'grey.50',
-        background: `linear-gradient(180deg, ${theme.palette.grey[50]} 0%, ${theme.palette.grey[100]} 100%)`
+        py: { xs: 6, md: 10 }, 
+        bgcolor: 'grey.50'
       }}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
             <Typography
               variant="h2"
               component="h2"
               sx={{
-                fontSize: { xs: '2rem', md: '2.5rem' },
+                fontSize: { xs: '1.8rem', md: '2.2rem' },
                 fontWeight: 700,
                 mb: 2,
                 color: 'text.primary'
@@ -397,119 +396,92 @@ const LandingPage = () => {
             >
               Why Choose Our Platform?
             </Typography>
-            <Box
-              sx={{
-                width: '80px',
-                height: '4px',
-                bgcolor: 'primary.main',
-                mx: 'auto',
-                mb: 2
-              }}
-            />
             <Typography
               variant="body1"
               sx={{
                 color: 'text.secondary',
                 maxWidth: '600px',
-                mx: 'auto',
-                mt: 2
+                mx: 'auto'
               }}
             >
-              Comprehensive solutions designed to accelerate your global career journey
+              Comprehensive solutions for your global career journey
             </Typography>
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={4}>
             {[
               {
-                icon: <FaBriefcase style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Global Job Opportunities",
-                description: "Access to thousands of international job listings across various industries and experience levels."
+                icon: <FaGlobe style={{ fontSize: '3rem' }} />,
+                title: "Global Opportunities",
+                description: "Access thousands of international jobs across 50+ countries"
               },
               {
-                icon: <FaGraduationCap style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
+                icon: <FaGraduationCap style={{ fontSize: '3rem' }} />,
                 title: "Skills Development",
-                description: "Enhance your professional skills with our comprehensive training programs and industry-recognized certifications."
+                description: "Industry-recognized training and certification programs"
               },
               {
-                icon: <FaChartLine style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Career Advancement",
-                description: "Unlock new career paths and achieve your professional goals with our career development resources."
-              },
-              {
-                icon: <FaUserTie style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
+                icon: <FaHandshake style={{ fontSize: '3rem' }} />,
                 title: "Professional Network",
-                description: "Connect with industry leaders and expand your professional network on a global scale."
+                description: "Connect with industry leaders and expand your reach"
               },
               {
-                icon: <FaGlobeAmericas style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Global Reach",
-                description: "Explore diverse career opportunities with leading organizations in over 50 countries worldwide."
-              },
-              {
-                icon: <FaSearchDollar style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Competitive Packages",
-                description: "Access positions with competitive compensation packages and comprehensive benefits."
-              },
-              {
-                icon: <FaShieldAlt style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "Secure Platform",
-                description: "Your data and privacy are protected with our advanced security measures and encryption."
-              },
-              {
-                icon: <FaComments style={{ fontSize: '2.5rem', color: theme.palette.primary.main }} />,
-                title: "24/7 Support",
-                description: "Get personalized assistance from our expert support team throughout your journey."
-              },
+                icon: <FaShieldAlt style={{ fontSize: '3rem' }} />,
+                title: "Secure & Supported",
+                description: "Advanced security with 24/7 expert assistance"
+              }
             ].map((feature, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+              <Grid item xs={12} sm={6} key={index}>
                 <motion.div
-                  initial="hidden"
-                  whileInView="visible"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  variants={fadeIn}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <FeatureCard elevation={2} sx={{ 
-                    bgcolor: 'background.paper',
-                    borderRadius: 2,
-                    border: `1px solid ${theme.palette.grey[200]}`,
+                  <Box sx={{
+                    bgcolor: 'white',
+                    p: 4,
+                    borderRadius: 3,
                     height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column'
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                    border: `1px solid ${theme.palette.grey[200]}`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      borderColor: theme.palette.primary.main
+                    }
                   }}>
                     <Box sx={{
+                      width: 70,
+                      height: 70,
+                      borderRadius: '50%',
+                      bgcolor: 'primary.light',
+                      color: 'primary.main',
                       display: 'flex',
-                      flexDirection: 'column',
                       alignItems: 'center',
-                      textAlign: 'center',
-                      flex: 1,
-                      '& svg': {
-                        mb: 2,
-                      }
+                      justifyContent: 'center',
+                      mb: 3
                     }}>
                       {feature.icon}
-                      <Typography variant="h6" component="h3" sx={{
-                        mb: 1.5,
-                        fontWeight: 600,
-                        color: 'text.primary',
-                        fontSize: '1.1rem'
-                      }}>
-                        {feature.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                        {feature.description}
-                      </Typography>
                     </Box>
-                  </FeatureCard>
+                    <Typography variant="h6" component="h3" sx={{
+                      mb: 1.5,
+                      fontWeight: 600,
+                      color: 'text.primary'
+                    }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                      {feature.description}
+                    </Typography>
+                  </Box>
                 </motion.div>
               </Grid>
             ))}
           </Grid>
         </Container>
       </Box>
-
-      {/* How It Works (Tailwind section removed; using themed section below) */}
 
       {/* Stats Section */}
       <Box component="section" sx={{
