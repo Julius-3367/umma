@@ -17,7 +17,7 @@ const createActivityLog = async (logData) => {
         userId: logData.userId,
         action: logData.action,
         resource: logData.resource,
-        details: logData.details || null,
+        details: logData.details ? JSON.stringify(logData.details) : null,
         ipAddress: logData.ipAddress || null,
         userAgent: logData.userAgent || null
       }

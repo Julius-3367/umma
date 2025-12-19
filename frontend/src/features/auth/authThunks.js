@@ -9,7 +9,21 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue, dispatch }) => {
     try {
+      // Clear any existing auth data before login
+      console.log('🧹 Clearing existing auth data before login...');
+      localStorage.removeItem('authState');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
       const response = await authService.login(credentials);
+      
+      console.log('✅ Login response received:', {
+        hasUser: !!response.user,
+        hasAccessToken: !!response.accessToken,
+        userEmail: response.user?.email,
+        userId: response.user?.id,
+        userName: `${response.user?.firstName} ${response.user?.lastName}`
+      });
       
       // Store tokens in localStorage
       if (response.accessToken) {
@@ -46,7 +60,21 @@ export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async (userData, { rejectWithValue, dispatch }) => {
     try {
+      // Clear any existing auth data before registration
+      console.log('🧹 Clearing existing auth data before registration...');
+      localStorage.removeItem('authState');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
       const response = await authService.register(userData);
+      
+      console.log('✅ Registration response received:', {
+        hasUser: !!response.user,
+        hasAccessToken: !!response.accessToken,
+        userEmail: response.user?.email,
+        userId: response.user?.id,
+        userName: `${response.user?.firstName} ${response.user?.lastName}`
+      });
       
       // Automatically log in after successful registration if tokens are provided
       if (response.accessToken) {

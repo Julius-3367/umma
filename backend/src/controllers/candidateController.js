@@ -56,8 +56,12 @@ const calculateProfileCompletion = (candidate) => {
 const getDashboardData = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log('🔐 getDashboardData - User ID from token:', userId);
-    console.log('🔐 getDashboardData - User email:', req.user.email);
+    console.log('🔐 ===== DASHBOARD DATA REQUEST =====');
+    console.log('🔐 User ID from JWT token:', userId);
+    console.log('🔐 User email from JWT token:', req.user.email);
+    console.log('🔐 User firstName from JWT token:', req.user.firstName);
+    console.log('🔐 User lastName from JWT token:', req.user.lastName);
+    console.log('🔐 Full req.user object:', JSON.stringify(req.user, null, 2));
 
     // Get candidate profile
     const candidate = await prisma.candidate.findUnique({
@@ -75,7 +79,17 @@ const getDashboardData = async (req, res) => {
       },
     });
 
-    console.log('👤 getDashboardData - Candidate found:', candidate ? { id: candidate.id, userId: candidate.userId, name: candidate.user?.firstName + ' ' + candidate.user?.lastName } : 'NULL');
+    console.log('👤 ===== CANDIDATE PROFILE LOOKUP =====');
+    console.log('👤 Searching for candidate with userId:', userId);
+    console.log('👤 Candidate found:', candidate ? 'YES' : 'NO');
+    if (candidate) {
+      console.log('👤 Candidate ID:', candidate.id);
+      console.log('👤 Candidate userId:', candidate.userId);
+      console.log('👤 Candidate fullName:', candidate.fullName);
+      console.log('👤 Candidate user.firstName:', candidate.user?.firstName);
+      console.log('👤 Candidate user.lastName:', candidate.user?.lastName);
+      console.log('👤 Candidate user.email:', candidate.user?.email);
+    }
 
     if (!candidate) {
       return res.status(404).json({
@@ -281,7 +295,7 @@ const getDashboardData = async (req, res) => {
       }).length
     });
 
-    res.json({
+    const responseData = {
       success: true,
       data: {
         profile: {
@@ -349,7 +363,17 @@ const getDashboardData = async (req, res) => {
           applications: placements.length,
         },
       },
-    });
+    };
+
+    console.log('📤 ===== SENDING DASHBOARD RESPONSE =====');
+    console.log('📤 Response profile.firstName:', responseData.data.profile.firstName);
+    console.log('📤 Response profile.lastName:', responseData.data.profile.lastName);
+    console.log('📤 Response profile.email:', responseData.data.profile.email);
+    console.log('📤 Response profile.fullName:', responseData.data.profile.fullName);
+    console.log('📤 Response profile.userId:', responseData.data.profile.userId);
+    console.log('📤 Response profile.user.id:', responseData.data.profile.user?.id);
+    
+    res.json(responseData);
   } catch (error) {
     console.error('Get dashboard data error:', error);
     res.status(500).json({
@@ -1542,12 +1566,38 @@ const updateProfile = async (req, res) => {
     if (updates.county !== undefined) candidateFields.county = updates.county;
     if (updates.maritalStatus !== undefined) candidateFields.maritalStatus = updates.maritalStatus;
     if (updates.highestEducation !== undefined) candidateFields.highestEducation = updates.highestEducation;
-    if (updates.languages !== undefined) candidateFields.languages = updates.languages;
+    
+    // Handle languages field - convert array to JSON string or set to null if empty
+    if (updates.languages !== undefined) {
+      if (Array.isArray(updates.languages)) {
+        candidateFields.languages = updates.languages.length > 0 
+          ? JSON.stringify(updates.languages) 
+          : null;
+      } else if (typeof updates.languages === 'string') {
+        candidateFields.languages = updates.languages || null;
+      } else {
+        candidateFields.languages = null;
+      }
+    }
+    
     if (updates.relevantSkills !== undefined) candidateFields.relevantSkills = updates.relevantSkills;
     if (updates.profilePhotoUrl !== undefined) candidateFields.profilePhotoUrl = updates.profilePhotoUrl;
     if (updates.passportCopyUrl !== undefined) candidateFields.passportCopyUrl = updates.passportCopyUrl;
     if (updates.idCopyUrl !== undefined) candidateFields.idCopyUrl = updates.idCopyUrl;
-    if (updates.supportingCertificates !== undefined) candidateFields.supportingCertificates = updates.supportingCertificates;
+    
+    // Handle supportingCertificates field - convert array to JSON string or set to null if empty
+    if (updates.supportingCertificates !== undefined) {
+      if (Array.isArray(updates.supportingCertificates)) {
+        candidateFields.supportingCertificates = updates.supportingCertificates.length > 0 
+          ? JSON.stringify(updates.supportingCertificates) 
+          : null;
+      } else if (typeof updates.supportingCertificates === 'string') {
+        candidateFields.supportingCertificates = updates.supportingCertificates || null;
+      } else {
+        candidateFields.supportingCertificates = null;
+      }
+    }
+    
     if (updates.previousEmployer !== undefined) candidateFields.previousEmployer = updates.previousEmployer;
     if (updates.previousRole !== undefined) candidateFields.previousRole = updates.previousRole;
     if (updates.previousDuration !== undefined) candidateFields.previousDuration = updates.previousDuration;

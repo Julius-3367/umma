@@ -69,7 +69,7 @@ const register = async (req, res) => {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create user
+    // Create user with default tenantId
     const user = await prisma.user.create({
       data: {
         email,
@@ -77,7 +77,8 @@ const register = async (req, res) => {
         firstName,
         lastName,
         phone,
-        roleId: role.id
+        roleId: role.id,
+        tenantId: 1, // Default to tenant 1 for all new users
       },
       include: {
         role: true

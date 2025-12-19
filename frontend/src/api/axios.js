@@ -2,6 +2,11 @@ import axios from 'axios';
 
 const DEFAULT_API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '');
 
+console.log('🔧 Axios configuration:', {
+  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+  DEFAULT_API_BASE
+});
+
 // Create axios instance with default config
 const axiosInstance = axios.create({
   baseURL: DEFAULT_API_BASE,
@@ -41,9 +46,19 @@ export const setupAxiosInterceptors = (reduxStore) => {
   // Setup request interceptor
   axiosInstance.interceptors.request.use(
     (config) => {
+      console.log('📤 Axios request:', {
+        method: config.method,
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`
+      });
+      
       const { accessToken } = getTokens();
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
+        console.log('🔑 Added auth token to request');
+      } else {
+        console.log('⚠️ No access token available');
       }
 
       // If the data is FormData, delete Content-Type to let browser set it with boundary
@@ -61,8 +76,23 @@ export const setupAxiosInterceptors = (reduxStore) => {
 
   // Setup response interceptor for token refresh
   axiosInstance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      console.log('📥 Axios response:', {
+        status: response.status,
+        url: response.config.url,
+        data: response.data
+      });
+      return response;
+    },
     async (error) => {
+      console.error('❌ Axios error:', {
+        message: error.message,
+        status: error.response?.status,
+        url: error.config?.url,
+        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+        responseData: error.response?.data
+      });
+      
       const originalRequest = error.config;
 
       // If error is 401 and we haven't tried to refresh yet

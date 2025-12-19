@@ -22,7 +22,7 @@ const createCohort = async (req, res) => {
     } = req.body;
 
     const userId = req.user.id;
-    const tenantId = req.user.tenantId;
+    const tenantId = req.user.tenantId || 1; // Default to tenant 1 if null
 
     // Validate required fields
     if (!courseId || !cohortCode || !cohortName || !startDate || !endDate || !enrollmentDeadline || !maxCapacity) {
@@ -106,9 +106,14 @@ const createCohort = async (req, res) => {
 const getCohorts = async (req, res) => {
   try {
     const { courseId, trainerId, status, startDate, endDate, page = 1, limit = 20 } = req.query;
-    const tenantId = req.user.tenantId;
+    const tenantId = req.user.tenantId || 1; // Default to tenant 1 if null
 
-    const where = { tenantId };
+    const where = {};
+    
+    // Only filter by tenantId if it exists
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
 
     if (courseId) where.courseId = parseInt(courseId);
     if (trainerId) where.leadTrainerId = parseInt(trainerId);
